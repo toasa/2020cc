@@ -21,4 +21,7 @@ test() {
 
 test 0 0
 test 30 30
+test 6 "1+2+3"
+test 20 "40-20"
+test 10 "10+40-10-30"
 echo "OK"
