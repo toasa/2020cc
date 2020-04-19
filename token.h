@@ -1,6 +1,8 @@
 typedef enum {
     TK_NUM,
     TK_RESERVED,
+    TK_LPARENT,  // (
+    TK_RPARENT,  // )
     TK_EOF,
 } TokenKind;
 

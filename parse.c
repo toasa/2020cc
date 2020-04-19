@@ -28,9 +28,26 @@ void next_token() {
     token = token->next;
 }
 
-Node *parse_primary() {
-    Node *n = new_node(ND_NUM, token->val);
+void expect(TokenKind tk) {
+    if (token->tk != tk) {
+        printf("expect token error\n");
+        exit(1);
+    }
     next_token();
+}
+
+Node *parse_expr();
+
+Node *parse_primary() {
+    Node *n;
+    if (token->tk == TK_LPARENT) {
+        next_token();
+        n = parse_expr();
+        expect(TK_RPARENT);
+    } else {
+        n = new_node(ND_NUM, token->val);
+        next_token();
+    }
     return n;
 }
 
