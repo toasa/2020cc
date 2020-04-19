@@ -51,20 +51,41 @@ Node *parse_primary() {
     return n;
 }
 
+Node *parse_unary() {
+    Node *n;
+
+    if (equal_string("+", token->str)) {
+        next_token();
+        n = parse_primary();
+    } else if (equal_string("-", token->str)) {
+        next_token();
+
+        n = new_node(ND_SUB, 0);
+        Node *lhs = new_node(ND_NUM, 0);
+        Node *rhs = parse_primary();
+        n->lhs = lhs;
+        n->rhs = rhs;
+    } else {
+        n = parse_primary();
+    }
+
+    return n;
+}
+
 Node *parse_mul() {
-    Node *lhs = parse_primary();
+    Node *lhs = parse_unary();
 
     while (equal_string("*", token->str) || equal_string("/", token->str)) {
         if (equal_string("*", token->str)) {
             next_token();
-            Node *rhs = parse_primary();
+            Node *rhs = parse_unary();
             Node *n = new_node(ND_MUL, 0);
             n->lhs = lhs;
             n->rhs = rhs;
             lhs = n;
         } else {
             next_token();
-            Node *rhs = parse_primary();
+            Node *rhs = parse_unary();
             Node *n = new_node(ND_DIV, 0);
             n->lhs = lhs;
             n->rhs = rhs;
