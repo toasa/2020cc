@@ -76,6 +76,22 @@ Token *tokenize(char *input) {
                 input++;
                 cur_token = new_token(cur_token, TK_NE, 0, "!=");
             }
+        } else if (*input == '<') {
+            input++;
+            if (*input == '=') {
+                input++;
+                cur_token = new_token(cur_token, TK_LE, 0, "<=");
+            } else {
+                cur_token = new_token(cur_token, TK_LT, 0, "<");
+            }
+        } else if (*input == '>') {
+            input++;
+            if (*input == '=') {
+                input++;
+                cur_token = new_token(cur_token, TK_GE, 0, ">=");
+            } else {
+                cur_token = new_token(cur_token, TK_GT, 0, ">");
+            }
         } else {
             break;
         }

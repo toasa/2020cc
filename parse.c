@@ -120,20 +120,60 @@ Node *parse_add() {
     return lhs;
 }
 
-Node *parse_equality() {
+Node *parse_relational() {
     Node *lhs = parse_add();
+
+    while (token->tk == TK_LT || token->tk == TK_LE
+        || token->tk == TK_GT || token->tk == TK_GE) {
+
+        if (token->tk == TK_LT) {
+            next_token();
+            Node *rhs = parse_add();
+            Node *n = new_node(ND_LT, 0);
+            n->lhs = lhs;
+            n->rhs = rhs;
+            lhs = n;
+        } else if (token->tk == TK_LE) {
+            next_token();
+            Node *rhs = parse_add();
+            Node *n = new_node(ND_LE, 0);
+            n->lhs = lhs;
+            n->rhs = rhs;
+            lhs = n;
+        } else if (token->tk == TK_GT) {
+            next_token();
+            Node *rhs = parse_add();
+            Node *n = new_node(ND_LT, 0);
+            n->lhs = rhs;
+            n->rhs = lhs;
+            lhs = n;
+        } else {
+            next_token();
+            Node *rhs = parse_add();
+            Node *n = new_node(ND_LE, 0);
+            n->lhs = rhs;
+            n->rhs = lhs;
+            lhs = n;
+        }
+    }
+
+    return lhs;
+}
+
+Node *parse_equality() {
+    Node *lhs = parse_relational();
 
     while (token->tk == TK_EQ || token->tk == TK_NE) {
         if (token->tk == TK_EQ) {
             next_token();
-            Node *rhs = parse_add();
+            Node *rhs = parse_relational();
             Node *n = new_node(ND_EQ, 0);
             n->lhs = lhs;
             n->rhs = rhs;
             lhs = n;
         } else {
             next_token();
-            Node *rhs = parse_add();
+            Node *rhs = parse_relational();
             Node *n = new_node(ND_NE, 0);
             n->lhs = lhs;
             n->rhs = rhs;

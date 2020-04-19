@@ -30,6 +30,14 @@ void gen_asm(Node *n) {
         printf("    cmp rax, rdi\n");
         printf("    setne al\n");
         printf("    movzb rax, al\n");
+    } else if (n->nk == ND_LT) {
+        printf("    cmp rax, rdi\n");
+        printf("    setl al\n");
+        printf("    movzb rax, al\n");
+    } else if (n->nk == ND_LE) {
+        printf("    cmp rax, rdi\n");
+        printf("    setle al\n");
+        printf("    movzb rax, al\n");
     }
 
     printf("    push rax\n");

@@ -5,6 +5,10 @@ typedef enum {
     TK_RPARENT,  // )
     TK_EQ,       // ==
     TK_NE,       // !=
+    TK_LT,       // <
+    TK_LE,       // <=
+    TK_GT,       // >
+    TK_GE,       // >=
     TK_EOF,
 } TokenKind;
 
