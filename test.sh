@@ -5,7 +5,7 @@ test() {
     input=$2
 
     ./main "$input" > tmp.s
-    clang tmp.s -o tmp
+    cc tmp.s -o tmp
     ./tmp
     result=$?
 
