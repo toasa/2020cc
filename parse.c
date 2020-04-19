@@ -53,15 +53,25 @@ Node *parse_primary() {
 
 Node *parse_mul() {
     Node *lhs = parse_primary();
-    while (equal_string("*", token->str)) {
-        next_token();
 
-        Node *rhs = parse_primary();
-        Node *n = new_node(ND_MUL, 0);
-        n->lhs = lhs;
-        n->rhs = rhs;
-        lhs = n;
+    while (equal_string("*", token->str) || equal_string("/", token->str)) {
+        if (equal_string("*", token->str)) {
+            next_token();
+            Node *rhs = parse_primary();
+            Node *n = new_node(ND_MUL, 0);
+            n->lhs = lhs;
+            n->rhs = rhs;
+            lhs = n;
+        } else {
+            next_token();
+            Node *rhs = parse_primary();
+            Node *n = new_node(ND_DIV, 0);
+            n->lhs = lhs;
+            n->rhs = rhs;
+            lhs = n;
+        }
     }
+
     return lhs;
 }
 

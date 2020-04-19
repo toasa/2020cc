@@ -26,6 +26,14 @@ void gen_asm(Node *n) {
         printf("    pop rax\n");
         printf("    mul rdi\n");
         printf("    push rax\n");
+    } else if (n->nk == ND_DIV) {
+        gen_asm(n->lhs);
+        gen_asm(n->rhs);
+        printf("    pop rdi\n");
+        printf("    pop rax\n");
+        printf("    cqo\n");
+        printf("    div rdi\n");
+        printf("    push rax\n");
     }
 }
 
