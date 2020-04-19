@@ -22,6 +22,14 @@ void gen_asm(Node *n) {
     } else if (n->nk == ND_DIV) {
         printf("    cqo\n");
         printf("    idiv rdi\n");
+    } else if (n->nk == ND_EQ) {
+        printf("    cmp rax, rdi\n");
+        printf("    sete al\n");
+        printf("    movzb rax, al\n");
+    } else if (n->nk == ND_NE) {
+        printf("    cmp rax, rdi\n");
+        printf("    setne al\n");
+        printf("    movzb rax, al\n");
     }
 
     printf("    push rax\n");

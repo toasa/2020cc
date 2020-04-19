@@ -64,6 +64,18 @@ Token *tokenize(char *input) {
         } else if (*input == ')') {
             input++;
             cur_token = new_token(cur_token, TK_RPARENT, 0, ")");
+        } else if (*input == '=') {
+            input++;
+            if (*input == '=') {
+                input++;
+                cur_token = new_token(cur_token, TK_EQ, 0, "==");
+            }
+        } else if (*input == '!') {
+            input++;
+            if (*input == '=') {
+                input++;
+                cur_token = new_token(cur_token, TK_NE, 0, "!=");
+            }
         } else {
             break;
         }

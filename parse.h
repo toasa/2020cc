@@ -4,6 +4,8 @@ typedef enum {
     ND_SUB,
     ND_MUL,
     ND_DIV,
+    ND_EQ,  // ==
+    ND_NE,  // !=
 } NodeKind;
 
 typedef struct Node {

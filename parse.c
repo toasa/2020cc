@@ -96,7 +96,7 @@ Node *parse_mul() {
     return lhs;
 }
 
-Node *parse_expr() {
+Node *parse_add() {
     Node *lhs = parse_mul();
 
     while (equal_string("+", token->str) || equal_string("-", token->str)) {
@@ -118,6 +118,34 @@ Node *parse_expr() {
     }
     
     return lhs;
+}
+
+Node *parse_equality() {
+    Node *lhs = parse_add();
+
+    while (token->tk == TK_EQ || token->tk == TK_NE) {
+        if (token->tk == TK_EQ) {
+            next_token();
+            Node *rhs = parse_add();
+            Node *n = new_node(ND_EQ, 0);
+            n->lhs = lhs;
+            n->rhs = rhs;
+            lhs = n;
+        } else {
+            next_token();
+            Node *rhs = parse_add();
+            Node *n = new_node(ND_NE, 0);
+            n->lhs = lhs;
+            n->rhs = rhs;
+            lhs = n;
+        }
+    }
+
+    return lhs;
+}
+
+Node *parse_expr() {
+    return parse_equality();
 }
 
 Node *parse(Token *t) {

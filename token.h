@@ -3,6 +3,8 @@ typedef enum {
     TK_RESERVED,
     TK_LPARENT,  // (
     TK_RPARENT,  // )
+    TK_EQ,       // ==
+    TK_NE,       // !=
     TK_EOF,
 } TokenKind;
 
