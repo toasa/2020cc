@@ -5,36 +5,26 @@
 void gen_asm(Node *n) {
     if (n->nk == ND_NUM) {
         printf("    push %d\n", n->val);
-    } else if (n->nk == ND_ADD) {
-        gen_asm(n->lhs);
-        gen_asm(n->rhs);
-        printf("    pop rdi\n");
-        printf("    pop rax\n");
+        return;
+    }
+
+    gen_asm(n->lhs);
+    gen_asm(n->rhs);
+    printf("    pop rdi\n");
+    printf("    pop rax\n");
+
+    if (n->nk == ND_ADD) {
         printf("    add rax, rdi\n");
-        printf("    push rax\n");
     } else if (n->nk == ND_SUB) {
-        gen_asm(n->lhs);
-        gen_asm(n->rhs);
-        printf("    pop rdi\n");
-        printf("    pop rax\n");
         printf("    sub rax, rdi\n");
-        printf("    push rax\n");
     } else if (n->nk == ND_MUL) {
-        gen_asm(n->lhs);
-        gen_asm(n->rhs);
-        printf("    pop rdi\n");
-        printf("    pop rax\n");
         printf("    mul rdi\n");
-        printf("    push rax\n");
     } else if (n->nk == ND_DIV) {
-        gen_asm(n->lhs);
-        gen_asm(n->rhs);
-        printf("    pop rdi\n");
-        printf("    pop rax\n");
         printf("    cqo\n");
         printf("    div rdi\n");
-        printf("    push rax\n");
     }
+
+    printf("    push rax\n");
 }
 
 void gen(Node *root) {
