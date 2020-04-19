@@ -1,39 +1,47 @@
 #include <stdio.h>
 #include "token.h"
+#include "parse.h"
 
-int equal_string(char *s1, char *s2) {
-    do {
-        if (*s1 != *s2) { return 0; }
-        s1++;
-        s2++;
-    } while (*s1 && *s2);
-    return 1;
+void gen_asm(Node *n) {
+    if (n->nk == ND_NUM) {
+        printf("    push %d\n", n->val);
+    } else if (n->nk == ND_ADD) {
+        gen_asm(n->lhs);
+        gen_asm(n->rhs);
+        printf("    pop rdi\n");
+        printf("    pop rax\n");
+        printf("    add rax, rdi\n");
+        printf("    push rax\n");
+    } else if (n->nk == ND_SUB) {
+        gen_asm(n->lhs);
+        gen_asm(n->rhs);
+        printf("    pop rdi\n");
+        printf("    pop rax\n");
+        printf("    sub rax, rdi\n");
+        printf("    push rax\n");
+    } else if (n->nk == ND_MUL) {
+        gen_asm(n->lhs);
+        gen_asm(n->rhs);
+        printf("    pop rdi\n");
+        printf("    pop rax\n");
+        printf("    mul rdi\n");
+        printf("    push rax\n");
+    }
 }
 
-void gen_asm(Token *t) {
-    for (; t->tk != TK_EOF; t = t->next) {
-        if (t->tk == TK_NUM) {
-            printf("    mov rax, %d\n", t->val);
-        } else if (t->tk == TK_RESERVED) {
-            if (equal_string("+", t->str)) {
-                t = t->next;
-                printf("    add rax, %d\n", t->val);
-            } else if (equal_string("-", t->str)) {
-                t = t->next;
-                printf("    sub rax, %d\n", t->val);
-            }
-        }
-    }
+void gen(Node *root) {
+    printf(".intel_syntax noprefix\n");
+    printf(".global main\n");
+    printf("main:\n");
+    gen_asm(root);
+    printf("    pop rax\n");
+    printf("    ret\n");
 }
 
 int main(int argc, char **argv) {
     char *input = argv[1];
     Token *t = tokenize(input);
-
-    printf(".intel_syntax noprefix\n");
-    printf(".global main\n");
-    printf("main:\n");
-    gen_asm(t);
-    printf("    ret\n");
+    Node *root = parse(t);
+    gen(root);
 }
 

@@ -1,7 +1,7 @@
 CFLAGS=-std=c11 -g -static
 
 run:
-	clang -o main main.c token.c
+	clang -o main main.c token.c parse.c
 
 test: run
 	./test.sh

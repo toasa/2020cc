@@ -20,9 +20,14 @@ test() {
 
 test 0 0
 test 30 30
+test 50 "25 + 25"
 test 6 "1+2+3"
 test 20 "40-20"
 test 10 "10+40-10-30"
 test 3 "2 + 1"
 test 20 "  10 + 11- 1 "
+test 20 "4 * 5"
+test 23 "3 + 4 * 5"
+test 17 "3 * 4 + 5"
+
 echo "OK"
