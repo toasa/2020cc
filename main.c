@@ -18,10 +18,10 @@ void gen_asm(Node *n) {
     } else if (n->nk == ND_SUB) {
         printf("    sub rax, rdi\n");
     } else if (n->nk == ND_MUL) {
-        printf("    mul rdi\n");
+        printf("    imul rdi\n");
     } else if (n->nk == ND_DIV) {
         printf("    cqo\n");
-        printf("    div rdi\n");
+        printf("    idiv rdi\n");
     }
 
     printf("    push rax\n");
