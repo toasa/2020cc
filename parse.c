@@ -44,6 +44,10 @@ Node *parse_primary() {
         next_token();
         n = parse_expr();
         expect(TK_RPARENT);
+    } else if (token->tk == TK_IDENT) {
+        n = new_node(ND_LVAR, 0);
+        n->offset = (token->str[0] - 'a' + 1) * 8;
+        next_token();
     } else {
         n = new_node(ND_NUM, token->val);
         next_token();
@@ -184,12 +188,44 @@ Node *parse_equality() {
     return lhs;
 }
 
-Node *parse_expr() {
-    return parse_equality();
+Node *parse_assign() {
+    Node *lhs = parse_equality();
+
+    if (token->tk == TK_ASSIGN) {
+        next_token();
+        Node *rhs = parse_assign();
+        Node *n = new_node(ND_ASSIGN, 0);
+        n->lhs = lhs;
+        n->rhs = rhs;
+        lhs = n;
+    }
+
+    return lhs;
 }
 
-Node *parse(Token *t) {
+Node *parse_expr() {
+    return parse_assign();
+}
+
+Node *parse_stmt() {
+    Node *n = parse_expr();
+    expect(TK_SEMICOLON);
+    return n;
+}
+
+Node *code[100];
+
+void parse_program() {
+    int i = 0;
+    while (token->tk != TK_EOF) {
+        Node *n = parse_stmt();
+        code[i++] = n;
+    }
+    code[i] = NULL;
+}
+
+Node **parse(Token *t) {
     token = t;
-    Node *root = parse_expr();
-    return root;
+    parse_program();
+    return code;
 }

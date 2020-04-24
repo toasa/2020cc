@@ -1,13 +1,15 @@
 typedef enum {
     ND_NUM,
+    ND_LVAR,
     ND_ADD,
     ND_SUB,
     ND_MUL,
     ND_DIV,
-    ND_EQ,  // ==
-    ND_NE,  // !=
-    ND_LT,  // <
-    ND_LE,  // <=
+    ND_EQ,     // ==
+    ND_NE,     // !=
+    ND_LT,     // <
+    ND_LE,     // <=
+    ND_ASSIGN, // =
 } NodeKind;
 
 typedef struct Node {
@@ -15,6 +17,7 @@ typedef struct Node {
     struct Node *lhs;
     struct Node *rhs;
     int val;
+    int offset;       // nkがND_LVARの場合に使う
 } Node;
 
-Node *parse(Token *t);
+Node **parse(Token *t);

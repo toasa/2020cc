@@ -46,6 +46,8 @@ Token *tokenize(char *input) {
         if (is_digit(*input)) {
             int num = read_number(&input);
             cur_token = new_token(cur_token, TK_NUM, num, "");
+        } else if (is_char(*input)) {
+            cur_token = new_token(cur_token, TK_IDENT, 0, input++);
         } else if (*input == '+') {
             input++;
             cur_token = new_token(cur_token, TK_RESERVED, 0, "+");
@@ -58,6 +60,9 @@ Token *tokenize(char *input) {
         } else if (*input == '/') {
             input++;
             cur_token = new_token(cur_token, TK_RESERVED, 0, "/");
+        } else if (*input == ';') {
+            input++;
+            cur_token = new_token(cur_token, TK_SEMICOLON, 0, ";");
         } else if (*input == '(') {
             input++;
             cur_token = new_token(cur_token, TK_LPARENT, 0, "(");
@@ -69,6 +74,8 @@ Token *tokenize(char *input) {
             if (*input == '=') {
                 input++;
                 cur_token = new_token(cur_token, TK_EQ, 0, "==");
+            } else {
+                cur_token = new_token(cur_token, TK_ASSIGN, 0, "=");
             }
         } else if (*input == '!') {
             input++;
