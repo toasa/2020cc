@@ -57,6 +57,12 @@ test 1 "10 >= 10;"
 test 3 "a = 3; a;"
 test 22 "b = 5 * 6 - 8; b;"
 test 4 "a = 2; b = a + 30; b / 8;"
+test 40 "a = 20; b = a + (10 * 2); b;"
+test 30 "a = 30; b = 11; a;"
+test 30 "a = 30; b = 11; c = b - 10; d = a * (b - c); d / 10;"
 test 4 "a = 4;"
+
+test 20 "abc = 20; abc;"
+test 20 "foo = 30; bar = 20; (foo - bar) * 2;"
 
 echo "OK"

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "token.h"
 
 int is_digit(char c) {
@@ -11,6 +12,11 @@ int is_char(char c) {
 
 int is_space(char c) {
     return c == ' ';
+}
+
+int is_keyword(char *str) {
+    // tempolary always false because there is still not any keyword.
+    return 0;
 }
 
 void skip(char **input) {
@@ -26,6 +32,18 @@ int read_number(char **input) {
         (*input)++;
     }
     return num;
+}
+
+char *read_str(char **input) {
+    char *input_org = *input;
+    int str_count = 0;
+    while (is_char(**input) || (**input == '_')) {
+        (*input)++;
+        str_count++;
+    }
+    char *str = calloc(1, sizeof(char) * (str_count + 1));
+    strncpy(str, input_org, str_count);
+    return str;
 }
 
 Token *new_token(Token *prev, TokenKind tk, int val, char *str) {
@@ -47,7 +65,12 @@ Token *tokenize(char *input) {
             int num = read_number(&input);
             cur_token = new_token(cur_token, TK_NUM, num, "");
         } else if (is_char(*input)) {
-            cur_token = new_token(cur_token, TK_IDENT, 0, input++);
+            char *str = read_str(&input);
+            if (is_keyword(str)) {
+            } else {
+                // identifier
+                cur_token = new_token(cur_token, TK_IDENT, 0, str);
+            }
         } else if (*input == '+') {
             input++;
             cur_token = new_token(cur_token, TK_RESERVED, 0, "+");

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "token.h"
 #include "parse.h"
 
@@ -36,7 +37,56 @@ void expect(TokenKind tk) {
     next_token();
 }
 
+int equal_strings(char *s1, char *s2) {
+    return (strcmp(s1, s2) == 0);
+}
+
 Node *parse_expr();
+
+typedef struct KV {
+    char *key;
+    int val;
+    struct KV *next;
+} KV;
+
+KV *new_KV(char *key, int val) {
+    KV *kv = calloc(1, sizeof(KV));
+    kv->key = key;
+    kv->val = val;
+    kv->next = NULL;
+    return kv;
+}
+
+KV *head = NULL;
+
+void insert(char *K, int V) {
+    KV *kv_new = new_KV(K, V);
+    if (head == NULL) {
+        head = kv_new;
+        return;
+    }
+
+    KV *kv_iter = head;
+    while (kv_iter->next != NULL) {
+        kv_iter = kv_iter->next;
+    }
+    kv_iter->next = kv_new;
+}
+
+int get_offset(char *ident) {
+    int count = 0;
+    KV *kv_iter = head;
+    while (kv_iter != NULL) {
+        if (equal_strings(ident, kv_iter->key)) {
+            return kv_iter->val;
+        }
+        count++;
+        kv_iter = kv_iter->next;
+    }
+    int offset = (count + 1) * 8;
+    insert(ident, offset);
+    return offset;
+}
 
 Node *parse_primary() {
     Node *n;
@@ -46,7 +96,7 @@ Node *parse_primary() {
         expect(TK_RPARENT);
     } else if (token->tk == TK_IDENT) {
         n = new_node(ND_LVAR, 0);
-        n->offset = (token->str[0] - 'a' + 1) * 8;
+        n->offset = get_offset(token->str);
         next_token();
     } else {
         n = new_node(ND_NUM, token->val);
