@@ -3,15 +3,7 @@
 #include <string.h>
 #include "token.h"
 #include "parse.h"
-
-int equal_string(char *s1, char *s2) {
-    do {
-        if (*s1 != *s2) { return 0; }
-        s1++;
-        s2++;
-    } while (*s1 && *s2);
-    return 1;
-}
+#include "util.h"
 
 Node *new_node(NodeKind nk, int val) {
     Node *n = calloc(1, sizeof(Node));
@@ -35,10 +27,6 @@ void expect(TokenKind tk) {
         exit(1);
     }
     next_token();
-}
-
-int equal_strings(char *s1, char *s2) {
-    return (strcmp(s1, s2) == 0);
 }
 
 Node *parse_expr();
@@ -108,10 +96,10 @@ Node *parse_primary() {
 Node *parse_unary() {
     Node *n;
 
-    if (equal_string("+", token->str)) {
+    if (equal_strings("+", token->str)) {
         next_token();
         n = parse_primary();
-    } else if (equal_string("-", token->str)) {
+    } else if (equal_strings("-", token->str)) {
         next_token();
 
         n = new_node(ND_SUB, 0);
@@ -129,8 +117,8 @@ Node *parse_unary() {
 Node *parse_mul() {
     Node *lhs = parse_unary();
 
-    while (equal_string("*", token->str) || equal_string("/", token->str)) {
-        if (equal_string("*", token->str)) {
+    while (equal_strings("*", token->str) || equal_strings("/", token->str)) {
+        if (equal_strings("*", token->str)) {
             next_token();
             Node *rhs = parse_unary();
             Node *n = new_node(ND_MUL, 0);
@@ -153,8 +141,8 @@ Node *parse_mul() {
 Node *parse_add() {
     Node *lhs = parse_mul();
 
-    while (equal_string("+", token->str) || equal_string("-", token->str)) {
-        if (equal_string("+", token->str)) {
+    while (equal_strings("+", token->str) || equal_strings("-", token->str)) {
+        if (equal_strings("+", token->str)) {
             next_token();
             Node *rhs = parse_mul();
             Node *n = new_node(ND_ADD, 0);
@@ -259,7 +247,7 @@ Node *parse_expr() {
 
 Node *parse_stmt() {
     Node *n;
-    if (equal_string("return", token->str)) {
+    if (equal_strings("return", token->str)) {
         next_token();
         Node *lhs = parse_expr();
         n = new_node(ND_RETURN, 0);

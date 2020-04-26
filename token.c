@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "token.h"
+#include "util.h"
 
 int is_digit(char c) {
     return ('0' <= c && c <= '9');
