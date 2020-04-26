@@ -258,7 +258,15 @@ Node *parse_expr() {
 }
 
 Node *parse_stmt() {
-    Node *n = parse_expr();
+    Node *n;
+    if (equal_string("return", token->str)) {
+        next_token();
+        Node *lhs = parse_expr();
+        n = new_node(ND_RETURN, 0);
+        n->lhs = lhs;
+    } else {
+        n = parse_expr();
+    }
     expect(TK_SEMICOLON);
     return n;
 }

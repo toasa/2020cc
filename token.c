@@ -15,7 +15,15 @@ int is_space(char c) {
 }
 
 int is_keyword(char *str) {
-    // tempolary always false because there is still not any keyword.
+    char *keywords[1] = {
+        "return",
+    };
+    for (int i = 0; i < 1; i++) {
+        if (equal_strings(str, keywords[i])) {
+            return 1;
+        }
+    }
+
     return 0;
 }
 
@@ -67,6 +75,7 @@ Token *tokenize(char *input) {
         } else if (is_char(*input)) {
             char *str = read_str(&input);
             if (is_keyword(str)) {
+                cur_token = new_token(cur_token, TK_RESERVED, 0, str);
             } else {
                 // identifier
                 cur_token = new_token(cur_token, TK_IDENT, 0, str);

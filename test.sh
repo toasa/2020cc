@@ -65,4 +65,7 @@ test 4 "a = 4;"
 test 20 "abc = 20; abc;"
 test 20 "foo = 30; bar = 20; (foo - bar) * 2;"
 
+test 20 "return 20;"
+test 5 "return 5; return 4;"
+
 echo "OK"

@@ -76,6 +76,13 @@ void gen(Node **code) {
 
     int i = 0;
     while (code[i] != NULL) {
+        Node *n = code[i];
+        if (n->nk == ND_RETURN) {
+            gen_asm(n->lhs);
+            printf("    pop rax\n");
+            break;
+        }
+
         gen_asm(code[i]);
         i++;
         printf("    pop rax\n");
