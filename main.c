@@ -8,7 +8,7 @@ void gen_lval(Node *n) {
     printf("    push rax\n");
 }
 
-void gen_asm(Node *n) {
+void gen_expr(Node *n) {
     if (n->nk == ND_NUM) {
         printf("    push %d\n", n->val);
         return;
@@ -20,7 +20,7 @@ void gen_asm(Node *n) {
         return;
     } else if (n->nk == ND_ASSIGN) {
         gen_lval(n->lhs);
-        gen_asm(n->rhs);
+        gen_expr(n->rhs);
 
         printf("    pop rdi\n");
         printf("    pop rax\n");
@@ -29,8 +29,8 @@ void gen_asm(Node *n) {
         return;
     }
 
-    gen_asm(n->lhs);
-    gen_asm(n->rhs);
+    gen_expr(n->lhs);
+    gen_expr(n->rhs);
     printf("    pop rdi\n");
     printf("    pop rax\n");
 
@@ -66,16 +66,16 @@ void gen_asm(Node *n) {
 
 void gen_stmt(Node *n) {
     if (n->nk == ND_RETURN) {
-        gen_asm(n->lhs);
+        gen_expr(n->lhs);
     } else if (n->nk == ND_IF) {
-        gen_asm(n->cond);
+        gen_expr(n->cond);
         printf("    pop rax\n");
         printf("    cmp rax, 0\n");
         printf("    je  .LendXXX\n");
         gen_stmt(n->then);
         printf(".LendXXX:\n");
     } else {
-        gen_asm(n);
+        gen_expr(n);
     }
 }
 
