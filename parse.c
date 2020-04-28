@@ -10,6 +10,8 @@ Node *new_node(NodeKind nk, int val) {
     n->nk = nk;
     n->lhs = NULL;
     n->rhs = NULL;
+    n->cond = NULL;
+    n->then = NULL;
     n->val = val;
     return n;
 }

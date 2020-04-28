@@ -18,7 +18,7 @@ int is_space(char c) {
 int is_keyword(char *str) {
     char *keywords[2] = {
         "return",
-	"if",
+        "if",
     };
     for (int i = 0; i < 2; i++) {
         if (equal_strings(str, keywords[i])) {
