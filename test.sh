@@ -79,4 +79,6 @@ test 30 "if (0) return 20; else return 30;"
 test 20 "x = 1; if (x) return 20; else return 30;"
 test 30 "x = 0; if (x) return 20; else return 30;"
 
+test 11 "i = 0; while (i <= 10) i = i + 1; i;"
+
 echo "OK"

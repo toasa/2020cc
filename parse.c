@@ -271,6 +271,13 @@ Node *parse_stmt() {
             next_token();
             n->alt = parse_stmt();
         }
+    } else if (cur_token_is("while")) {
+        n = new_node(ND_WHILE, 0);
+        next_token();
+        expect(TK_LPARENT);
+        n->cond = parse_expr();
+        expect(TK_RPARENT);
+        n->then = parse_stmt();
     } else {
         n = parse_expr();
         expect(TK_SEMICOLON);
