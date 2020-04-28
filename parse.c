@@ -19,6 +19,10 @@ Node *new_node(NodeKind nk, int val) {
 // 現在検査中のトークン
 Token *token;
 
+int cur_token_is(char *s) {
+    return equal_strings(s, token->str);
+}
+
 void next_token() {
     token = token->next;
 }
@@ -98,10 +102,10 @@ Node *parse_primary() {
 Node *parse_unary() {
     Node *n;
 
-    if (equal_strings("+", token->str)) {
+    if (cur_token_is("+")) {
         next_token();
         n = parse_primary();
-    } else if (equal_strings("-", token->str)) {
+    } else if (cur_token_is("-")) {
         next_token();
 
         n = new_node(ND_SUB, 0);
@@ -119,8 +123,8 @@ Node *parse_unary() {
 Node *parse_mul() {
     Node *lhs = parse_unary();
 
-    while (equal_strings("*", token->str) || equal_strings("/", token->str)) {
-        if (equal_strings("*", token->str)) {
+    while (cur_token_is("*") || cur_token_is("/")) {
+        if (cur_token_is("*")) {
             next_token();
             Node *rhs = parse_unary();
             Node *n = new_node(ND_MUL, 0);
@@ -143,8 +147,8 @@ Node *parse_mul() {
 Node *parse_add() {
     Node *lhs = parse_mul();
 
-    while (equal_strings("+", token->str) || equal_strings("-", token->str)) {
-        if (equal_strings("+", token->str)) {
+    while (cur_token_is("+") || cur_token_is("-")) {
+        if (cur_token_is("+")) {
             next_token();
             Node *rhs = parse_mul();
             Node *n = new_node(ND_ADD, 0);
@@ -249,13 +253,13 @@ Node *parse_expr() {
 
 Node *parse_stmt() {
     Node *n;
-    if (equal_strings("return", token->str)) {
+    if (cur_token_is("return")) {
         next_token();
         Node *lhs = parse_expr();
         n = new_node(ND_RETURN, 0);
         n->lhs = lhs;
         expect(TK_SEMICOLON);
-    } else if (equal_strings("if", token->str)) {
+    } else if (cur_token_is("if")) {
         n = new_node(ND_IF, 0);
         next_token();
         expect(TK_LPARENT);
