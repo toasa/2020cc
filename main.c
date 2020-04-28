@@ -64,6 +64,21 @@ void gen_asm(Node *n) {
     printf("    push rax\n");
 }
 
+void gen_stmt(Node *n) {
+    if (n->nk == ND_RETURN) {
+        gen_asm(n->lhs);
+    } else if (n->nk == ND_IF) {
+        gen_asm(n->cond);
+        printf("    pop rax\n");
+        printf("    cmp rax, 0\n");
+        printf("    je  .LendXXX\n");
+        gen_stmt(n->then);
+        printf(".LendXXX:\n");
+    } else {
+        gen_asm(n);
+    }
+}
+
 void gen(Node **code) {
     printf(".intel_syntax noprefix\n");
     printf(".global main\n");
@@ -77,15 +92,13 @@ void gen(Node **code) {
     int i = 0;
     while (code[i] != NULL) {
         Node *n = code[i];
-        if (n->nk == ND_RETURN) {
-            gen_asm(n->lhs);
-            printf("    pop rax\n");
-            break;
-        }
-
-        gen_asm(code[i]);
+        int is_return = (n->nk == ND_RETURN);
+        gen_stmt(n);
         i++;
         printf("    pop rax\n");
+        if (is_return) {
+            break;
+        }
     }
 
     // epilogue

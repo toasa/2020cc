@@ -68,4 +68,9 @@ test 20 "foo = 30; bar = 20; (foo - bar) * 2;"
 test 20 "return 20;"
 test 5 "return 5; return 4;"
 
+test 20 "if (1) 20;"
+test 20 "if (1) return 20;"
+test 20 "if (0+1) return 20;"
+test 30 "if (0) return 20; return 30;"
+
 echo "OK"

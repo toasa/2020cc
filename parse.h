@@ -11,6 +11,7 @@ typedef enum {
     ND_LE,     // <=
     ND_ASSIGN, // =
     ND_RETURN, // return
+    ND_IF,     // if
 } NodeKind;
 
 typedef struct Node {
@@ -19,6 +20,9 @@ typedef struct Node {
     struct Node *rhs;
     int val;
     int offset;       // nkがND_LVARの場合に使う
+
+    struct Node *cond; // nkがND_IFの場合に使う
+    struct Node *then; // nkがND_IFの場合に使う
 } Node;
 
 Node **parse(Token *t);
