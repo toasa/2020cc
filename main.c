@@ -64,6 +64,8 @@ void gen_expr(Node *n) {
     printf("    push rax\n");
 }
 
+int label_count = 0;
+
 void gen_stmt(Node *n) {
     if (n->nk == ND_RETURN) {
         gen_expr(n->lhs);
@@ -71,9 +73,10 @@ void gen_stmt(Node *n) {
         gen_expr(n->cond);
         printf("    pop rax\n");
         printf("    cmp rax, 0\n");
-        printf("    je  .LendXXX\n");
+        printf("    je  .Lend%03d\n", label_count);
         gen_stmt(n->then);
-        printf(".LendXXX:\n");
+        printf(".Lend%03d:\n", label_count);
+        label_count++;
     } else {
         gen_expr(n);
     }
