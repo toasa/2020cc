@@ -19,10 +19,11 @@ typedef struct Node {
     struct Node *lhs;
     struct Node *rhs;
     int val;
-    int offset;       // nkがND_LVARの場合に使う
+    int offset;        // nkがND_LVARの場合に使う
 
     struct Node *cond; // nkがND_IFの場合に使う
     struct Node *then; // nkがND_IFの場合に使う
+    struct Node *alt;  // nkがND_IFの場合に使う
 } Node;
 
 Node **parse(Token *t);

@@ -73,9 +73,20 @@ void gen_stmt(Node *n) {
         gen_expr(n->cond);
         printf("    pop rax\n");
         printf("    cmp rax, 0\n");
-        printf("    je  .Lend%03d\n", label_count);
-        gen_stmt(n->then);
-        printf(".Lend%03d:\n", label_count);
+
+        if (n->alt == NULL) {
+            printf("    je  .Lend%03d\n", label_count);
+            gen_stmt(n->then);
+            printf(".Lend%03d:\n", label_count);
+        } else {
+            printf("    je  .Lelse%03d\n", label_count);
+            gen_stmt(n->then);
+            printf("    jmp .Lend%03d\n", label_count);
+            printf(".Lelse%03d:\n", label_count);
+            gen_stmt(n->alt);
+            printf(".Lend%03d:\n", label_count);
+        }
+
         label_count++;
     } else {
         gen_expr(n);

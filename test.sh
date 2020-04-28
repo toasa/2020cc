@@ -73,4 +73,10 @@ test 20 "if (1) return 20;"
 test 20 "if (0+1) return 20;"
 test 30 "if (0) return 20; return 30;"
 
+test 20 "if (1) return 20; else return 30;"
+test 30 "if (0) return 20; else return 30;"
+
+test 20 "x = 1; if (x) return 20; else return 30;"
+test 30 "x = 0; if (x) return 20; else return 30;"
+
 echo "OK"

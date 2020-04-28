@@ -12,6 +12,7 @@ Node *new_node(NodeKind nk, int val) {
     n->rhs = NULL;
     n->cond = NULL;
     n->then = NULL;
+    n->alt = NULL;
     n->val = val;
     return n;
 }
@@ -266,6 +267,10 @@ Node *parse_stmt() {
         n->cond = parse_expr();
         expect(TK_RPARENT);
         n->then = parse_stmt();
+        if (cur_token_is("else")) {
+            next_token();
+            n->alt = parse_stmt();
+        }
     } else {
         n = parse_expr();
         expect(TK_SEMICOLON);
