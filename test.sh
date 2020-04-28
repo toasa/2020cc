@@ -81,4 +81,6 @@ test 30 "x = 0; if (x) return 20; else return 30;"
 
 test 11 "i = 0; while (i <= 10) i = i + 1; i;"
 
+test 32 "for (i = 20; i < 30; i = i + 1) i = i + 5; i;"
+
 echo "OK"

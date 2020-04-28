@@ -13,6 +13,8 @@ Node *new_node(NodeKind nk, int val) {
     n->cond = NULL;
     n->then = NULL;
     n->alt = NULL;
+    n->expr = NULL;
+    n->post = NULL;
     n->val = val;
     return n;
 }
@@ -22,6 +24,14 @@ Token *token;
 
 int cur_token_is(char *s) {
     return equal_strings(s, token->str);
+}
+
+int next_tokenkind_is(TokenKind tk) {
+    if (token->tk == TK_EOF) {
+        return 0;
+    }
+
+    return (token->next->tk == tk);
 }
 
 void next_token() {
@@ -276,6 +286,23 @@ Node *parse_stmt() {
         next_token();
         expect(TK_LPARENT);
         n->cond = parse_expr();
+        expect(TK_RPARENT);
+        n->then = parse_stmt();
+    } else if (cur_token_is("for")) {
+        n = new_node(ND_FOR, 0);
+        next_token();
+        expect(TK_LPARENT);
+        if (!next_tokenkind_is(TK_SEMICOLON)) {
+            n->expr = parse_expr();
+        }
+        expect(TK_SEMICOLON);
+        if (!next_tokenkind_is(TK_SEMICOLON)) {
+            n->cond = parse_expr();
+        }
+        expect(TK_SEMICOLON);
+        if (!next_tokenkind_is(TK_RPARENT)) {
+            n->post = parse_expr();
+        }
         expect(TK_RPARENT);
         n->then = parse_stmt();
     } else {

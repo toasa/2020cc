@@ -21,6 +21,7 @@ int is_keyword(char *str) {
         "if",
         "else",
         "while",
+        "for",
         NULL,
     };
     for (int i = 0; keywords[i] != NULL; i++) {

@@ -13,6 +13,7 @@ typedef enum {
     ND_RETURN, // return
     ND_IF,     // if
     ND_WHILE,  // while
+    ND_FOR,    // for
 } NodeKind;
 
 typedef struct Node {
@@ -22,9 +23,11 @@ typedef struct Node {
     int val;
     int offset;        // nkがND_LVARの場合に使う
 
-    struct Node *cond; // nkがND_IF, ND_WHILEの場合に使う
-    struct Node *then; // nkがND_IF, ND_WHILEの場合に使う
+    struct Node *cond; // nkがND_IF, ND_WHILE, ND_FORの場合に使う
+    struct Node *then; // nkがND_IF, ND_WHILE, ND_FORの場合に使う
     struct Node *alt;  // nkがND_IFの場合に使う
+    struct Node *expr; // nkがND_FORの場合に使う
+    struct Node *post; // nkがND_FORの場合に使う
 } Node;
 
 Node **parse(Token *t);
