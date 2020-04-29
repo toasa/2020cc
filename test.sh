@@ -83,4 +83,9 @@ test 11 "i = 0; while (i <= 10) i = i + 1; i;"
 
 test 32 "for (i = 20; i < 30; i = i + 1) i = i + 5; i;"
 
+test 11 "i = 0;
+while (i <= 10)
+    i = i + 1;
+i;"
+
 echo "OK"

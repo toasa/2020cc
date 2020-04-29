@@ -15,6 +15,10 @@ int is_space(char c) {
     return c == ' ';
 }
 
+int can_skip(char c) {
+    return is_space(c) || c == '\n' || c == '\t';
+}
+
 int is_keyword(char *str) {
     char *keywords[] = {
         "return",
@@ -34,7 +38,7 @@ int is_keyword(char *str) {
 }
 
 void skip(char **input) {
-    while (is_space(**input)) {
+    while (can_skip(**input)) {
         (*input)++;
     }
 }
