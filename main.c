@@ -8,6 +8,11 @@ void gen_lval(Node *n) {
     printf("    push rax\n");
 }
 
+char *regs[6] = {
+    "rdi", "rsi", "rdx",
+    "rcx", "r8", "r9"
+};
+
 void gen_expr(Node *n) {
     if (n->nk == ND_NUM) {
         printf("    push %d\n", n->val);
@@ -28,6 +33,16 @@ void gen_expr(Node *n) {
         printf("    push rdi\n");
         return;
     } else if (n->nk == ND_CALL) {
+        if (n->args_num > 0) {
+            Node *arg = n->next;
+            for (int count = 0; count < n->args_num; count++) {
+                gen_expr(arg);
+                printf("    pop rax\n");
+                printf("    mov %s, rax\n", regs[count]);
+                arg = arg->next;
+            }
+        }
+
         printf("    mov rax, 0\n");
         printf("    call %s\n", n->name);
         printf("    push rax\n");

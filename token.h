@@ -14,6 +14,7 @@ typedef enum {
     TK_GE,        // >=
     TK_ASSIGN,    // =
     TK_SEMICOLON, // ;
+    TK_COMMA,     // ,
     TK_EOF,
 } TokenKind;
 

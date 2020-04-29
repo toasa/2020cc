@@ -105,6 +105,9 @@ Token *tokenize(char *input) {
         } else if (*input == ';') {
             input++;
             cur_token = new_token(cur_token, TK_SEMICOLON, 0, ";");
+        } else if (*input == ',') {
+            input++;
+            cur_token = new_token(cur_token, TK_COMMA, 0, ",");
         } else if (*input == '(') {
             input++;
             cur_token = new_token(cur_token, TK_LPARENT, 0, "(");

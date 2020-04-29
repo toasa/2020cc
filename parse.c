@@ -107,7 +107,24 @@ Node *parse_primary() {
             n->name = token->str;
             expect(TK_IDENT);
             expect(TK_LPARENT);
-            // TODO: handle the function arguments
+
+            if (!cur_token_is(")")) {
+                // function arguments
+                int args_num = 1;
+                Node *head = calloc(1, sizeof(Node));
+                Node *cur = parse_expr();
+                head->next = cur;
+                while (!cur_token_is(")")) {
+                    expect(TK_COMMA);
+                    Node *tmp = parse_expr();
+                    cur->next = tmp;
+                    cur = tmp;
+                    args_num++;
+                }
+                n->next = head->next;
+                n->args_num = args_num;
+            }
+
             expect(TK_RPARENT);
         } else {
             n = new_node(ND_LVAR, 0);

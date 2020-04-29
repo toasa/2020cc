@@ -30,9 +30,10 @@ typedef struct Node {
     struct Node *alt;  // nkがND_IFの場合に使う
     struct Node *expr; // nkがND_FORの場合に使う
     struct Node *post; // nkがND_FORの場合に使う
-    struct Node *next; // nkがND_BLOCKの場合に使う
+    struct Node *next; // nkがND_BLOCK, ND_CALLの場合に使う
 
-    char *name; // nkがND_CALLの場合に使う
+    char *name;   // nkがND_CALLの場合に使う
+    int args_num; // nkがND_CALLの場合に使う
 } Node;
 
 Node **parse(Token *t);

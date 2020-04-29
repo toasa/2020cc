@@ -5,7 +5,7 @@ test() {
     input=$2
 
     ./main "$input" > tmp.s
-    cc tmp.s -o tmp
+    cc tmp.s foo.o -o tmp
     ./tmp
     result=$?
 
@@ -96,15 +96,20 @@ while (i <= 10) {
 }
 sum;"
 
-test 2 "i = 0;
+test 41 "i = 0;
+a = 20;
 {
     i = i + 1;
     i = i + 1;
+    a = a * i;
+    a = a + 1;
 }
-i;"
+a;"
 
 ./main "foo();" > tmp.s
 cc tmp.s foo.o -o tmp
 ./tmp
+
+test 21 "bar(1, 2, 3, 4, 5, 6);"
 
 echo "OK"
