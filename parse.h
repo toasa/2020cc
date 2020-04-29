@@ -14,6 +14,7 @@ typedef enum {
     ND_IF,     // if
     ND_WHILE,  // while
     ND_FOR,    // for
+    ND_BLOCK,  // { ... }
 } NodeKind;
 
 typedef struct Node {
@@ -28,6 +29,7 @@ typedef struct Node {
     struct Node *alt;  // nkがND_IFの場合に使う
     struct Node *expr; // nkがND_FORの場合に使う
     struct Node *post; // nkがND_FORの場合に使う
+    struct Node *next; // nkがND_BLOCKの場合に使う
 } Node;
 
 Node **parse(Token *t);

@@ -118,6 +118,17 @@ void gen_stmt(Node *n) {
         printf(".Lend%03d:\n", label_count);
 
         label_count++;
+    } else if (n->nk == ND_BLOCK) {
+        Node *next = n->next;
+        while (next != NULL) {
+            int is_return = (next->nk == ND_RETURN);
+            gen_stmt(next);
+            printf("    pop rax\n");
+            if (is_return) {
+                break;
+            }
+            next = next->next;
+        }
     } else {
         gen_expr(n);
     }

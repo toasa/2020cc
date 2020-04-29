@@ -111,6 +111,12 @@ Token *tokenize(char *input) {
         } else if (*input == ')') {
             input++;
             cur_token = new_token(cur_token, TK_RPARENT, 0, ")");
+        } else if (*input == '{') {
+            input++;
+            cur_token = new_token(cur_token, TK_LBRACE, 0, "{");
+        } else if (*input == '}') {
+            input++;
+            cur_token = new_token(cur_token, TK_RBRACE, 0, "}");
         } else if (*input == '=') {
             input++;
             if (*input == '=') {

@@ -88,4 +88,19 @@ while (i <= 10)
     i = i + 1;
 i;"
 
+test 55 "i = 0;
+sum = 0;
+while (i <= 10) {
+    sum = sum + i;
+    i = i + 1;
+}
+sum;"
+
+test 2 "i = 0;
+{
+    i = i + 1;
+    i = i + 1;
+}
+i;"
+
 echo "OK"

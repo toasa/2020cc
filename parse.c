@@ -15,6 +15,7 @@ Node *new_node(NodeKind nk, int val) {
     n->alt = NULL;
     n->expr = NULL;
     n->post = NULL;
+    n->next = NULL;
     n->val = val;
     return n;
 }
@@ -305,6 +306,21 @@ Node *parse_stmt() {
         }
         expect(TK_RPARENT);
         n->then = parse_stmt();
+    } else if (cur_token_is("{")) {
+        n = new_node(ND_BLOCK, 0);
+        next_token();
+        if (!cur_token_is("}")) {
+            Node *head = calloc(1, sizeof(Node));
+            Node *cur = parse_stmt();
+            head->next = cur;
+            while (!cur_token_is("}")) {
+                Node *tmp = parse_stmt();
+                cur->next = tmp;
+                cur = tmp;
+            }
+            n->next = head->next;
+        }
+        expect(TK_RBRACE);
     } else {
         n = parse_expr();
         expect(TK_SEMICOLON);
