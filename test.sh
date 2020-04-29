@@ -103,4 +103,8 @@ test 2 "i = 0;
 }
 i;"
 
+./main "foo();" > tmp.s
+cc tmp.s foo.o -o tmp
+./tmp
+
 echo "OK"

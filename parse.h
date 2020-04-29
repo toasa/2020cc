@@ -15,6 +15,7 @@ typedef enum {
     ND_WHILE,  // while
     ND_FOR,    // for
     ND_BLOCK,  // { ... }
+    ND_CALL,   // function call
 } NodeKind;
 
 typedef struct Node {
@@ -30,6 +31,8 @@ typedef struct Node {
     struct Node *expr; // nkがND_FORの場合に使う
     struct Node *post; // nkがND_FORの場合に使う
     struct Node *next; // nkがND_BLOCKの場合に使う
+
+    char *name; // nkがND_CALLの場合に使う
 } Node;
 
 Node **parse(Token *t);

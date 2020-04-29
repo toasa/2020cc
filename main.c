@@ -27,6 +27,11 @@ void gen_expr(Node *n) {
         printf("    mov [rax], rdi\n");
         printf("    push rdi\n");
         return;
+    } else if (n->nk == ND_CALL) {
+        printf("    mov rax, 0\n");
+        printf("    call %s\n", n->name);
+        printf("    push rax\n");
+        return;
     }
 
     gen_expr(n->lhs);

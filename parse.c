@@ -101,9 +101,19 @@ Node *parse_primary() {
         n = parse_expr();
         expect(TK_RPARENT);
     } else if (token->tk == TK_IDENT) {
-        n = new_node(ND_LVAR, 0);
-        n->offset = get_offset(token->str);
-        next_token();
+        // function call
+        if (next_tokenkind_is(TK_LPARENT)) {
+            n = new_node(ND_CALL, 0);
+            n->name = token->str;
+            expect(TK_IDENT);
+            expect(TK_LPARENT);
+            // TODO: handle the function arguments
+            expect(TK_RPARENT);
+        } else {
+            n = new_node(ND_LVAR, 0);
+            n->offset = get_offset(token->str);
+            next_token();
+        }
     } else {
         n = new_node(ND_NUM, token->val);
         next_token();
