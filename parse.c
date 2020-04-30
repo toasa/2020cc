@@ -63,9 +63,16 @@ KV *new_KV(char *key, int val) {
     return kv;
 }
 
-KV *head = NULL;
+// Function context
+// These have to be initiate at beginning in `parse_toplevel_func`.
+KV *head;
+int ident_num;
 
+// insert tail of linked list that stores identifier.
 void insert(char *K, int V) {
+    // increment the number of identifier.
+    ident_num++;
+
     KV *kv_new = new_KV(K, V);
     if (head == NULL) {
         head = kv_new;
@@ -355,19 +362,57 @@ Node *parse_stmt() {
     return n;
 }
 
-Node *code[100];
+Node *parse_toplevel_func() {
+    head = NULL;
+    ident_num = 0;
+    Node *n = new_node(ND_FUNC, 0);
+    n->name = token->str;
+    next_token();
+
+    // parse argument
+    expect(TK_LPARENT);
+
+    if (!cur_token_is(")")) {
+        // function arguments
+        int args_num = 1;
+        Node *head = calloc(1, sizeof(Node));
+        Node *cur = parse_expr();
+        head->next = cur;
+        while (!cur_token_is(")")) {
+            expect(TK_COMMA);
+            Node *tmp = parse_expr();
+            cur->next = tmp;
+            cur = tmp;
+            args_num++;
+        }
+        n->next = head->next;
+        n->args_num = args_num;
+    }
+
+    expect(TK_RPARENT);
+
+    // parse function body
+    n->body = parse_stmt();
+
+    // the number of function identifier equals
+    // the number of function arguments plus local variables.
+    n->ident_num = ident_num;
+    return n;
+}
+
+Node *funcs[100];
 
 void parse_program() {
     int i = 0;
     while (token->tk != TK_EOF) {
-        Node *n = parse_stmt();
-        code[i++] = n;
+        funcs[i] = parse_toplevel_func();
+        i++;
     }
-    code[i] = NULL;
+    funcs[i] = NULL;
 }
 
 Node **parse(Token *t) {
     token = t;
     parse_program();
-    return code;
+    return funcs;
 }

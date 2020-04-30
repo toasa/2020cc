@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "token.h"
 #include "parse.h"
+#include "util.h"
 
 void gen_lval(Node *n) {
     printf("    mov rax, rbp\n");
@@ -149,37 +150,39 @@ void gen_stmt(Node *n) {
             }
             next = next->next;
         }
+        printf("    push rax\n");
     } else {
         gen_expr(n);
     }
 }
 
-void gen(Node **code) {
-    printf(".intel_syntax noprefix\n");
-    printf(".global main\n");
-    printf("main:\n");
+void gen_func(Node *n) {
+    assert(n->nk == ND_FUNC);
+    printf(".global %s\n", n->name);
+    printf("%s:\n", n->name);
 
     // prologue
     printf("    push rbp\n");
     printf("    mov rbp, rsp\n");
-    printf("    sub rsp, 208\n");
+    printf("    sub rsp, %d\n", n->ident_num * 8);
+    // printf("    sub rsp, %d\n", 208);
 
-    int i = 0;
-    while (code[i] != NULL) {
-        Node *n = code[i];
-        int is_return = (n->nk == ND_RETURN);
-        gen_stmt(n);
-        i++;
-        printf("    pop rax\n");
-        if (is_return) {
-            break;
-        }
-    }
+    gen_stmt(n->body);
+    printf("    pop rax\n");
 
     // epilogue
     printf("    mov rsp, rbp\n");
     printf("    pop rbp\n");
     printf("    ret\n");
+}
+
+void gen(Node **funcs) {
+    printf(".intel_syntax noprefix\n");
+
+    for (int i = 0; funcs[i] != NULL; i++) {
+        gen_func(funcs[i]);
+    }
+
 }
 
 int main(int argc, char **argv) {

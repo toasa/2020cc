@@ -16,6 +16,7 @@ typedef enum {
     ND_FOR,    // for
     ND_BLOCK,  // { ... }
     ND_CALL,   // function call
+    ND_FUNC,   // function definition
 } NodeKind;
 
 typedef struct Node {
@@ -30,10 +31,12 @@ typedef struct Node {
     struct Node *alt;  // nkがND_IFの場合に使う
     struct Node *expr; // nkがND_FORの場合に使う
     struct Node *post; // nkがND_FORの場合に使う
-    struct Node *next; // nkがND_BLOCK, ND_CALLの場合に使う
+    struct Node *next; // nkがND_BLOCK, ND_CALL, ND_FUNCの場合に使う
+    struct Node *body; // nkがND_FUNCの場合に使う
 
-    char *name;   // nkがND_CALLの場合に使う
-    int args_num; // nkがND_CALLの場合に使う
+    char *name;    // nkがND_CALL, ND_FUNCの場合に使う
+    int args_num;  // nkがND_CALL, ND_FUNCの場合に使う
+    int ident_num; // nkがND_FUNCの場合に使う
 } Node;
 
 Node **parse(Token *t);
