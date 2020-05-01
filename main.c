@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "token.h"
 #include "parse.h"
 #include "util.h"
@@ -79,13 +80,14 @@ void gen_expr(Node *n) {
 }
 
 int label_count = 0;
+char cur_func[100];
 
 void gen_stmt(Node *n) {
     if (n->nk == ND_RETURN) {
         gen_expr(n->expr);
         printf("    pop rax\n");
         // TODO: switch return label for each function.
-        printf("    jmp .Lreturn\n");
+        printf("    jmp .Lreturn_%s\n", cur_func);
     } else if (n->nk == ND_IF) {
         gen_expr(n->cond);
         printf("    pop rax\n");
@@ -161,8 +163,10 @@ void gen_stmt(Node *n) {
     }
 }
 
+
 void gen_func(Node *n) {
     assert(n->nk == ND_FUNC);
+    strcpy(cur_func, n->name);
     printf(".global %s\n", n->name);
     printf("%s:\n", n->name);
 
@@ -174,7 +178,7 @@ void gen_func(Node *n) {
     gen_stmt(n->body);
 
     // epilogue
-    printf(".Lreturn:\n");
+    printf(".Lreturn_%s:\n", n->name);
     printf("    mov rsp, rbp\n");
     printf("    pop rbp\n");
     printf("    ret\n");

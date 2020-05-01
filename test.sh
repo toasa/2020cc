@@ -127,4 +127,13 @@ test 21 "main() {
 return bar(1, 2, 3, 4, 5, 6);
 }"
 
+test 222 "ret222() {
+    return 222;
+}
+
+main() {
+    return ret222();
+}
+"
+
 echo "OK"

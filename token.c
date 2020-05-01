@@ -55,7 +55,10 @@ int read_number(char **input) {
 char *read_str(char **input) {
     char *input_org = *input;
     int str_count = 0;
-    while (is_char(**input) || (**input == '_')) {
+    // identifier として一文字目が数字はダメだが、`read_str`の呼び出し側
+    // で、一文字目は`is_char`であることを確かめているため、今の所OK
+    // TODO: read_strとして、一文字目は char or '_' でそれ以降は数字をうけつけるようにする
+    while (is_char(**input) || (**input == '_') || is_digit(**input)) {
         (*input)++;
         str_count++;
     }
