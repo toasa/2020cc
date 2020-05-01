@@ -26,13 +26,14 @@ typedef struct Node {
     int val;
     int offset;        // nkがND_LVARの場合に使う
 
-    struct Node *cond; // nkがND_IF, ND_WHILE, ND_FORの場合に使う
-    struct Node *then; // nkがND_IF, ND_WHILE, ND_FORの場合に使う
-    struct Node *alt;  // nkがND_IFの場合に使う
-    struct Node *expr; // nkがND_FORの場合に使う
-    struct Node *post; // nkがND_FORの場合に使う
-    struct Node *next; // nkがND_BLOCK, ND_CALL, ND_FUNCの場合に使う
-    struct Node *body; // nkがND_FUNCの場合に使う
+    struct Node *cond;  // nkがND_IF, ND_WHILE, ND_FORの場合に使う
+    struct Node *then;  // nkがND_IF, ND_WHILE, ND_FORの場合に使う
+    struct Node *alt;   // nkがND_IFの場合に使う
+    struct Node *expr;  // nkがND_FOR, ND_RETURNの場合に使う
+    struct Node *post;  // nkがND_FORの場合に使う
+    struct Node *next;  // nkがND_BLOCK, ND_CALL, ND_FUNCの場合に使う
+    struct Node *body;  // nkがND_FUNCの場合に使う
+    struct Node *block; // nkがND_BLOCKの場合に使う
 
     char *name;    // nkがND_CALL, ND_FUNCの場合に使う
     int args_num;  // nkがND_CALL, ND_FUNCの場合に使う

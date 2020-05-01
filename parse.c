@@ -303,7 +303,7 @@ Node *parse_stmt() {
         next_token();
         Node *lhs = parse_expr();
         n = new_node(ND_RETURN, 0);
-        n->lhs = lhs;
+        n->expr = lhs;
         expect(TK_SEMICOLON);
     } else if (cur_token_is("if")) {
         n = new_node(ND_IF, 0);
@@ -352,7 +352,7 @@ Node *parse_stmt() {
                 cur->next = tmp;
                 cur = tmp;
             }
-            n->next = head->next;
+            n->block = head->next;
         }
         expect(TK_RBRACE);
     } else {

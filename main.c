@@ -14,6 +14,8 @@ char *regs[6] = {
     "rcx", "r8", "r9"
 };
 
+// push the expression value onto a stack,
+// so caller of this function must call `pop` instruction.
 void gen_expr(Node *n) {
     if (n->nk == ND_NUM) {
         printf("    push %d\n", n->val);
@@ -23,15 +25,6 @@ void gen_expr(Node *n) {
         printf("    pop rax\n");
         printf("    mov rax, [rax]\n");
         printf("    push rax\n");
-        return;
-    } else if (n->nk == ND_ASSIGN) {
-        gen_lval(n->lhs);
-        gen_expr(n->rhs);
-
-        printf("    pop rdi\n");
-        printf("    pop rax\n");
-        printf("    mov [rax], rdi\n");
-        printf("    push rdi\n");
         return;
     } else if (n->nk == ND_CALL) {
         if (n->args_num > 0) {
@@ -89,7 +82,10 @@ int label_count = 0;
 
 void gen_stmt(Node *n) {
     if (n->nk == ND_RETURN) {
-        gen_expr(n->lhs);
+        gen_expr(n->expr);
+        printf("    pop rax\n");
+        // TODO: switch return label for each function.
+        printf("    jmp .Lreturn\n");
     } else if (n->nk == ND_IF) {
         gen_expr(n->cond);
         printf("    pop rax\n");
@@ -122,37 +118,46 @@ void gen_stmt(Node *n) {
         label_count++;
     } else if (n->nk == ND_FOR) {
         if (n->expr != NULL) {
-            gen_expr(n->expr);
+            gen_stmt(n->expr);
         }
         printf(".Lstart%03d:\n", label_count);
         if (n->cond != NULL) {
             gen_expr(n->cond);
+            printf("    pop rax\n");
+        } else {
+            // if a condition does not exist, to will be a infinite loop.
+            printf("    mov rax, 1\n");
         }
-        printf("    pop rax\n");
         printf("    cmp rax, 0\n");
         printf("    je  .Lend%03d\n", label_count);
         gen_stmt(n->then);
         if (n->post != NULL) {
-            gen_expr(n->post);
+            gen_stmt(n->post);
         }
         printf("    jmp .Lstart%03d\n", label_count);
         printf(".Lend%03d:\n", label_count);
 
         label_count++;
     } else if (n->nk == ND_BLOCK) {
-        Node *next = n->next;
-        while (next != NULL) {
-            int is_return = (next->nk == ND_RETURN);
-            gen_stmt(next);
-            printf("    pop rax\n");
+        Node *stmt = n->block;
+        while (stmt != NULL) {
+            int is_return = (stmt->nk == ND_RETURN);
+            gen_stmt(stmt);
             if (is_return) {
                 break;
             }
-            next = next->next;
+            stmt = stmt->next;
         }
-        printf("    push rax\n");
+    } else if (n->nk == ND_ASSIGN) {
+        gen_lval(n->lhs);
+        gen_expr(n->rhs);
+
+        printf("    pop rdi\n");
+        printf("    pop rax\n");
+        printf("    mov [rax], rdi\n");
     } else {
         gen_expr(n);
+        printf("    pop rax\n");
     }
 }
 
@@ -165,12 +170,11 @@ void gen_func(Node *n) {
     printf("    push rbp\n");
     printf("    mov rbp, rsp\n");
     printf("    sub rsp, %d\n", n->ident_num * 8);
-    // printf("    sub rsp, %d\n", 208);
 
     gen_stmt(n->body);
-    printf("    pop rax\n");
 
     // epilogue
+    printf(".Lreturn:\n");
     printf("    mov rsp, rbp\n");
     printf("    pop rbp\n");
     printf("    ret\n");

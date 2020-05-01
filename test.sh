@@ -60,7 +60,6 @@ test 4 "main() { a = 2; b = a + 30; b / 8; }"
 test 40 "main() { a = 20; b = a + (10 * 2); b; }"
 test 30 "main() { a = 30; b = 11; a; }"
 test 30 "main() { a = 30; b = 11; c = b - 10; d = a * (b - c); d / 10; }"
-test 4 "main() { a = 4; }"
 
 test 20 "main() { abc = 20; abc; }"
 test 20 "main() { foo = 30; bar = 20; (foo - bar) * 2; }"
@@ -100,6 +99,14 @@ while (i <= 10) {
 sum;
 }"
 
+test 1 "main() {
+i = 0;
+{
+    i = i + 1;
+}
+i;
+}"
+
 test 41 "main() {
 i = 0;
 a = 20;
@@ -117,7 +124,7 @@ cc tmp.s foo.o -o tmp
 ./tmp
 
 test 21 "main() {
-bar(1, 2, 3, 4, 5, 6);
+return bar(1, 2, 3, 4, 5, 6);
 }"
 
 echo "OK"
