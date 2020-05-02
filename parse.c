@@ -159,6 +159,14 @@ Node *parse_unary() {
         Node *rhs = parse_primary();
         n->lhs = lhs;
         n->rhs = rhs;
+    } else if (cur_token_is("*")) {
+        next_token();
+        n = new_node(ND_DEREF, 0);
+        n->expr = parse_unary();
+    } else if (cur_token_is("&")) {
+        next_token();
+        n = new_node(ND_ADDR, 0);
+        n->expr = parse_unary();
     } else {
         n = parse_primary();
     }

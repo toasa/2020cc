@@ -4,6 +4,7 @@
 #include "parse.h"
 #include "util.h"
 
+// push address of 'n' onto a stack.
 void gen_lval(Node *n) {
     printf("    mov rax, rbp\n");
     printf("    sub rax, %d\n", n->offset);
@@ -42,6 +43,15 @@ void gen_expr(Node *n) {
         printf("    mov rax, 0\n");
         printf("    call %s\n", n->name);
         printf("    push rax\n");
+        return;
+    } else if (n->nk == ND_DEREF) {
+        gen_expr(n->expr);
+        printf("    pop rax\n");
+        printf("    mov rax, [rax]\n");
+        printf("    push rax\n");
+        return;
+    } else if (n->nk == ND_ADDR) {
+        gen_lval(n->expr);
         return;
     }
 

@@ -5,6 +5,8 @@ typedef enum {
     ND_SUB,
     ND_MUL,
     ND_DIV,
+    ND_DEREF,  // *
+    ND_ADDR,   // &
     ND_EQ,     // ==
     ND_NE,     // !=
     ND_LT,     // <
@@ -24,12 +26,12 @@ typedef struct Node {
     struct Node *lhs;
     struct Node *rhs;
     int val;
-    int offset;        // nkがND_LVARの場合に使う
+    int offset;         // nkがND_LVARの場合に使う
 
     struct Node *cond;  // nkがND_IF, ND_WHILE, ND_FORの場合に使う
     struct Node *then;  // nkがND_IF, ND_WHILE, ND_FORの場合に使う
     struct Node *alt;   // nkがND_IFの場合に使う
-    struct Node *expr;  // nkがND_FOR, ND_RETURNの場合に使う
+    struct Node *expr;  // nkがND_FOR, ND_RETURN, ND_DEREF, ND_ADDRの場合に使う
     struct Node *post;  // nkがND_FORの場合に使う
     struct Node *next;  // nkがND_BLOCK, ND_CALL, ND_FUNCの場合に使う
     struct Node *body;  // nkがND_FUNCの場合に使う

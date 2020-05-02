@@ -229,5 +229,30 @@ main() {
 }
 "
 
-echo "OK"
+test 3 "
+main() {
+    x = 3;
+    y = &x;
+    return *y;
+}
+"
 
+test 3 "
+main() {
+    x = 3;
+    y = 5;
+    z = &y;
+    return *(z + 8);
+}
+"
+
+test 3 "
+main() {
+    x = 3;
+    y = 5;
+    z = &y + 8;
+    return *z;
+}
+"
+
+echo "OK"
