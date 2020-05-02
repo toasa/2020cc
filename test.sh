@@ -169,4 +169,65 @@ main() {
 }
 "
 
+test 10 "
+f(n) {
+    return n;
+}
+
+main() {
+    return f(10);
+}
+"
+
+test 12 "
+f(n1, n2) {
+    return n1 + n2;
+}
+
+main() {
+    return f(7, 5);
+}
+"
+
+test 16 "
+f(n1, n2, n3) {
+    return n1 + n2 + n3;
+}
+
+main() {
+    return f(7, 5, 4);
+}
+"
+
+test 18 "
+f(n1, n2, n3, n4) {
+    return n1 + n2 + n3 + n4;
+}
+
+main() {
+    return f(7, 5, 4, 2);
+}
+"
+
+test 19 "
+f(n1, n2, n3, n4, n5) {
+    return n1 + n2 + n3 + n4 + n5;
+}
+
+main() {
+    return f(7, 5, 4, 2, 1);
+}
+"
+
+test 25 "
+f(n1, n2, n3, n4, n5, n6) {
+    return n1 + n2 + n3 + n4 + n5 + n6;
+}
+
+main() {
+    return f(7, 5, 4, 2, 1, 6);
+}
+"
+
 echo "OK"
+
