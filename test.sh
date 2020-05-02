@@ -5,7 +5,7 @@ test() {
     input=$2
 
     ./main "$input" > tmp.s
-    cc tmp.s foo.o -o tmp
+    cc tmp.s extern_funcs.o -o tmp
     ./tmp
     result=$?
 
@@ -120,7 +120,7 @@ a;
 }"
 
 ./main "main() { foo(); }" > tmp.s
-cc tmp.s foo.o -o tmp
+cc tmp.s extern_funcs.o -o tmp
 ./tmp
 
 test 21 "main() {
