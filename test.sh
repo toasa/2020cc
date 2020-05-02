@@ -136,4 +136,24 @@ main() {
 }
 "
 
+test 15 "
+main() {
+    return add(7, 8);
+}
+
+add(x, y) {
+    return x + y;
+}
+"
+
+test 97 "
+sub(x, y) {
+    return x - y;
+}
+
+main() {
+    return sub(100, 3);
+}
+"
+
 echo "OK"

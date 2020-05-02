@@ -23,6 +23,7 @@ void gen_expr(Node *n) {
         return;
     } else if (n->nk == ND_LVAR) {
         gen_lval(n);
+        // TODO? extract 'load' function.
         printf("    pop rax\n");
         printf("    mov rax, [rax]\n");
         printf("    push rax\n");
@@ -175,6 +176,21 @@ void gen_func(Node *n) {
     printf("    mov rbp, rsp\n");
     printf("    sub rsp, %d\n", n->ident_num * 8);
 
+    // arguments
+    if (n->args_num > 0) {
+        Node *arg = n->next;
+        for (int i = 0; i < n->args_num; i++) {
+            // store values which is specified register to
+            // stack area as local variables.
+            // TODO? extract 'store' function.
+            printf("    mov rax, rbp\n");
+            printf("    sub rax, %d\n", arg->offset);
+            printf("    mov [rax], %s\n", regs[i]);
+            arg = arg->next;
+        }
+    }
+
+    // function body
     gen_stmt(n->body);
 
     // epilogue
