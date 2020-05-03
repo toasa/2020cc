@@ -8,14 +8,6 @@
 Node *new_node(NodeKind nk, int val) {
     Node *n = calloc(1, sizeof(Node));
     n->nk = nk;
-    n->lhs = NULL;
-    n->rhs = NULL;
-    n->cond = NULL;
-    n->then = NULL;
-    n->alt = NULL;
-    n->expr = NULL;
-    n->post = NULL;
-    n->next = NULL;
     n->val = val;
     return n;
 }
