@@ -18,78 +18,81 @@ test() {
     fi
 }
 
-test 0 "main() { 0; }"
-test 30 "main() { 30; }"
+test 0 "int main() { 0; }"
+test 30 "int main() { 30; }"
 
-test 50 "main() { 25 + 25; }"
-test 6 "main() { 1+2+3; }"
+test 50 "int main() { 25 + 25; }"
+test 6 "int main() { 1+2+3; }"
 
-test 20 "main() { 40-20; }"
+test 20 "int main() { 40-20; }"
 
-test 10 "main() { 10+40-10-30; }"
-test 20 "main() {   10 + 11- 1 ; }"
+test 10 "int main() { 10+40-10-30; }"
+test 20 "int main() {   10 + 11- 1 ; }"
 
-test 20 "main() { 4 * 5; }"
-test 23 "main() { 3 + 4 * 5; }"
-test 17 "main() { 3 * 4 + 5; }"
-test 27 "main() { 3 * (4 + 5); }"
-test 77 "main() { (3 + 4) * (5 + 6); }"
+test 20 "int main() { 4 * 5; }"
+test 23 "int main() { 3 + 4 * 5; }"
+test 17 "int main() { 3 * 4 + 5; }"
+test 27 "int main() { 3 * (4 + 5); }"
+test 77 "int main() { (3 + 4) * (5 + 6); }"
 
-test 8 "main() { 56 / 7; }"
-test 25 "main() { 20 + 10 / 2; }"
-test 4 "main() { 20 / 10 + 2; }"
+test 8 "int main() { 56 / 7; }"
+test 25 "int main() { 20 + 10 / 2; }"
+test 4 "int main() { 20 / 10 + 2; }"
 
-test 3 "main() { -3 + 6; }"
-test 13 "main() { -(3+10) * -1; }"
-test 15 "main() { -(-3*5); }"
+test 3 "int main() { -3 + 6; }"
+test 13 "int main() { -(3+10) * -1; }"
+test 15 "int main() { -(-3*5); }"
 
-test 1 "main() { 10 == 10; }"
-test 0 "main() { 5 == 30 / 10; }"
-test 1 "main() { 5 != (30/10); }"
-test 0 "main() { (3*4+5) != 17; }"
-test 1 "main() { (1 == 1) != 0; }"
+test 1 "int main() { 10 == 10; }"
+test 0 "int main() { 5 == 30 / 10; }"
+test 1 "int main() { 5 != (30/10); }"
+test 0 "int main() { (3*4+5) != 17; }"
+test 1 "int main() { (1 == 1) != 0; }"
 
-test 1 "main() { 10 <= 10; }"
-test 0 "main() { 10 < 10; }"
-test 0 "main() { 10 > 10; }"
-test 1 "main() { 10 >= 10; }"
+test 1 "int main() { 10 <= 10; }"
+test 0 "int main() { 10 < 10; }"
+test 0 "int main() { 10 > 10; }"
+test 1 "int main() { 10 >= 10; }"
 
-test 3 "main() { a = 3; a; }"
-test 22 "main() { b = 5 * 6 - 8; b; }"
-test 4 "main() { a = 2; b = a + 30; b / 8; }"
-test 40 "main() { a = 20; b = a + (10 * 2); b; }"
-test 30 "main() { a = 30; b = 11; a; }"
-test 30 "main() { a = 30; b = 11; c = b - 10; d = a * (b - c); d / 10; }"
+test 3 "int main() { int a; a = 3; a; }"
+test 22 "int main() { int b; b = 5 * 6 - 8; b; }"
+test 4 "int main() { int a; int b; a = 2; b = a + 30; b / 8; }"
+test 40 "int main() { int a; a = 20; int b; b = a + (10 * 2); b; }"
+test 30 "int main() { int a; a = 30; int b; b = 11; a; }"
+test 30 "int main() { int a; a = 30; int b; b = 11; int c; c = b - 10; int d; d = a * (b - c); d / 10; }"
 
-test 20 "main() { abc = 20; abc; }"
-test 20 "main() { foo = 30; bar = 20; (foo - bar) * 2; }"
+test 20 "int main() { int abc; abc = 20; abc; }"
+test 20 "int main() { int foo; int bar; foo = 30; bar = 20; (foo - bar) * 2; }"
 
-test 20 "main() { return 20; }"
-test 5 "main() { return 5; return 4; }"
+test 20 "int main() { return 20; }"
+test 5 "int main() { return 5; return 4; }"
 
-test 20 "main() { if (1) 20; }"
-test 20 "main() { if (1) return 20; }"
-test 20 "main() { if (0+1) return 20; }"
-test 30 "main() { if (0) return 20; return 30; }"
+test 20 "int main() { if (1) 20; }"
+test 20 "int main() { if (1) return 20; }"
+test 20 "int main() { if (0+1) return 20; }"
+test 30 "int main() { if (0) return 20; return 30; }"
 
-test 20 "main() { if (1) return 20; else return 30; }"
-test 30 "main() { if (0) return 20; else return 30; }"
+test 20 "int main() { if (1) return 20; else return 30; }"
+test 30 "int main() { if (0) return 20; else return 30; }"
 
-test 20 "main() { x = 1; if (x) return 20; else return 30; }"
-test 30 "main() { x = 0; if (x) return 20; else return 30; }"
+test 20 "int main() { int x; x = 1; if (x) return 20; else return 30; }"
+test 30 "int main() { int x; x = 0; if (x) return 20; else return 30; }"
 
-test 11 "main() { i = 0; while (i <= 10) i = i + 1; i; }"
+test 11 "int main() { int i; i = 0; while (i <= 10) i = i + 1; i; }"
 
-test 32 "main() { for (i = 20; i < 30; i = i + 1) i = i + 5; i; }"
+test 32 "int main() { int i; for (i = 20; i < 30; i = i + 1) i = i + 5; i; }"
 
-test 11 "main() {
+test 11 "int main() {
+int i;
 i = 0;
 while (i <= 10)
     i = i + 1;
 i;
 }"
 
-test 55 "main() {
+test 55 "int main() {
+int i;
+int sum;
 i = 0;
 sum = 0;
 while (i <= 10) {
@@ -99,7 +102,8 @@ while (i <= 10) {
 sum;
 }"
 
-test 1 "main() {
+test 1 "int main() {
+int i;
 i = 0;
 {
     i = i + 1;
@@ -107,7 +111,9 @@ i = 0;
 i;
 }"
 
-test 41 "main() {
+test 41 "int main() {
+int i;
+int a;
 i = 0;
 a = 20;
 {
@@ -119,118 +125,120 @@ a = 20;
 a;
 }"
 
-./main "main() { foo(); }" > tmp.s
+./main "int main() { foo(); }" > tmp.s
 cc tmp.s extern_funcs.o -o tmp
 ./tmp
 
-test 21 "main() {
+test 21 "int main() {
 return bar(1, 2, 3, 4, 5, 6);
 }"
 
-test 222 "ret222() {
+test 222 "int ret222() {
     return 222;
 }
 
-main() {
+int main() {
     return ret222();
 }
 "
 
 test 15 "
-main() {
+int main() {
     return add(7, 8);
 }
 
-add(x, y) {
+int add(int x, int y) {
     return x + y;
 }
 "
 
 test 97 "
-sub(x, y) {
+int sub(int x, int y) {
     return x - y;
 }
 
-main() {
+int main() {
     return sub(100, 3);
 }
 "
 
 test 55 "
-fib(n) {
+int fib(int n) {
     if (n <= 2) {
         return 1;
     }
     return fib(n - 1) + fib(n - 2);
 }
 
-main() {
+int main() {
     return fib(10);
 }
 "
 
 test 10 "
-f(n) {
+int f(int n) {
     return n;
 }
 
-main() {
+int main() {
     return f(10);
 }
 "
 
 test 12 "
-f(n1, n2) {
+int f(int n1, int n2) {
     return n1 + n2;
 }
 
-main() {
+int main() {
     return f(7, 5);
 }
 "
 
 test 16 "
-f(n1, n2, n3) {
+int f(int n1, int n2, int n3) {
     return n1 + n2 + n3;
 }
 
-main() {
+int main() {
     return f(7, 5, 4);
 }
 "
 
 test 18 "
-f(n1, n2, n3, n4) {
+int f(int n1, int n2, int n3, int n4) {
     return n1 + n2 + n3 + n4;
 }
 
-main() {
+int main() {
     return f(7, 5, 4, 2);
 }
 "
 
 test 19 "
-f(n1, n2, n3, n4, n5) {
+int f(int n1, int n2, int n3, int n4, int n5) {
     return n1 + n2 + n3 + n4 + n5;
 }
 
-main() {
+int main() {
     return f(7, 5, 4, 2, 1);
 }
 "
 
 test 25 "
-f(n1, n2, n3, n4, n5, n6) {
+int f(int n1, int n2, int n3, int n4, int n5, int n6) {
     return n1 + n2 + n3 + n4 + n5 + n6;
 }
 
-main() {
+int main() {
     return f(7, 5, 4, 2, 1, 6);
 }
 "
 
 test 3 "
-main() {
+int main() {
+    int x;
+    int y;
     x = 3;
     y = &x;
     return *y;
@@ -238,7 +246,10 @@ main() {
 "
 
 test 3 "
-main() {
+int main() {
+    int x;
+    int y;
+    int z;
     x = 3;
     y = 5;
     z = &y;
@@ -247,7 +258,10 @@ main() {
 "
 
 test 3 "
-main() {
+int main() {
+    int x;
+    int y;
+    int z;
     x = 3;
     y = 5;
     z = &y + 8;

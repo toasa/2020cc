@@ -15,6 +15,7 @@ typedef enum {
     TK_ASSIGN,    // =
     TK_SEMICOLON, // ;
     TK_COMMA,     // ,
+    TK_TYPE,      // 'int', 'void', 'char',...
     TK_EOF,
 } TokenKind;
 

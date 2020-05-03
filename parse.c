@@ -27,6 +27,10 @@ int cur_token_is(char *s) {
     return equal_strings(s, token->str);
 }
 
+int cur_tokenkind_is(TokenKind tk) {
+    return (token->tk == tk);
+}
+
 int next_tokenkind_is(TokenKind tk) {
     if (token->tk == TK_EOF) {
         return 0;
@@ -49,56 +53,94 @@ void expect(TokenKind tk) {
 
 Node *parse_expr();
 
-typedef struct KV {
-    char *key;
-    int val;
-    struct KV *next;
-} KV;
-
-KV *new_KV(char *key, int val) {
-    KV *kv = calloc(1, sizeof(KV));
-    kv->key = key;
-    kv->val = val;
-    kv->next = NULL;
-    return kv;
+FuncData new_func_data() {
+    FuncData data;
+    data.name = NULL;
+    data.idents = NULL;
+    data.body = NULL;
+    data.args_num = 0;
+    data.ident_num = 0;
+    return data;
 }
 
-// Function context
-// These have to be initiate at beginning in `parse_toplevel_func`.
-KV *head;
+Ident new_ident(IdentKind ik, char *name, Type t) {
+    Ident i;
+    i.ik = ik;
+    i.name = name;
+    i.type = t;
+    return i;
+}
+
+IdentNode *new_ident_node(Ident i) {
+    IdentNode *ident_node = calloc(1, sizeof(IdentNode));
+    ident_node->data = i;
+    ident_node->next = NULL;
+    return ident_node;
+}
+
+// a head of linked list stored identifier infomation.
+IdentNode *ident_head = NULL;
+
+// the number of identifier in currently parsing function.
 int ident_num;
 
-// insert tail of linked list that stores identifier.
-void insert(char *K, int V) {
+void register_new_ident(Ident i) {
+    IdentNode *new_i = new_ident_node(i);
     // increment the number of identifier.
     ident_num++;
+    int count = 0;
 
-    KV *kv_new = new_KV(K, V);
-    if (head == NULL) {
-        head = kv_new;
+    if (ident_head == NULL) {
+        int offset = (count + 1) * 8;
+        new_i->data.offset = offset;
+        ident_head = new_i;
         return;
     }
+    count++;
 
-    KV *kv_iter = head;
-    while (kv_iter->next != NULL) {
-        kv_iter = kv_iter->next;
+    IdentNode *ident_iter = ident_head;
+    while (ident_iter->next != NULL) {
+        char *cur_name = ident_iter->data.name;
+        // check duplication of identifier declaration.
+        if (equal_strings(cur_name, i.name)) {
+            printf("duplicate of identifier declaration.\n");
+            exit(1);
+        }
+        ident_iter = ident_iter->next;
+        count++;
     }
-    kv_iter->next = kv_new;
+
+    int offset = (count + 1) * 8;
+    new_i->data.offset = offset;
+    ident_iter->next = new_i;
 }
 
-int get_offset(char *ident) {
-    int count = 0;
-    KV *kv_iter = head;
-    while (kv_iter != NULL) {
-        if (equal_strings(ident, kv_iter->key)) {
-            return kv_iter->val;
+// search the 'name' from the linked list of identifier.
+Ident get_ident(char *name) {
+    IdentNode *ident_iter = ident_head;
+    while (ident_iter != NULL) {
+        char *cur_name = ident_iter->data.name;
+        if (equal_strings(cur_name, name)) {
+            break;
         }
-        count++;
-        kv_iter = kv_iter->next;
+        ident_iter = ident_iter->next;
     }
-    int offset = (count + 1) * 8;
-    insert(ident, offset);
-    return offset;
+
+    if (ident_iter == NULL) {
+        // found a undeclared identifier.
+        printf("%s: undeclared identifier.\n", name);
+        exit(1);
+    }
+
+    return ident_iter->data;
+}
+
+// currently type is 'INT' only.
+Type parse_type() {
+    Type t;
+    t.ty = INT;
+    next_token();
+    return t;
 }
 
 Node *parse_primary() {
@@ -111,7 +153,10 @@ Node *parse_primary() {
         // function call
         if (next_tokenkind_is(TK_LPARENT)) {
             n = new_node(ND_CALL, 0);
-            n->name = token->str;
+            FuncData fd = new_func_data();
+
+            fd.name = token->str;
+
             expect(TK_IDENT);
             expect(TK_LPARENT);
 
@@ -128,14 +173,16 @@ Node *parse_primary() {
                     cur = tmp;
                     args_num++;
                 }
-                n->next = head->next;
-                n->args_num = args_num;
+                fd.args = head->next;
+                fd.args_num = args_num;
             }
 
+            n->func = fd;
             expect(TK_RPARENT);
         } else {
+            // n->ident に識別子情報を格納する
             n = new_node(ND_LVAR, 0);
-            n->offset = get_offset(token->str);
+            n->ident = get_ident(token->str);
             next_token();
         }
     } else {
@@ -305,6 +352,22 @@ Node *parse_expr() {
     return parse_assign();
 }
 
+Node *parse_declaration(IdentKind ik) {
+    Node *n = new_node(ND_DECL, 0);
+
+    // declaration statement;
+    Type t = parse_type();
+    char *name = token->str;
+    next_token();
+
+    Ident i = new_ident(ik, name, t);
+    register_new_ident(i);
+
+    n->ident = i;
+
+    return n;
+}
+
 Node *parse_stmt() {
     Node *n;
     if (cur_token_is("return")) {
@@ -363,6 +426,10 @@ Node *parse_stmt() {
             n->block = head->next;
         }
         expect(TK_RBRACE);
+    } else if (cur_tokenkind_is(TK_TYPE)) {
+        // `n` 's NodeKind is 'ND_DECL'.
+        n = parse_declaration(ID_LOCAL);
+        expect(TK_SEMICOLON);
     } else {
         n = parse_expr();
         expect(TK_SEMICOLON);
@@ -370,41 +437,49 @@ Node *parse_stmt() {
     return n;
 }
 
-Node *parse_toplevel_func() {
-    head = NULL;
+void init_function_context() {
+    ident_head = NULL;
     ident_num = 0;
+}
+
+Node *parse_toplevel_func() {
+    init_function_context();
     Node *n = new_node(ND_FUNC, 0);
-    n->name = token->str;
+    FuncData func_data = new_func_data();
+
+    // return type
+    func_data.return_type = parse_type();
+
+    // function name
+    func_data.name = token->str;
     next_token();
 
+    // TODO? `args` of `FuncData` is need?
     // parse argument
     expect(TK_LPARENT);
-
     if (!cur_token_is(")")) {
         // function arguments
         int args_num = 1;
-        Node *head = calloc(1, sizeof(Node));
-        Node *cur = parse_expr();
-        head->next = cur;
+        parse_declaration(ID_ARG);
         while (!cur_token_is(")")) {
             expect(TK_COMMA);
-            Node *tmp = parse_expr();
-            cur->next = tmp;
-            cur = tmp;
+            parse_declaration(ID_ARG);
             args_num++;
         }
-        n->next = head->next;
-        n->args_num = args_num;
+        func_data.args_num = args_num;
     }
 
     expect(TK_RPARENT);
 
     // parse function body
-    n->body = parse_stmt();
+    func_data.body = parse_stmt();
 
     // the number of function identifier equals
     // the number of function arguments plus local variables.
-    n->ident_num = ident_num;
+    func_data.ident_num = ident_num;
+    func_data.idents = ident_head;
+
+    n->func = func_data;
     return n;
 }
 

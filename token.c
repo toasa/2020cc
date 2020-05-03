@@ -33,7 +33,19 @@ int is_keyword(char *str) {
             return 1;
         }
     }
+    return 0;
+}
 
+int is_type(char *str) {
+    char *types[] = {
+        "int",
+        NULL,
+    };
+    for (int i = 0; types[i] != NULL; i++) {
+        if (equal_strings(str, types[i])) {
+            return 1;
+        }
+    }
     return 0;
 }
 
@@ -89,6 +101,8 @@ Token *tokenize(char *input) {
             char *str = read_str(&input);
             if (is_keyword(str)) {
                 cur_token = new_token(cur_token, TK_RESERVED, 0, str);
+            } else if (is_type(str)) {
+                cur_token = new_token(cur_token, TK_TYPE, 0, str);
             } else {
                 // identifier
                 cur_token = new_token(cur_token, TK_IDENT, 0, str);

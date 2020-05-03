@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "token.h"
 #include "parse.h"
@@ -7,7 +8,7 @@
 // push address of 'n' onto a stack.
 void gen_lval(Node *n) {
     printf("    mov rax, rbp\n");
-    printf("    sub rax, %d\n", n->offset);
+    printf("    sub rax, %d\n", n->ident.offset);
     printf("    push rax\n");
 }
 
@@ -30,9 +31,10 @@ void gen_expr(Node *n) {
         printf("    push rax\n");
         return;
     } else if (n->nk == ND_CALL) {
-        if (n->args_num > 0) {
-            Node *arg = n->next;
-            for (int count = 0; count < n->args_num; count++) {
+        FuncData callee = n->func;
+        if (callee.args_num > 0) {
+            Node *arg = callee.args;
+            for (int count = 0; count < callee.args_num; count++) {
                 gen_expr(arg);
                 printf("    pop rax\n");
                 printf("    mov %s, rax\n", regs[count]);
@@ -41,7 +43,7 @@ void gen_expr(Node *n) {
         }
 
         printf("    mov rax, 0\n");
-        printf("    call %s\n", n->name);
+        printf("    call %s\n", callee.name);
         printf("    push rax\n");
         return;
     } else if (n->nk == ND_DEREF) {
@@ -168,6 +170,8 @@ void gen_stmt(Node *n) {
         printf("    pop rdi\n");
         printf("    pop rax\n");
         printf("    mov [rax], rdi\n");
+    } else if (n->nk == ND_DECL) {
+        // do anything?
     } else {
         gen_expr(n);
         printf("    pop rax\n");
@@ -177,34 +181,41 @@ void gen_stmt(Node *n) {
 
 void gen_func(Node *n) {
     assert(n->nk == ND_FUNC);
-    strcpy(cur_func, n->name);
-    printf(".global %s\n", n->name);
-    printf("%s:\n", n->name);
+    strcpy(cur_func, n->func.name);
+    printf(".global %s\n", n->func.name);
+    printf("%s:\n", n->func.name);
 
     // prologue
     printf("    push rbp\n");
     printf("    mov rbp, rsp\n");
-    printf("    sub rsp, %d\n", n->ident_num * 8);
+    printf("    sub rsp, %d\n", n->func.ident_num * 8);
 
     // arguments
-    if (n->args_num > 0) {
-        Node *arg = n->next;
-        for (int i = 0; i < n->args_num; i++) {
+    if (n->func.args_num > 0) {
+        // iterate the linked list of `idents`.
+        IdentNode *arg = n->func.idents;
+        for (int i = 0; i < n->func.args_num; i++) {
+
+            if (arg->data.ik != ID_ARG) {
+                printf("argument preparing error\n");
+                exit(1);
+            }
+
             // store values which is specified register to
             // stack area as local variables.
             // TODO? extract 'store' function.
             printf("    mov rax, rbp\n");
-            printf("    sub rax, %d\n", arg->offset);
+            printf("    sub rax, %d\n", arg->data.offset);
             printf("    mov [rax], %s\n", regs[i]);
             arg = arg->next;
         }
     }
 
     // function body
-    gen_stmt(n->body);
+    gen_stmt(n->func.body);
 
     // epilogue
-    printf(".Lreturn_%s:\n", n->name);
+    printf(".Lreturn_%s:\n", n->func.name);
     printf("    mov rsp, rbp\n");
     printf("    pop rbp\n");
     printf("    ret\n");
