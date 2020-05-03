@@ -83,6 +83,8 @@ IdentNode *ident_head = NULL;
 // the number of identifier in currently parsing function.
 int ident_num;
 
+// add one `IdentNode` at tail of linked list which stored idefifier
+// which occurs in currently parsing function.
 void register_new_ident(Ident i) {
     IdentNode *new_i = new_ident_node(i);
     // increment the number of identifier.
@@ -114,6 +116,8 @@ void register_new_ident(Ident i) {
 }
 
 // search the 'name' from the linked list of identifier.
+// if the identifier 'name' is not declared then occur compile error
+// and abort.
 Ident get_ident(char *name) {
     IdentNode *ident_iter = ident_head;
     while (ident_iter != NULL) {
@@ -177,7 +181,7 @@ Node *parse_primary() {
             n->func = fd;
             expect(TK_RPARENT);
         } else {
-            // n->ident に識別子情報を格納する
+            // identifier (it must be declared already)
             n = new_node(ND_LVAR, 0);
             n->ident = get_ident(token->str);
             next_token();
@@ -451,7 +455,6 @@ Node *parse_toplevel_func() {
     func_data.name = token->str;
     next_token();
 
-    // TODO? `args` of `FuncData` is need?
     // parse argument
     expect(TK_LPARENT);
     if (!cur_token_is(")")) {

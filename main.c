@@ -93,6 +93,7 @@ void gen_expr(Node *n) {
 }
 
 int label_count = 0;
+// the function name which is generating assemblly currently.
 char cur_func[100];
 
 void gen_stmt(Node *n) {
@@ -107,10 +108,12 @@ void gen_stmt(Node *n) {
         printf("    cmp rax, 0\n");
 
         if (n->alt == NULL) {
+            // Not exists 'else'.
             printf("    je  .Lend%03d\n", label_count);
             gen_stmt(n->then);
             printf(".Lend%03d:\n", label_count);
         } else {
+            // exists 'else'.
             printf("    je  .Lelse%03d\n", label_count);
             gen_stmt(n->then);
             printf("    jmp .Lend%03d\n", label_count);
@@ -140,7 +143,7 @@ void gen_stmt(Node *n) {
             gen_expr(n->cond);
             printf("    pop rax\n");
         } else {
-            // if a condition does not exist, to will be a infinite loop.
+            // If a condition does not exist, to will be a infinite loop.
             printf("    mov rax, 1\n");
         }
         printf("    cmp rax, 0\n");
@@ -171,7 +174,7 @@ void gen_stmt(Node *n) {
         printf("    pop rax\n");
         printf("    mov [rax], rdi\n");
     } else if (n->nk == ND_DECL) {
-        // do anything?
+        // need to do something?
     } else {
         gen_expr(n);
         printf("    pop rax\n");
@@ -218,7 +221,7 @@ void gen_func(Node *n) {
     printf(".Lreturn_%s:\n", n->func.name);
     printf("    mov rsp, rbp\n");
     printf("    pop rbp\n");
-    printf("    ret\n");
+    printf("    ret\n\n");
 }
 
 void gen(Node **funcs) {
@@ -227,7 +230,6 @@ void gen(Node **funcs) {
     for (int i = 0; funcs[i] != NULL; i++) {
         gen_func(funcs[i]);
     }
-
 }
 
 int main(int argc, char **argv) {
