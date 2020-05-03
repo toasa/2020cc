@@ -45,8 +45,7 @@ void next_token() {
 
 void expect(TokenKind tk) {
     if (token->tk != tk) {
-        printf("expect token error\n");
-        exit(1);
+        error("expect token error");
     }
     next_token();
 }
@@ -103,8 +102,7 @@ void register_new_ident(Ident i) {
         char *cur_name = ident_iter->data.name;
         // check duplication of identifier declaration.
         if (equal_strings(cur_name, i.name)) {
-            printf("duplicate of identifier declaration.\n");
-            exit(1);
+            error("duplicate of identifier declaration.");
         }
         ident_iter = ident_iter->next;
         count++;
@@ -128,8 +126,7 @@ Ident get_ident(char *name) {
 
     if (ident_iter == NULL) {
         // found a undeclared identifier.
-        printf("%s: undeclared identifier.\n", name);
-        exit(1);
+        error("%s: undeclared identifier.", name);
     }
 
     return ident_iter->data;

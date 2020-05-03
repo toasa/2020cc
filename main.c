@@ -180,7 +180,8 @@ void gen_stmt(Node *n) {
 
 
 void gen_func(Node *n) {
-    assert(n->nk == ND_FUNC);
+    assert(n->nk == ND_FUNC, "top level node must be function.");
+
     strcpy(cur_func, n->func.name);
     printf(".global %s\n", n->func.name);
     printf("%s:\n", n->func.name);
@@ -197,8 +198,7 @@ void gen_func(Node *n) {
         for (int i = 0; i < n->func.args_num; i++) {
 
             if (arg->data.ik != ID_ARG) {
-                printf("argument preparing error\n");
-                exit(1);
+                error("argument preparing error");
             }
 
             // store values which is specified register to
