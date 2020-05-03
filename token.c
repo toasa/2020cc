@@ -64,12 +64,19 @@ int read_number(char **input) {
     return num;
 }
 
+// 一文字目はchar、二文字目以降はchar, 数字, `_`のいづれかの文字を読み、
+// 新たにメモリを確保した上で文字列を返す
 char *read_str(char **input) {
     char *input_org = *input;
+
     int str_count = 0;
-    // identifier として一文字目が数字はダメだが、`read_str`の呼び出し側
-    // で、一文字目は`is_char`であることを確かめているため、今の所OK
-    // TODO: read_strとして、一文字目は char or '_' でそれ以降は数字をうけつけるようにする
+    if (is_char(**input)) {
+        (*input)++;
+        str_count++;
+    } else {
+        return NULL;
+    }
+
     while (is_char(**input) || (**input == '_') || is_digit(**input)) {
         (*input)++;
         str_count++;
