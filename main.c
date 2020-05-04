@@ -22,6 +22,12 @@ void gen_addr(Node *n) {
     }
 }
 
+void load() {
+    printf("    pop rax\n");
+    printf("    mov rax, [rax]\n");
+    printf("    push rax\n");
+}
+
 // push the expression value onto a stack,
 // so caller of this function must call `pop` instruction.
 void gen_expr(Node *n) {
@@ -30,10 +36,7 @@ void gen_expr(Node *n) {
         return;
     } else if (n->nk == ND_LVAR) {
         gen_addr(n);
-        // TODO? should extract 'load' function?
-        printf("    pop rax\n");
-        printf("    mov rax, [rax]\n");
-        printf("    push rax\n");
+        load();
         return;
     } else if (n->nk == ND_CALL) {
         FuncData callee = n->func;
@@ -53,9 +56,7 @@ void gen_expr(Node *n) {
         return;
     } else if (n->nk == ND_DEREF) {
         gen_expr(n->expr);
-        printf("    pop rax\n");
-        printf("    mov rax, [rax]\n");
-        printf("    push rax\n");
+        load();
         return;
     } else if (n->nk == ND_ADDR) {
         gen_addr(n->expr);
