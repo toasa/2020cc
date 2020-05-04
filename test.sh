@@ -249,6 +249,24 @@ test 3 "
 int main() {
     int x;
     int y;
+    x = 3;
+    y = 5;
+    return *(&y + 8);
+}"
+
+test 5 "
+int main() {
+    int x;
+    int y;
+    x = 3;
+    y = 5;
+    return *(&x - 8);
+}"
+
+test 3 "
+int main() {
+    int x;
+    int y;
     int *z;
     x = 3;
     y = 5;
@@ -278,5 +296,25 @@ int main() {
     return x;
 }
 "
+
+test 7 "
+int main() {
+    int x;
+    int y;
+    x = 3;
+    y = 5;
+    *(&x - 8) = 7;
+    return y;
+}"
+
+test 7 "
+int main() {
+    int x;
+    int y;
+    x = 3;
+    y = 5;
+    *(&y + 8) = 7;
+    return x;
+}"
 
 echo "OK"
