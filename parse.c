@@ -54,7 +54,7 @@ FuncData new_func_data() {
     return data;
 }
 
-Ident new_ident(IdentKind ik, char *name, Type t) {
+Ident new_ident(IdentKind ik, char *name, Type *t) {
     Ident i;
     i.ik = ik;
     i.name = name;
@@ -128,11 +128,27 @@ Ident get_ident(char *name) {
     return ident_iter->data;
 }
 
-// currently type is 'INT' only.
-Type parse_type() {
-    Type t;
-    t.ty = INT;
+Type *new_type() {
+    Type *t = calloc(1, sizeof(Type));
+    return t;
+}
+
+Type *parse_type() {
+    Type *t = new_type();
+    assert(cur_tokenkind_is(TK_TYPE), "%s is not type", token->str);
+    // currently primitive type is 'INT' only.
+    // TODO: handle to multiple types.
+    t->ty = INT;
+
     next_token();
+
+    while (cur_token_is("*")) {
+        Type *p = new_type();
+        p->ty = PTR;
+        p->ptr_to = t;
+        t = p;
+        next_token();
+    }
     return t;
 }
 
@@ -349,7 +365,7 @@ Node *parse_declaration(IdentKind ik) {
     Node *n = new_node(ND_DECL, 0);
 
     // declaration statement;
-    Type t = parse_type();
+    Type *t = parse_type();
     char *name = token->str;
     next_token();
 

@@ -5,17 +5,22 @@
 #include "parse.h"
 #include "util.h"
 
-// push address of 'n' onto a stack.
-void gen_lval(Node *n) {
-    printf("    mov rax, rbp\n");
-    printf("    sub rax, %d\n", n->ident.offset);
-    printf("    push rax\n");
-}
-
 char *regs[6] = {
     "rdi", "rsi", "rdx",
     "rcx", "r8", "r9"
 };
+
+void gen_expr(Node *n);
+
+void gen_addr(Node *n) {
+    if (n->nk == ND_LVAR) {
+        printf("    mov rax, rbp\n");
+        printf("    sub rax, %d\n", n->ident.offset);
+        printf("    push rax\n");
+    } else if (n->nk == ND_DEREF) {
+        gen_expr(n->expr);
+    }
+}
 
 // push the expression value onto a stack,
 // so caller of this function must call `pop` instruction.
@@ -24,8 +29,8 @@ void gen_expr(Node *n) {
         printf("    push %d\n", n->val);
         return;
     } else if (n->nk == ND_LVAR) {
-        gen_lval(n);
-        // TODO? extract 'load' function.
+        gen_addr(n);
+        // TODO? should extract 'load' function?
         printf("    pop rax\n");
         printf("    mov rax, [rax]\n");
         printf("    push rax\n");
@@ -53,7 +58,7 @@ void gen_expr(Node *n) {
         printf("    push rax\n");
         return;
     } else if (n->nk == ND_ADDR) {
-        gen_lval(n->expr);
+        gen_addr(n->expr);
         return;
     }
 
@@ -100,7 +105,6 @@ void gen_stmt(Node *n) {
     if (n->nk == ND_RETURN) {
         gen_expr(n->expr);
         printf("    pop rax\n");
-        // TODO: switch return label for each function.
         printf("    jmp .Lreturn_%s\n", cur_func);
     } else if (n->nk == ND_IF) {
         gen_expr(n->cond);
@@ -167,7 +171,7 @@ void gen_stmt(Node *n) {
             stmt = stmt->next;
         }
     } else if (n->nk == ND_ASSIGN) {
-        gen_lval(n->lhs);
+        gen_addr(n->lhs);
         gen_expr(n->rhs);
 
         printf("    pop rdi\n");

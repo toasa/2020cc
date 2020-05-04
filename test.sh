@@ -238,7 +238,7 @@ int main() {
 test 3 "
 int main() {
     int x;
-    int y;
+    int *y;
     x = 3;
     y = &x;
     return *y;
@@ -249,7 +249,7 @@ test 3 "
 int main() {
     int x;
     int y;
-    int z;
+    int *z;
     x = 3;
     y = 5;
     z = &y;
@@ -261,11 +261,21 @@ test 3 "
 int main() {
     int x;
     int y;
-    int z;
+    int *z;
     x = 3;
     y = 5;
     z = &y + 8;
     return *z;
+}
+"
+
+test 222 "
+int main() {
+    int x;
+    int *y;
+    y = &x;
+    *y = 222;
+    return x;
 }
 "
 

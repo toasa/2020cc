@@ -23,7 +23,8 @@ typedef enum {
 } NodeKind;
 
 typedef struct Type {
-    enum { INT } ty;
+    enum { INT, PTR } ty;
+    struct Type *ptr_to;
 } Type;
 
 typedef enum IdentKind {
@@ -36,7 +37,7 @@ typedef struct Ident {
     IdentKind ik;
     char *name;
     int offset;
-    Type type;
+    Type *type;
     int is_global;
 } Ident;
 
@@ -48,7 +49,7 @@ typedef struct IdentNode {
 typedef struct FuncData {
     char *name;
     struct Node *body;
-    Type return_type;
+    Type *return_type;
 
     int args_num;
     struct Node *args;   // nkがND_CALLの場合に使う。次の引数には`next`メンバからアクセスする。
