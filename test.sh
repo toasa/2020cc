@@ -251,7 +251,7 @@ int main() {
     int y;
     x = 3;
     y = 5;
-    return *(&y + 8);
+    return *(&y + 1);
 }"
 
 test 5 "
@@ -260,7 +260,7 @@ int main() {
     int y;
     x = 3;
     y = 5;
-    return *(&x - 8);
+    return *(&x - 1);
 }"
 
 test 3 "
@@ -271,7 +271,7 @@ int main() {
     x = 3;
     y = 5;
     z = &y;
-    return *(z + 8);
+    return *(z + 1);
 }
 "
 
@@ -282,7 +282,7 @@ int main() {
     int *z;
     x = 3;
     y = 5;
-    z = &y + 8;
+    z = &y + 1;
     return *z;
 }
 "
@@ -303,7 +303,7 @@ int main() {
     int y;
     x = 3;
     y = 5;
-    *(&x - 8) = 7;
+    *(&x - 1) = 7;
     return y;
 }"
 
@@ -313,7 +313,7 @@ int main() {
     int y;
     x = 3;
     y = 5;
-    *(&y + 8) = 7;
+    *(&y + 1) = 7;
     return x;
 }"
 

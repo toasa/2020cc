@@ -254,24 +254,79 @@ Node *parse_mul() {
     return lhs;
 }
 
+int is_pointer(Node *n) {
+    if (n->nk == ND_ADDR) { return 1; }
+    if (n->nk == ND_LVAR) {
+        if (n->ident.type->ty == PTR) {
+            return 1;
+        }
+    }
+    // TODO? it should be recursive?
+    // if (n->lhs != NULL) {
+    //     if (is_pointer(n->lhs)) {
+    //         return 1;
+    //     }
+    // }
+    // if (n->rhs != NULL) {
+    //     if (is_pointer(n->rhs)) {
+    //         return 1;
+    //     }
+    // }
+    return 0;
+}
+
+Node *new_add(Node *lhs) {
+    Node *n = new_node(ND_ADD, 0);
+    Node *rhs = parse_mul();
+
+    // TODO? it should handle pointer + pointer?
+    if (is_pointer(lhs) && !is_pointer(rhs)) {
+        Node *new_rhs = new_node(ND_MUL, 0);
+        new_rhs->lhs = new_node(ND_NUM, 8);
+        new_rhs->rhs = rhs;
+        rhs = new_rhs;
+    } else if (!is_pointer(lhs) && is_pointer(rhs)) {
+        Node *new_lhs = new_node(ND_MUL, 0);
+        new_lhs->lhs = new_node(ND_NUM, 8);
+        new_lhs->rhs = rhs;
+        lhs = new_lhs;
+    }
+    n->lhs = lhs;
+    n->rhs = rhs;
+    return n;
+}
+
+Node *new_sub(Node *lhs) {
+    Node *n = new_node(ND_SUB, 0);
+    Node *rhs = parse_mul();
+
+    // TODO? it should handle pointer - pointer?
+    if (is_pointer(lhs) && !is_pointer(rhs)) {
+        Node *new_rhs = new_node(ND_MUL, 0);
+        new_rhs->lhs = new_node(ND_NUM, 8);
+        new_rhs->rhs = rhs;
+        rhs = new_rhs;
+    } else if (!is_pointer(lhs) && is_pointer(rhs)) {
+        Node *new_lhs = new_node(ND_MUL, 0);
+        new_lhs->lhs = new_node(ND_NUM, 8);
+        new_lhs->rhs = rhs;
+        lhs = new_lhs;
+    }
+    n->lhs = lhs;
+    n->rhs = rhs;
+    return n;
+}
+
 Node *parse_add() {
     Node *lhs = parse_mul();
 
     while (cur_token_is("+") || cur_token_is("-")) {
         if (cur_token_is("+")) {
             next_token();
-            Node *rhs = parse_mul();
-            Node *n = new_node(ND_ADD, 0);
-            n->lhs = lhs;
-            n->rhs = rhs;
-            lhs = n;
+            lhs = new_add(lhs);
         } else {
             next_token();
-            Node *rhs = parse_mul();
-            Node *n = new_node(ND_SUB, 0);
-            n->lhs = lhs;
-            n->rhs = rhs;
-            lhs = n;
+            lhs = new_sub(lhs);
         }
     }
     
