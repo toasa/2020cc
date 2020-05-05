@@ -317,4 +317,44 @@ int main() {
     return x;
 }"
 
+test 4 "
+int main() {
+    int x;
+    return sizeof(x);
+}
+"
+
+test 8 "
+int main() {
+    int *x;
+    return sizeof(x);
+}
+"
+
+test 4 "
+int main() {
+    int x;
+    return sizeof(x + 3);
+}
+"
+
+test 8 "
+int main() {
+    int *x;
+    return sizeof(x + 3);
+}
+"
+
+test 4 "
+int main() {
+    return sizeof(3);
+}
+"
+
+test 4 "
+int main() {
+    return sizeof(3);
+}
+"
+
 echo "OK"

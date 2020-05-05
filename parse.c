@@ -201,6 +201,27 @@ Node *parse_primary() {
     return n;
 }
 
+int is_pointer(Node *n) {
+    if (n->nk == ND_ADDR) { return 1; }
+    if (n->nk == ND_LVAR) {
+        if (n->ident.type->ty == PTR) {
+            return 1;
+        }
+    }
+    // TODO? it should be recursive?
+    if (n->lhs != NULL) {
+        if (is_pointer(n->lhs)) {
+            return 1;
+        }
+    }
+    if (n->rhs != NULL) {
+        if (is_pointer(n->rhs)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 Node *parse_unary() {
     Node *n;
 
@@ -223,6 +244,16 @@ Node *parse_unary() {
         next_token();
         n = new_node(ND_ADDR, 0);
         n->expr = parse_unary();
+    } else if (cur_token_is("sizeof")) {
+        next_token();
+        Node *tmp = parse_unary();
+        // 構文木 n に紐付いている型が int なら 4 を
+        // ポインタなら 8 を生成する
+        if (is_pointer(tmp)) {
+            n = new_node(ND_NUM, 8);
+        } else {
+            n = new_node(ND_NUM, 4);
+        }
     } else {
         n = parse_primary();
     }
@@ -252,27 +283,6 @@ Node *parse_mul() {
     }
 
     return lhs;
-}
-
-int is_pointer(Node *n) {
-    if (n->nk == ND_ADDR) { return 1; }
-    if (n->nk == ND_LVAR) {
-        if (n->ident.type->ty == PTR) {
-            return 1;
-        }
-    }
-    // TODO? it should be recursive?
-    // if (n->lhs != NULL) {
-    //     if (is_pointer(n->lhs)) {
-    //         return 1;
-    //     }
-    // }
-    // if (n->rhs != NULL) {
-    //     if (is_pointer(n->rhs)) {
-    //         return 1;
-    //     }
-    // }
-    return 0;
 }
 
 Node *new_add(Node *lhs) {
