@@ -197,8 +197,8 @@ Node *parse_primary() {
         n = parse_expr();
         expect(TK_RPARENT);
     } else if (token->tk == TK_IDENT) {
-        // function call
         if (next_tokenkind_is(TK_LPARENT)) {
+            // function call
             n = new_node(ND_CALL, 0);
             FuncData fd = new_func_data();
 
@@ -226,6 +226,30 @@ Node *parse_primary() {
 
             n->func = fd;
             expect(TK_RPARENT);
+        } else if (next_tokenkind_is(TK_LBRACKET)) {
+            // array index operator
+            Node *array = new_node(ND_LVAR, 0);
+            array->ident = get_ident(token->str);
+
+            expect(TK_IDENT);
+            expect(TK_LBRACKET);
+
+            // array index expression
+            Node *index = new_node(ND_MUL, 0);
+            index->lhs = parse_expr();
+            size_t element_count = array->ident.type->array_size;
+            size_t total_bytes = array->ident.type->size;
+            size_t size_of_elem = total_bytes / element_count;
+            index->rhs = new_node(ND_NUM, size_of_elem);
+
+            Node *add = new_node(ND_ADD, 0);
+            add->lhs = array;
+            add->rhs = index;
+
+            expect(TK_RBRACKET);
+
+            n = new_node(ND_DEREF, 0);
+            n->expr = add;
         } else {
             // identifier (it must be declared already)
             n = new_node(ND_LVAR, 0);

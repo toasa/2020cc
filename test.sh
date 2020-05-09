@@ -435,4 +435,68 @@ int main() {
 }
 "
 
+test 30 "
+int main() {
+    int a[3];
+    int i;
+    i = 2;
+    *(a+0) = 10;
+    *(a+1) = 20;
+    *(a+2) = 30;
+    return *(a+i);
+}
+"
+
+test 10 "
+int main() {
+    int a[3];
+    a[0] = 10;
+    a[1] = 20;
+    a[2] = 30;
+    return a[0];
+}
+"
+
+test 20 "
+int main() {
+    int a[3];
+    a[0] = 10;
+    a[1] = 20;
+    a[2] = 30;
+    return a[1];
+}
+"
+
+test 30 "
+int main() {
+    int a[3];
+    a[0] = 10;
+    a[1] = 20;
+    a[2] = 30;
+    return a[2];
+}
+"
+
+test 8 "
+int main() {
+    int a[3];
+    a[0] = 4;
+    a[1] = 20;
+    a[2] = 3;
+    return a[2] + a[1] / a[0];
+}
+"
+
+test 20 "
+int main() {
+    int a[3];
+    a[0] = 10;
+    a[1] = 20;
+    a[2] = 30;
+    int i;
+    i = 1;
+    return a[i];
+}
+"
+
 echo "OK"
