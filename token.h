@@ -8,13 +8,6 @@ typedef enum {
     TK_RBRACE,    // }
     TK_LBRACKET,  // [
     TK_RBRACKET,  // ]
-    TK_EQ,        // ==
-    TK_NE,        // !=
-    TK_LT,        // <
-    TK_LE,        // <=
-    TK_GT,        // >
-    TK_GE,        // >=
-    TK_ASSIGN,    // =
     TK_SEMICOLON, // ;
     TK_COMMA,     // ,
     TK_TYPE,      // 'int', 'void', 'char',...

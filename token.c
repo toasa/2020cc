@@ -186,21 +186,21 @@ Token *tokenize(char *input) {
             input++;
             if (*input == '=') {
                 input++;
-                cur_token = new_token(cur_token, TK_EQ, 0, "==");
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "==");
             } else {
-                cur_token = new_token(cur_token, TK_ASSIGN, 0, "=");
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "=");
             }
         } else if (*input == '!') {
             input++;
             if (*input == '=') {
                 input++;
-                cur_token = new_token(cur_token, TK_NE, 0, "!=");
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "!=");
             }
         } else if (*input == '<') {
             input++;
             if (*input == '=') {
                 input++;
-                cur_token = new_token(cur_token, TK_LE, 0, "<=");
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "<=");
             } else if (*input == '<') {
                 input++;
                 if (*input == '=') {
@@ -210,13 +210,13 @@ Token *tokenize(char *input) {
                     cur_token = new_token(cur_token, TK_RESERVED, 0, "<<");
                 }
             } else {
-                cur_token = new_token(cur_token, TK_LT, 0, "<");
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "<");
             }
         } else if (*input == '>') {
             input++;
             if (*input == '=') {
                 input++;
-                cur_token = new_token(cur_token, TK_GE, 0, ">=");
+                cur_token = new_token(cur_token, TK_RESERVED, 0, ">=");
             } else if (*input == '>') {
                 input++;
                 if (*input == '=') {
@@ -226,7 +226,7 @@ Token *tokenize(char *input) {
                     cur_token = new_token(cur_token, TK_RESERVED, 0, ">>");
                 }
             } else {
-                cur_token = new_token(cur_token, TK_GT, 0, ">");
+                cur_token = new_token(cur_token, TK_RESERVED, 0, ">");
             }
         } else {
             break;

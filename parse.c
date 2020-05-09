@@ -446,24 +446,24 @@ Node *parse_shift() {
 Node *parse_relational() {
     Node *lhs = parse_shift();
 
-    while (token->tk == TK_LT || token->tk == TK_LE
-        || token->tk == TK_GT || token->tk == TK_GE) {
+    while (cur_token_is("<") || cur_token_is("<=")
+        || cur_token_is(">") || cur_token_is(">=")) {
 
-        if (token->tk == TK_LT) {
+        if (cur_token_is("<")) {
             next_token();
             Node *rhs = parse_shift();
             Node *n = new_node(ND_LT, 0);
             n->lhs = lhs;
             n->rhs = rhs;
             lhs = n;
-        } else if (token->tk == TK_LE) {
+        } else if (cur_token_is("<=")) {
             next_token();
             Node *rhs = parse_shift();
             Node *n = new_node(ND_LE, 0);
             n->lhs = lhs;
             n->rhs = rhs;
             lhs = n;
-        } else if (token->tk == TK_GT) {
+        } else if (cur_token_is(">")) {
             next_token();
             Node *rhs = parse_shift();
             Node *n = new_node(ND_LT, 0);
@@ -486,8 +486,8 @@ Node *parse_relational() {
 Node *parse_equality() {
     Node *lhs = parse_relational();
 
-    while (token->tk == TK_EQ || token->tk == TK_NE) {
-        if (token->tk == TK_EQ) {
+    while (cur_token_is("==") || cur_token_is("!=")) {
+        if (cur_token_is("==")) {
             next_token();
             Node *rhs = parse_relational();
             Node *n = new_node(ND_EQ, 0);
@@ -510,7 +510,7 @@ Node *parse_equality() {
 Node *parse_assign() {
     Node *lhs = parse_equality();
 
-    if (token->tk == TK_ASSIGN) {
+    if (cur_token_is("=")) {
         next_token();
         Node *rhs = parse_assign();
         Node *n = new_node(ND_ASSIGN, 0);
