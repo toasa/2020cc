@@ -84,7 +84,7 @@ void register_new_ident(Ident i) {
     int count = 0;
 
     if (ident_head == NULL) {
-        if (i.type->ty == ARRAY) {
+        if (i.type->tk == ARRAY) {
             new_i->data.offset = i.type->size;
         } else {
             int offset = (count + 1) * i.type->size;
@@ -106,7 +106,7 @@ void register_new_ident(Ident i) {
         count++;
     }
 
-    if (i.type->ty == ARRAY) {
+    if (i.type->tk == ARRAY) {
         new_i->data.offset = i.type->size;
     } else {
         int offset = (count + 1) * i.type->size;
@@ -137,8 +137,10 @@ Ident get_ident(char *name) {
     return ident_iter->data;
 }
 
-Type *new_type() {
+Type *new_type(TypeKind tk, Type *ptr_to) {
     Type *t = calloc(1, sizeof(Type));
+    t->tk = tk;
+    t->ptr_to = ptr_to;
     return t;
 }
 
@@ -153,42 +155,46 @@ size_t get_type_size(TypeKind t) {
     return 8;
 }
 
-// TODO: improve readability
 Type *parse_type() {
-    Type *t = new_type();
+    Type *t;
     assert(cur_tokenkind_is(TK_TYPE), "%s is not type", token->str);
 
-    t->ty = INT;
-    t->size = get_type_size(INT);
+    TypeKind type_base = INT;
 
     next_token();
 
-    // array type
-    if (cur_tokenkind_is(TK_IDENT) && next_tokenkind_is(TK_LBRACKET)) {
+    if (cur_token_is("*")) {
+        // pointer
+        t = new_type(type_base, NULL);
+        t->size = get_type_size(type_base);
+
+        do {
+            Type *p = new_type(PTR, t);
+            p->size = get_type_size(PTR);
+            t = p;
+            next_token();
+        } while (cur_token_is("*"));
+    } else if  (cur_tokenkind_is(TK_IDENT) && next_tokenkind_is(TK_LBRACKET)) {
+        // array
+
         // In `parse_type()` skip the identifier name, so preserve global variable: `arr_name`.
         arr_name = token->str;
         expect(TK_IDENT);
         expect(TK_LBRACKET);
 
         assert(cur_tokenkind_is(TK_NUM), "array size must be integer literal");
-        t->ty = ARRAY;
+        t = new_type(ARRAY, NULL);
         t->array_size = token->val;
         // TODO: other type array
         t->size = get_type_size(INT) * t->array_size;
         next_token();
         expect(TK_RBRACKET);
-
-        return t;
+    } else {
+        // local identifier
+        t = new_type(type_base, NULL);
+        t->size = get_type_size(type_base);
     }
 
-    while (cur_token_is("*")) {
-        Type *p = new_type();
-        p->ty = PTR;
-        p->ptr_to = t;
-        p->size = get_type_size(PTR);
-        t = p;
-        next_token();
-    }
     return t;
 }
 
@@ -244,7 +250,7 @@ Node *parse_primary() {
 int is_pointer(Node *n) {
     if (n->nk == ND_ADDR) { return 1; }
     if (n->nk == ND_LVAR) {
-        if (n->ident.type->ty == PTR || n->ident.type->ty == ARRAY) {
+        if (n->ident.type->tk == PTR || n->ident.type->tk == ARRAY) {
             return 1;
         }
     }
@@ -475,7 +481,7 @@ Node *parse_declaration(IdentKind ik) {
     Type *t = parse_type();
 
     char *ident_name;
-    if (t->ty == ARRAY) {
+    if (t->tk == ARRAY) {
         ident_name = arr_name;
     } else {
         ident_name = token->str;

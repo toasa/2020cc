@@ -29,7 +29,7 @@ typedef enum {
 } TypeKind;
 
 typedef struct Type {
-    TypeKind ty;
+    TypeKind tk;
     struct Type *ptr_to;
     size_t array_size;           // the number of elements
     size_t size;

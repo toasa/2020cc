@@ -35,7 +35,7 @@ void gen_expr(Node *n) {
         printf("    push %d\n", n->val);
         return;
     } else if (n->nk == ND_LVAR) {
-        if (n->ident.type->ty == ARRAY) {
+        if (n->ident.type->tk == ARRAY) {
             gen_addr(n);
         } else {
             gen_addr(n);
