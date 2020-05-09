@@ -84,8 +84,12 @@ void register_new_ident(Ident i) {
     int count = 0;
 
     if (ident_head == NULL) {
-        int offset = (count + 1) * 8;
-        new_i->data.offset = offset;
+        if (i.type->ty == ARRAY) {
+            new_i->data.offset = i.type->size;
+        } else {
+            int offset = (count + 1) * i.type->size;
+            new_i->data.offset = offset;
+        }
         ident_head = new_i;
         return;
     }
@@ -102,8 +106,13 @@ void register_new_ident(Ident i) {
         count++;
     }
 
-    int offset = (count + 1) * 8;
-    new_i->data.offset = offset;
+    if (i.type->ty == ARRAY) {
+        new_i->data.offset = i.type->size;
+    } else {
+        int offset = (count + 1) * i.type->size;
+        new_i->data.offset = offset;
+    }
+
     ident_iter->next = new_i;
 }
 
@@ -133,19 +142,50 @@ Type *new_type() {
     return t;
 }
 
+// when a type is array in parsing, a name of array was passed because continue to array size after the name. so preserve the array name to the global variable `arr_name`.
+char *arr_name;
+
+size_t get_type_size(TypeKind t) {
+    if (t == INT) {
+        // TODO: It should will be 4, but currently any local variable assign to 64bit register in code generating, so treat size of 'INT' as 8bytes.
+        return 8;
+    }
+    return 8;
+}
+
+// TODO: improve readability
 Type *parse_type() {
     Type *t = new_type();
     assert(cur_tokenkind_is(TK_TYPE), "%s is not type", token->str);
-    // currently primitive type is 'INT' only.
-    // TODO: handle to multiple types.
+
     t->ty = INT;
+    t->size = get_type_size(INT);
 
     next_token();
+
+    // array type
+    if (cur_tokenkind_is(TK_IDENT) && next_tokenkind_is(TK_LBRACKET)) {
+        // In `parse_type()` skip the identifier name, so preserve global variable: `arr_name`.
+        arr_name = token->str;
+        expect(TK_IDENT);
+        expect(TK_LBRACKET);
+
+        assert(cur_tokenkind_is(TK_NUM), "array size must be integer literal");
+        t->ty = ARRAY;
+        t->array_size = token->val;
+        // TODO: other type array
+        t->size = get_type_size(INT) * t->array_size;
+        next_token();
+        expect(TK_RBRACKET);
+
+        return t;
+    }
 
     while (cur_token_is("*")) {
         Type *p = new_type();
         p->ty = PTR;
         p->ptr_to = t;
+        p->size = get_type_size(PTR);
         t = p;
         next_token();
     }
@@ -204,10 +244,11 @@ Node *parse_primary() {
 int is_pointer(Node *n) {
     if (n->nk == ND_ADDR) { return 1; }
     if (n->nk == ND_LVAR) {
-        if (n->ident.type->ty == PTR) {
+        if (n->ident.type->ty == PTR || n->ident.type->ty == ARRAY) {
             return 1;
         }
     }
+
     // TODO? it should be recursive?
     if (n->lhs != NULL) {
         if (is_pointer(n->lhs)) {
@@ -249,6 +290,7 @@ Node *parse_unary() {
         Node *tmp = parse_unary();
         // 構文木 n に紐付いている型が int なら 4 を
         // ポインタなら 8 を生成する
+        // TODO: implement for a case of array.
         if (is_pointer(tmp)) {
             n = new_node(ND_NUM, 8);
         } else {
@@ -431,10 +473,18 @@ Node *parse_declaration(IdentKind ik) {
 
     // declaration statement;
     Type *t = parse_type();
-    char *name = token->str;
-    next_token();
 
-    Ident i = new_ident(ik, name, t);
+    char *ident_name;
+    if (t->ty == ARRAY) {
+        ident_name = arr_name;
+    } else {
+        ident_name = token->str;
+        next_token();
+    }
+
+    Ident i = new_ident(ik, ident_name, t);
+
+    // add new ident node at tail of linked list.
     register_new_ident(i);
 
     n->ident = i;

@@ -22,9 +22,17 @@ typedef enum {
     ND_DECL,   // local variable declaration
 } NodeKind;
 
+typedef enum {
+    INT,
+    PTR,
+    ARRAY
+} TypeKind;
+
 typedef struct Type {
-    enum { INT, PTR } ty;
+    TypeKind ty;
     struct Type *ptr_to;
+    size_t array_size;           // the number of elements
+    size_t size;
 } Type;
 
 typedef enum IdentKind {

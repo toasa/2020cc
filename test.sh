@@ -245,6 +245,17 @@ int main() {
 }
 "
 
+test 5 "
+int main() {
+    int x;
+    int *y;
+    x = 3;
+    y = &x;
+    *y = 5;
+    return x;
+}
+"
+
 test 3 "
 int main() {
     int x;
@@ -354,6 +365,47 @@ int main() {
 test 4 "
 int main() {
     return sizeof(3);
+}
+"
+
+test 10 "
+int main() {
+    int a[3];
+    *(a+0) = 10;
+    *(a+1) = 20;
+    *(a+2) = 30;
+    return *(a+0);
+}
+"
+
+test 20 "
+int main() {
+    int a[3];
+    *(a+0) = 10;
+    *(a+1) = 20;
+    *(a+2) = 30;
+    return *(a+1);
+}
+"
+
+test 30 "
+int main() {
+    int a[3];
+    *(a+0) = 10;
+    *(a+1) = 20;
+    *(a+2) = 30;
+    return *(a+2);
+}
+"
+
+test 12 "
+int main() {
+    int a[4];
+    *(a+0) = 10;
+    *(a+1) = 20;
+    *(a+2) = 30;
+    *(a+3) = 40;
+    return *(a+3) / *(a+1) + *a;
 }
 "
 

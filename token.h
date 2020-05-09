@@ -6,6 +6,8 @@ typedef enum {
     TK_RPARENT,   // )
     TK_LBRACE,    // {
     TK_RBRACE,    // }
+    TK_LBRACKET,  // [
+    TK_RBRACKET,  // ]
     TK_EQ,        // ==
     TK_NE,        // !=
     TK_LT,        // <

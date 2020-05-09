@@ -35,8 +35,12 @@ void gen_expr(Node *n) {
         printf("    push %d\n", n->val);
         return;
     } else if (n->nk == ND_LVAR) {
-        gen_addr(n);
-        load();
+        if (n->ident.type->ty == ARRAY) {
+            gen_addr(n);
+        } else {
+            gen_addr(n);
+            load();
+        }
         return;
     } else if (n->nk == ND_CALL) {
         FuncData callee = n->func;
@@ -197,7 +201,13 @@ void gen_func(Node *n) {
     // prologue
     printf("    push rbp\n");
     printf("    mov rbp, rsp\n");
-    printf("    sub rsp, %d\n", n->func.ident_num * 8);
+
+    // allocate for local variables in stack area.
+    int stack_size = 0;
+    for (IdentNode *ident = n->func.idents; ident != NULL; ident = ident->next) {
+        stack_size += ident->data.type->size;
+    }
+    printf("    sub rsp, %d\n", stack_size);
 
     // arguments
     if (n->func.args_num > 0) {
