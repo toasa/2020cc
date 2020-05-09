@@ -364,11 +364,13 @@ Node *new_add(Node *lhs) {
     // TODO? it should handle pointer + pointer?
     if (is_pointer(lhs) && !is_pointer(rhs)) {
         Node *new_rhs = new_node(ND_MUL, 0);
+        // TODO: 8 is work around, it should be size of 'lhs'.
         new_rhs->lhs = new_node(ND_NUM, 8);
         new_rhs->rhs = rhs;
         rhs = new_rhs;
     } else if (!is_pointer(lhs) && is_pointer(rhs)) {
         Node *new_lhs = new_node(ND_MUL, 0);
+        // TODO: 8 is work around, it should be size of 'rhs'.
         new_lhs->lhs = new_node(ND_NUM, 8);
         new_lhs->rhs = rhs;
         lhs = new_lhs;
@@ -385,11 +387,13 @@ Node *new_sub(Node *lhs) {
     // TODO? it should handle pointer - pointer?
     if (is_pointer(lhs) && !is_pointer(rhs)) {
         Node *new_rhs = new_node(ND_MUL, 0);
+        // TODO: 8 is work around, it should be size of 'lhs'.
         new_rhs->lhs = new_node(ND_NUM, 8);
         new_rhs->rhs = rhs;
         rhs = new_rhs;
     } else if (!is_pointer(lhs) && is_pointer(rhs)) {
         Node *new_lhs = new_node(ND_MUL, 0);
+        // TODO: 8 is work around, it should be size of 'rhs'.
         new_lhs->lhs = new_node(ND_NUM, 8);
         new_lhs->rhs = rhs;
         lhs = new_lhs;
