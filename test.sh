@@ -409,4 +409,30 @@ int main() {
 }
 "
 
+test 3 "
+int main() {
+    int a[2];
+    *a = 1;
+    *(a + 1) = 2;
+    int *p;
+    p = a;
+    return *p + *(p + 1);
+}
+"
+
+test 31 "
+int main() {
+    int a;
+    int b;
+    int arr[2];
+    int c;
+    a = 1;
+    *arr = 10;
+    *(arr + 1) = 20;
+    b = a + *arr;
+    c = b + *(arr + 1);
+    return c;
+}
+"
+
 echo "OK"

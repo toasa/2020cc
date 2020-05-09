@@ -81,19 +81,21 @@ void register_new_ident(Ident i) {
     IdentNode *new_i = new_ident_node(i);
     // increment the number of identifier.
     ident_num++;
-    int count = 0;
+
+    // To calculate a offset for new identifier, add size of each identifier while iterate the linked list.
+    int offset = 0;
 
     if (ident_head == NULL) {
         if (i.type->tk == ARRAY) {
             new_i->data.offset = i.type->size;
         } else {
-            int offset = (count + 1) * i.type->size;
-            new_i->data.offset = offset;
+            new_i->data.offset = i.type->size;
         }
         ident_head = new_i;
         return;
     }
-    count++;
+
+    offset += ident_head->data.type->size;
 
     IdentNode *ident_iter = ident_head;
     while (ident_iter->next != NULL) {
@@ -102,16 +104,12 @@ void register_new_ident(Ident i) {
         if (equal_strings(cur_name, i.name)) {
             error("duplicate of identifier declaration.");
         }
+
+        offset += ident_iter->data.type->size;
         ident_iter = ident_iter->next;
-        count++;
     }
 
-    if (i.type->tk == ARRAY) {
-        new_i->data.offset = i.type->size;
-    } else {
-        int offset = (count + 1) * i.type->size;
-        new_i->data.offset = offset;
-    }
+    new_i->data.offset = i.type->size + offset;
 
     ident_iter->next = new_i;
 }
