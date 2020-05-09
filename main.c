@@ -86,6 +86,12 @@ void gen_expr(Node *n) {
         printf("    xor rdx, rdx\n");
         printf("    idiv rdi\n");
         printf("    mov rax, rdx\n");
+    } else if (n->nk == ND_LSHIFT) {
+        printf("    mov rcx, rdi\n");
+        printf("    shl rax, cl\n");
+    } else if (n->nk == ND_RSHIFT) {
+        printf("    mov rcx, rdi\n");
+        printf("    shr rax, cl\n");
     } else if (n->nk == ND_EQ) {
         printf("    cmp rax, rdi\n");
         printf("    sete al\n");

@@ -501,4 +501,7 @@ int main() {
 
 test 2 "int main() { return 100 % 7; }"
 
+test 128 "int main() { return 1 << 7; }"
+test 2 "int main() { return 128 >> 6; }"
+
 echo "OK"
