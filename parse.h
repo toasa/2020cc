@@ -62,7 +62,6 @@ typedef struct FuncData {
     int args_num;
     struct Node *args;   // nkがND_CALLの場合に使う。次の引数には`next`メンバからアクセスする。
 
-    int ident_num;
     IdentNode *idents;   // nkがND_FUNCの場合に引数のオフセット値を取得する
 } FuncData;
 

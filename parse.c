@@ -50,7 +50,6 @@ FuncData new_func_data() {
     data.idents = NULL;
     data.body = NULL;
     data.args_num = 0;
-    data.ident_num = 0;
     return data;
 }
 
@@ -72,15 +71,10 @@ IdentNode *new_ident_node(Ident i) {
 // a head of linked list stored identifier infomation.
 IdentNode *ident_head = NULL;
 
-// the number of identifier in currently parsing function.
-int ident_num;
-
 // add one `IdentNode` at tail of linked list which stored idefifier
 // which occurs in currently parsing function.
 void register_new_ident(Ident i) {
     IdentNode *new_i = new_ident_node(i);
-    // increment the number of identifier.
-    ident_num++;
 
     // To calculate a offset for new identifier, add size of each identifier while iterate the linked list.
     int offset = 0;
@@ -567,7 +561,6 @@ Node *parse_stmt() {
 
 void init_function_context() {
     ident_head = NULL;
-    ident_num = 0;
 }
 
 Node *parse_toplevel_func() {
@@ -601,9 +594,7 @@ Node *parse_toplevel_func() {
     // parse function body
     func_data.body = parse_stmt();
 
-    // the number of function identifier equals
-    // the number of function arguments plus local variables.
-    func_data.ident_num = ident_num;
+    // store the head of linked list which include identifiers.
     func_data.idents = ident_head;
 
     n->func = func_data;
