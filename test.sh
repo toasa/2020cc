@@ -504,4 +504,12 @@ test 2 "int main() { return 100 % 7; }"
 test 128 "int main() { return 1 << 7; }"
 test 2 "int main() { return 128 >> 6; }"
 
+test 64 "int main() { int x; x = 32; x += 32; return x; }"
+test 30 "int main() { int x; x = 32; x -= 2; return x; }"
+test 64 "int main() { int x; x = 32; x *= 2; return x; }"
+test 8 "int main() { int x; x = 32; x /= 4; return x; }"
+test 4 "int main() { int x; x = 32; x %= 7; return x; }"
+test 16 "int main() { int x; x = 32; x >>= 1; return x; }"
+test 64 "int main() { int x; x = 32; x <<= 1; return x; }"
+
 echo "OK"

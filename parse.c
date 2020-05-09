@@ -513,6 +513,90 @@ Node *parse_assign() {
         n->lhs = lhs;
         n->rhs = rhs;
         lhs = n;
+    } else if (cur_token_is("+=")) {
+        next_token();
+        Node *rhs = parse_equality();
+        Node *add = new_node(ND_ADD, 0);
+        add->lhs = lhs;
+        add->rhs = rhs;
+
+        Node *assign = new_node(ND_ASSIGN, 0);
+        assign->lhs = lhs;
+        assign->rhs = add;
+
+        lhs = assign;
+    } else if (cur_token_is("-=")) {
+        next_token();
+        Node *rhs = parse_equality();
+        Node *sub = new_node(ND_SUB, 0);
+        sub->lhs = lhs;
+        sub->rhs = rhs;
+
+        Node *assign = new_node(ND_ASSIGN, 0);
+        assign->lhs = lhs;
+        assign->rhs = sub;
+
+        lhs = assign;
+    } else if (cur_token_is("*=")) {
+        next_token();
+        Node *rhs = parse_equality();
+        Node *sub = new_node(ND_MUL, 0);
+        sub->lhs = lhs;
+        sub->rhs = rhs;
+
+        Node *assign = new_node(ND_ASSIGN, 0);
+        assign->lhs = lhs;
+        assign->rhs = sub;
+
+        lhs = assign;
+    } else if (cur_token_is("/=")) {
+        next_token();
+        Node *rhs = parse_equality();
+        Node *div = new_node(ND_DIV, 0);
+        div->lhs = lhs;
+        div->rhs = rhs;
+
+        Node *assign = new_node(ND_ASSIGN, 0);
+        assign->lhs = lhs;
+        assign->rhs = div;
+
+        lhs = assign;
+    } else if (cur_token_is("%=")) {
+        next_token();
+        Node *rhs = parse_equality();
+        Node *rem = new_node(ND_REM, 0);
+        rem->lhs = lhs;
+        rem->rhs = rhs;
+
+        Node *assign = new_node(ND_ASSIGN, 0);
+        assign->lhs = lhs;
+        assign->rhs = rem;
+
+        lhs = assign;
+    } else if (cur_token_is("<<=")) {
+        next_token();
+        Node *rhs = parse_equality();
+        Node *lshift = new_node(ND_LSHIFT, 0);
+        lshift->lhs = lhs;
+        lshift->rhs = rhs;
+
+        Node *assign = new_node(ND_ASSIGN, 0);
+        assign->lhs = lhs;
+        assign->rhs = lshift;
+
+        lhs = assign;
+    } else if (cur_token_is(">>=")) {
+        next_token();
+        Node *rhs = parse_equality();
+        Node *rshift = new_node(ND_RSHIFT, 0);
+        rshift->lhs = lhs;
+        rshift->rhs = rhs;
+
+        Node *assign = new_node(ND_ASSIGN, 0);
+        assign->lhs = lhs;
+        assign->rhs = rshift;
+
+        lhs = assign;
     }
 
     return lhs;

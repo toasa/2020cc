@@ -117,19 +117,44 @@ Token *tokenize(char *input) {
             }
         } else if (*input == '+') {
             input++;
-            cur_token = new_token(cur_token, TK_RESERVED, 0, "+");
+            if (*input == '=') {
+                input++;
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "+=");
+            } else {
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "+");
+            }
         } else if (*input == '-') {
             input++;
-            cur_token = new_token(cur_token, TK_RESERVED, 0, "-");
+            if (*input == '=') {
+                input++;
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "-=");
+            } else {
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "-");
+            }
         } else if (*input == '*') {
             input++;
-            cur_token = new_token(cur_token, TK_RESERVED, 0, "*");
+            if (*input == '=') {
+                input++;
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "*=");
+            } else {
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "*");
+            }
         } else if (*input == '/') {
             input++;
-            cur_token = new_token(cur_token, TK_RESERVED, 0, "/");
+            if (*input == '=') {
+                input++;
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "/=");
+            } else {
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "/");
+            }
         } else if (*input == '%') {
             input++;
-            cur_token = new_token(cur_token, TK_RESERVED, 0, "%");
+            if (*input == '=') {
+                input++;
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "%=");
+            } else {
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "%");
+            }
         } else if (*input == '&') {
             input++;
             cur_token = new_token(cur_token, TK_RESERVED, 0, "&");
@@ -178,7 +203,12 @@ Token *tokenize(char *input) {
                 cur_token = new_token(cur_token, TK_LE, 0, "<=");
             } else if (*input == '<') {
                 input++;
-                cur_token = new_token(cur_token, TK_RESERVED, 0, "<<");
+                if (*input == '=') {
+                    input++;
+                    cur_token = new_token(cur_token, TK_RESERVED, 0, "<<=");
+                } else {
+                    cur_token = new_token(cur_token, TK_RESERVED, 0, "<<");
+                }
             } else {
                 cur_token = new_token(cur_token, TK_LT, 0, "<");
             }
@@ -189,7 +219,12 @@ Token *tokenize(char *input) {
                 cur_token = new_token(cur_token, TK_GE, 0, ">=");
             } else if (*input == '>') {
                 input++;
-                cur_token = new_token(cur_token, TK_RESERVED, 0, ">>");
+                if (*input == '=') {
+                    input++;
+                    cur_token = new_token(cur_token, TK_RESERVED, 0, ">>=");
+                } else {
+                    cur_token = new_token(cur_token, TK_RESERVED, 0, ">>");
+                }
             } else {
                 cur_token = new_token(cur_token, TK_GT, 0, ">");
             }
