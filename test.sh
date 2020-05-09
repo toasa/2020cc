@@ -499,4 +499,6 @@ int main() {
 }
 "
 
+test 2 "int main() { return 100 % 7; }"
+
 echo "OK"

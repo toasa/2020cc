@@ -328,7 +328,7 @@ Node *parse_unary() {
 Node *parse_mul() {
     Node *lhs = parse_unary();
 
-    while (cur_token_is("*") || cur_token_is("/")) {
+    while (cur_token_is("*") || cur_token_is("/") || cur_token_is("%")) {
         if (cur_token_is("*")) {
             next_token();
             Node *rhs = parse_unary();
@@ -336,10 +336,17 @@ Node *parse_mul() {
             n->lhs = lhs;
             n->rhs = rhs;
             lhs = n;
-        } else {
+        } else if (cur_token_is("/")) {
             next_token();
             Node *rhs = parse_unary();
             Node *n = new_node(ND_DIV, 0);
+            n->lhs = lhs;
+            n->rhs = rhs;
+            lhs = n;
+        } else {
+            next_token();
+            Node *rhs = parse_unary();
+            Node *n = new_node(ND_REM, 0);
             n->lhs = lhs;
             n->rhs = rhs;
             lhs = n;

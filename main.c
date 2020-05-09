@@ -81,6 +81,11 @@ void gen_expr(Node *n) {
     } else if (n->nk == ND_DIV) {
         printf("    cqo\n");
         printf("    idiv rdi\n");
+    } else if (n->nk == ND_REM) {
+        printf("    cqo\n");
+        printf("    xor rdx, rdx\n");
+        printf("    idiv rdi\n");
+        printf("    mov rax, rdx\n");
     } else if (n->nk == ND_EQ) {
         printf("    cmp rax, rdi\n");
         printf("    sete al\n");

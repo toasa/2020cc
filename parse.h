@@ -5,6 +5,7 @@ typedef enum {
     ND_SUB,
     ND_MUL,
     ND_DIV,
+    ND_REM,    // %
     ND_DEREF,  // *
     ND_ADDR,   // &
     ND_EQ,     // ==
