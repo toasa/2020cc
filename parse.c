@@ -228,6 +228,7 @@ Node *parse_primary() {
             expect(TK_RPARENT);
         } else if (next_tokenkind_is(TK_LBRACKET)) {
             // array index operator
+            // TODO: should handle `3[arr]`.
             Node *array = new_node(ND_LVAR, 0);
             array->ident = get_ident(token->str);
 
