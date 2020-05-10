@@ -65,6 +65,64 @@ void gen_expr(Node *n) {
     } else if (n->nk == ND_ADDR) {
         gen_addr(n->expr);
         return;
+    } else if (n->nk == ND_PREINC) {
+        gen_expr(n->expr);
+        gen_expr(n->inc);
+        printf("    pop rax\n");
+        printf("    pop rdi\n");
+        printf("    add rdi, rax\n");
+
+        gen_addr(n->expr);
+
+        printf("    pop rax\n");
+        printf("    mov [rax], rdi\n");
+
+        printf("    push rdi\n");
+        return;
+    } else if (n->nk == ND_PREDEC) {
+        gen_expr(n->expr);
+        gen_expr(n->inc);
+        printf("    pop rax\n");
+        printf("    pop rdi\n");
+        printf("    sub rdi, rax\n");
+
+        gen_addr(n->expr);
+
+        printf("    pop rax\n");
+        printf("    mov [rax], rdi\n");
+
+        printf("    push rdi\n");
+        return;
+    } else if (n->nk == ND_POSTINC) {
+        gen_expr(n->expr);
+        gen_expr(n->inc);
+        printf("    pop rax\n");
+        printf("    pop rdi\n");
+        printf("    mov rsi, rdi\n");
+        printf("    add rdi, rax\n");
+
+        gen_addr(n->expr);
+
+        printf("    pop rax\n");
+        printf("    mov [rax], rdi\n");
+
+        printf("    push rsi\n");
+        return;
+    } else if (n->nk == ND_POSTDEC) {
+        gen_expr(n->expr);
+        gen_expr(n->inc);
+        printf("    pop rax\n");
+        printf("    pop rdi\n");
+        printf("    mov rsi, rdi\n");
+        printf("    sub rdi, rax\n");
+
+        gen_addr(n->expr);
+
+        printf("    pop rax\n");
+        printf("    mov [rax], rdi\n");
+
+        printf("    push rsi\n");
+        return;
     }
 
     gen_expr(n->lhs);

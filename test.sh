@@ -512,4 +512,31 @@ test 4 "int main() { int x; x = 32; x %= 7; return x; }"
 test 16 "int main() { int x; x = 32; x >>= 1; return x; }"
 test 64 "int main() { int x; x = 32; x <<= 1; return x; }"
 
+test 11 "int main() { int x; x = 10; ++x; return x; }"
+test 9 "int main() { int x; x = 10; --x; return x; }"
+test 11 "int main() { int x; int y; x = 10; y = ++x; return y; }"
+test 9 "int main() { int x; int y; x = 10; y = --x; return y; }"
+test 0 "int main() { int x; int y; x = 10; y = ++x; return x - y; }"
+
+test 11 "int main() { int x; x = 10; x++; return x; }"
+test 9 "int main() { int x; x = 10; x--; return x; }"
+test 10 "int main() { int x; int y; x = 10; y = x++; return y; }"
+test 10 "int main() { int x; int y; x = 10; y = x--; return y; }"
+test 1 "int main() { int x; int y; x = 10; y = x++; return x - y; }"
+
+test 40 "
+int main() {
+    int a[3];
+    a[0] = 10;
+    a[1] = 20;
+    a[2] = 30;
+
+    int *p;
+    p = a;
+    p++;
+    *p = 40;
+    return a[1];
+}
+"
+
 echo "OK"

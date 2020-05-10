@@ -44,6 +44,28 @@ void expect(TokenKind tk) {
 
 Node *parse_expr();
 
+int is_pointer(Node *n) {
+    if (n->nk == ND_ADDR) { return 1; }
+    if (n->nk == ND_LVAR) {
+        if (n->ident.type->tk == PTR || n->ident.type->tk == ARRAY) {
+            return 1;
+        }
+    }
+
+    // TODO? it should be recursive?
+    if (n->lhs != NULL) {
+        if (is_pointer(n->lhs)) {
+            return 1;
+        }
+    }
+    if (n->rhs != NULL) {
+        if (is_pointer(n->rhs)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 FuncData new_func_data() {
     FuncData data;
     data.name = NULL;
@@ -261,29 +283,36 @@ Node *parse_primary() {
         n = new_node(ND_NUM, token->val);
         next_token();
     }
+
+    Node *new_n;
+
+    if (cur_token_is("++")) {
+        // post increment
+        next_token();
+        new_n = new_node(ND_POSTINC, 0);
+        new_n->expr = n;
+        if (is_pointer(n)) {
+            new_n->inc = new_node(ND_NUM, 8);
+        } else {
+            new_n->inc = new_node(ND_NUM, 1);
+        }
+
+        n = new_n;
+    } else if (cur_token_is("--")) {
+        // post decrement
+        next_token();
+        new_n = new_node(ND_POSTDEC, 0);
+        new_n->expr = n;
+        if (is_pointer(n)) {
+            new_n->inc = new_node(ND_NUM, 8);
+        } else {
+            new_n->inc = new_node(ND_NUM, 1);
+        }
+
+        n = new_n;
+    }
+
     return n;
-}
-
-int is_pointer(Node *n) {
-    if (n->nk == ND_ADDR) { return 1; }
-    if (n->nk == ND_LVAR) {
-        if (n->ident.type->tk == PTR || n->ident.type->tk == ARRAY) {
-            return 1;
-        }
-    }
-
-    // TODO? it should be recursive?
-    if (n->lhs != NULL) {
-        if (is_pointer(n->lhs)) {
-            return 1;
-        }
-    }
-    if (n->rhs != NULL) {
-        if (is_pointer(n->rhs)) {
-            return 1;
-        }
-    }
-    return 0;
 }
 
 Node *parse_unary() {
@@ -308,6 +337,26 @@ Node *parse_unary() {
         next_token();
         n = new_node(ND_ADDR, 0);
         n->expr = parse_unary();
+    } else if (cur_token_is("++")) {
+        // pre increment
+        next_token();
+        n = new_node(ND_PREINC, 0);
+        n->expr = parse_primary();
+        if (is_pointer(n->expr)) {
+            n->inc = new_node(ND_NUM, 8);
+        } else {
+            n->inc = new_node(ND_NUM, 1);
+        }
+    } else if (cur_token_is("--")) {
+        // pre decrement
+        next_token();
+        n = new_node(ND_PREDEC, 0);
+        n->expr = parse_primary();
+        if (is_pointer(n->expr)) {
+            n->inc = new_node(ND_NUM, 8);
+        } else {
+            n->inc = new_node(ND_NUM, 1);
+        }
     } else if (cur_token_is("sizeof")) {
         next_token();
         Node *tmp = parse_unary();
