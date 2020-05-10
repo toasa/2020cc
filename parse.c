@@ -744,6 +744,22 @@ Node *parse_stmt() {
     } else if (cur_tokenkind_is(TK_TYPE)) {
         // `n` 's NodeKind is 'ND_DECL'.
         n = parse_declaration(ID_LOCAL);
+
+        // simultaneously initialize identifer on declaration.
+        if (cur_token_is("=")) {
+            next_token();
+
+            Node *assign = new_node(ND_ASSIGN, 0);
+
+            Node *lhs = new_node(ND_LVAR, 0);
+            lhs->ident = get_ident(n->ident.name);
+
+            assign->lhs = lhs;
+            assign->rhs = parse_equality();
+
+            n = assign;
+        }
+
         expect(TK_SEMICOLON);
     } else {
         n = parse_expr();
