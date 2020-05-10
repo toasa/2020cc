@@ -542,4 +542,13 @@ int main() {
 test 10 "int main() { int a = 10; return a; }"
 test 11 "int main() { int a = 20; int b = 20; return a - b + 11; }"
 
+test 40 "int main() { int arr[4] = {10, 20, 30, 40}; return arr[3]; }"
+test 40 "
+int main() {
+    int a = 20;
+    int arr[3] = {1, 2, 3};
+    return a * arr[1];
+}
+"
+
 echo "OK"

@@ -212,6 +212,64 @@ Type *parse_type() {
     return t;
 }
 
+Node *parse_array() {
+    // array index operator
+    // TODO: should handle `3[arr]`.
+    Node *array = new_node(ND_LVAR, 0);
+    array->ident = get_ident(token->str);
+
+    expect(TK_IDENT);
+    expect(TK_LBRACKET);
+
+    // array index expression
+    Node *index = new_node(ND_MUL, 0);
+    index->lhs = parse_expr();
+    size_t element_count = array->ident.type->array_size;
+    size_t total_bytes = array->ident.type->size;
+    size_t size_of_elem = total_bytes / element_count;
+    index->rhs = new_node(ND_NUM, size_of_elem);
+
+    Node *add = new_node(ND_ADD, 0);
+    add->lhs = array;
+    add->rhs = index;
+
+    expect(TK_RBRACKET);
+
+    Node *n = new_node(ND_DEREF, 0);
+    n->expr = add;
+    return n;
+}
+
+// return value of `parse_exprs`.
+typedef struct Exprs {
+    int count;
+    Node *head;
+} Exprs;
+
+// parse some expressions which is separated comma,
+// and return a linked list of expressions.
+// ex. 20, 40, x, y + 20
+Exprs parse_exprs(char *terminator) {
+    Exprs result;
+
+    int count = 1;
+    Node *head = calloc(1, sizeof(Node));
+    Node *cur = parse_expr();
+    head->next = cur;
+
+    while (!cur_token_is(terminator)) {
+        expect(TK_COMMA);
+        Node *tmp = parse_expr();
+        cur->next = tmp;
+        cur = tmp;
+        count++;
+    }
+
+    result.count = count;
+    result.head = head->next;
+    return result;
+}
+
 Node *parse_primary() {
     Node *n;
     if (token->tk == TK_LPARENT) {
@@ -231,48 +289,15 @@ Node *parse_primary() {
 
             if (!cur_token_is(")")) {
                 // function arguments
-                int args_num = 1;
-                Node *head = calloc(1, sizeof(Node));
-                Node *cur = parse_expr();
-                head->next = cur;
-                while (!cur_token_is(")")) {
-                    expect(TK_COMMA);
-                    Node *tmp = parse_expr();
-                    cur->next = tmp;
-                    cur = tmp;
-                    args_num++;
-                }
-                fd.args = head->next;
-                fd.args_num = args_num;
+                Exprs result = parse_exprs(")");
+                fd.args = result.head;
+                fd.args_num = result.count;
             }
 
             n->func = fd;
             expect(TK_RPARENT);
         } else if (next_tokenkind_is(TK_LBRACKET)) {
-            // array index operator
-            // TODO: should handle `3[arr]`.
-            Node *array = new_node(ND_LVAR, 0);
-            array->ident = get_ident(token->str);
-
-            expect(TK_IDENT);
-            expect(TK_LBRACKET);
-
-            // array index expression
-            Node *index = new_node(ND_MUL, 0);
-            index->lhs = parse_expr();
-            size_t element_count = array->ident.type->array_size;
-            size_t total_bytes = array->ident.type->size;
-            size_t size_of_elem = total_bytes / element_count;
-            index->rhs = new_node(ND_NUM, size_of_elem);
-
-            Node *add = new_node(ND_ADD, 0);
-            add->lhs = array;
-            add->rhs = index;
-
-            expect(TK_RBRACKET);
-
-            n = new_node(ND_DEREF, 0);
-            n->expr = add;
+            n = parse_array();
         } else {
             // identifier (it must be declared already)
             n = new_node(ND_LVAR, 0);
@@ -749,17 +774,75 @@ Node *parse_stmt() {
         if (cur_token_is("=")) {
             next_token();
 
-            Node *assign = new_node(ND_ASSIGN, 0);
+            if (n->ident.type->tk == ARRAY) {
+                expect(TK_LBRACE);
 
-            Node *lhs = new_node(ND_LVAR, 0);
-            lhs->ident = get_ident(n->ident.name);
+                // parse elements of array.
+                Exprs result = parse_exprs("}");
+                Node *assigns = new_node(ND_BLOCK, 0);
 
-            assign->lhs = lhs;
-            assign->rhs = parse_equality();
+                // preparation of linked list
+                Node *head = calloc(1, sizeof(Node));
+                Node *cur = calloc(1, sizeof(Node));
+                head->next = cur;
 
-            n = assign;
+                Node *elem = result.head;
+                // create a linked list which preserve the assigning of each array index.
+                // ex.
+                // ```
+                //     arr[3] = { 10, 20, 30 };
+                //
+                //     // above converts to below
+                //
+                //     arr[0] = 10;
+                //     arr[1] = 20;
+                //     arr[2] = 30;
+                // ```
+                for (int i = 0; i < result.count; i++) {
+                    Node *array = new_node(ND_LVAR, 0);
+                    array->ident = get_ident(n->ident.name);
+
+                    // array index expression
+                    Node *index = new_node(ND_MUL, 0);
+                    index->lhs = new_node(ND_NUM, i);
+
+                    size_t element_count = array->ident.type->array_size;
+                    size_t total_bytes = array->ident.type->size;
+                    size_t size_of_elem = total_bytes / element_count;
+                    index->rhs = new_node(ND_NUM, size_of_elem);
+
+                    Node *add = new_node(ND_ADD, 0);
+                    add->lhs = array;
+                    add->rhs = index;
+
+                    Node *deref = new_node(ND_DEREF, 0);
+                    deref->expr = add;
+
+                    Node *assign = new_node(ND_ASSIGN, 0);
+                    assign->lhs = deref;
+                    assign->rhs = elem;
+
+                    cur->next = assign;
+                    cur = assign;
+
+                    elem = elem->next;
+                }
+
+                assigns->block = head->next->next;
+                n = assigns;
+                expect(TK_RBRACE);
+            } else {
+                Node *assign = new_node(ND_ASSIGN, 0);
+
+                Node *lhs = new_node(ND_LVAR, 0);
+                lhs->ident = get_ident(n->ident.name);
+
+                assign->lhs = lhs;
+                assign->rhs = parse_equality();
+
+                n = assign;
+            }
         }
-
         expect(TK_SEMICOLON);
     } else {
         n = parse_expr();
