@@ -196,12 +196,17 @@ Type *parse_type() {
         expect(TK_IDENT);
         expect(TK_LBRACKET);
 
-        assert(cur_tokenkind_is(TK_NUM), "array size must be integer literal");
         t = new_type(ARRAY, NULL);
-        t->array_size = token->val;
-        // TODO: other type array
-        t->size = get_type_size(INT) * t->array_size;
-        next_token();
+        if (cur_token_is("]")) {
+            // array initialization allow that the number of array elements is not specified.
+        } else {
+            assert(cur_tokenkind_is(TK_NUM), "array size must be integer literal");
+            t->array_size = token->val;
+            // TODO: other type array
+            t->size = get_type_size(INT) * t->array_size;
+            next_token();
+        }
+
         expect(TK_RBRACKET);
     } else {
         // local identifier
@@ -785,6 +790,24 @@ Node *parse_stmt() {
                 Node *head = calloc(1, sizeof(Node));
                 Node *cur = calloc(1, sizeof(Node));
                 head->next = cur;
+
+                // if array size not determined yet, resolve here.
+                if (n->ident.type->array_size == 0) {
+                    IdentNode *ident_iter = ident_head;
+                    int offset = 0;
+                    while (1) {
+                        if (equal_strings(n->ident.name, ident_iter->data.name)) {
+                            ident_iter->data.type->array_size = result.count;
+                            // TODO: other type array
+                            size_t size = get_type_size(INT) * result.count;
+                            ident_iter->data.type->size = size;
+                            ident_iter->data.offset = offset + size;
+                            break;
+                        }
+                        offset += ident_iter->data.type->size;
+                        ident_iter = ident_iter->next;
+                    }
+                }
 
                 Node *elem = result.head;
                 // create a linked list which preserve the assigning of each array index.

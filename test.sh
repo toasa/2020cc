@@ -551,4 +551,22 @@ int main() {
 }
 "
 
+test 40 "int main() { int arr[] = {10, 20, 30, 40}; return arr[3]; }"
+test 40 "
+int main() {
+    int a = 20;
+    int arr[] = {1, 2, 3};
+    return a * arr[1];
+}
+"
+
+test 60 "
+int main() {
+    int a = 20;
+    int b = 30;
+    int arr[] = {a, b, a * b};
+    return arr[2] / (arr[1] - arr[0]);
+}
+"
+
 echo "OK"
