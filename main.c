@@ -213,8 +213,8 @@ void gen_stmt(Node *n) {
 
         label_count++;
     } else if (n->nk == ND_FOR) {
-        if (n->expr != NULL) {
-            gen_stmt(n->expr);
+        if (n->init != NULL) {
+            gen_stmt(n->init);
         }
         printf(".Lstart%03d:\n", label_count);
         if (n->cond != NULL) {

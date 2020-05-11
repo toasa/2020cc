@@ -743,15 +743,16 @@ Node *parse_stmt() {
         n = new_node(ND_FOR, 0);
         next_token();
         expect(TK_LPARENT);
-        if (!next_tokenkind_is(TK_SEMICOLON)) {
-            n->expr = parse_expr();
+        if (!cur_tokenkind_is(TK_SEMICOLON)) {
+            n->init = parse_stmt();
+        } else {
+            expect(TK_SEMICOLON);
         }
-        expect(TK_SEMICOLON);
-        if (!next_tokenkind_is(TK_SEMICOLON)) {
+        if (!cur_tokenkind_is(TK_SEMICOLON)) {
             n->cond = parse_expr();
         }
         expect(TK_SEMICOLON);
-        if (!next_tokenkind_is(TK_RPARENT)) {
+        if (!cur_tokenkind_is(TK_RPARENT)) {
             n->post = parse_expr();
         }
         expect(TK_RPARENT);

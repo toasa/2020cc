@@ -569,4 +569,21 @@ int main() {
 }
 "
 
+test 10 "
+int main() {
+    for (int i = 0; i < 10; i++) {
+    }
+    return i;
+}
+"
+
+test 10 "
+int main() {
+    int i = 0;
+    for (; i < 10; i++) {
+    }
+    return i;
+}
+"
+
 echo "OK"
