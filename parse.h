@@ -38,6 +38,8 @@ typedef enum {
 typedef struct Type {
     TypeKind tk;
     struct Type *ptr_to;
+    struct Type *arr_of;
+    char *arr_name;
     size_t array_size;           // the number of elements
     size_t size;
 } Type;
@@ -77,6 +79,8 @@ typedef struct Node {
     struct Node *lhs;
     struct Node *rhs;
     int val;
+
+    Type *ty;
 
     Ident ident;        // nkがND_LVAR, ND_DECLの場合に使う
     FuncData func;      // nkがND_CALL, ND_FUNCの場合に使う
