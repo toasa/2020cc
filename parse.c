@@ -12,6 +12,13 @@ Node *new_node(NodeKind nk, int val) {
     return n;
 }
 
+Node *new_node_with_lr(NodeKind nk, Node *lhs, Node *rhs) {
+    Node *n = new_node(nk, 0);
+    n->lhs = lhs;
+    n->rhs = rhs;
+    return n;
+}
+
 // 現在検査中のトークン
 Token *token;
 
@@ -350,12 +357,9 @@ Node *parse_unary() {
         n = parse_primary();
     } else if (cur_token_is("-")) {
         next_token();
-
-        n = new_node(ND_SUB, 0);
         Node *lhs = new_node(ND_NUM, 0);
         Node *rhs = parse_primary();
-        n->lhs = lhs;
-        n->rhs = rhs;
+        n = new_node_with_lr(ND_SUB, lhs, rhs);
     } else if (cur_token_is("*")) {
         next_token();
         n = new_node(ND_DEREF, 0);
@@ -408,25 +412,13 @@ Node *parse_mul() {
     while (cur_token_is("*") || cur_token_is("/") || cur_token_is("%")) {
         if (cur_token_is("*")) {
             next_token();
-            Node *rhs = parse_unary();
-            Node *n = new_node(ND_MUL, 0);
-            n->lhs = lhs;
-            n->rhs = rhs;
-            lhs = n;
+            lhs = new_node_with_lr(ND_MUL, lhs, parse_unary());
         } else if (cur_token_is("/")) {
             next_token();
-            Node *rhs = parse_unary();
-            Node *n = new_node(ND_DIV, 0);
-            n->lhs = lhs;
-            n->rhs = rhs;
-            lhs = n;
+            lhs = new_node_with_lr(ND_DIV, lhs, parse_unary());
         } else {
             next_token();
-            Node *rhs = parse_unary();
-            Node *n = new_node(ND_REM, 0);
-            n->lhs = lhs;
-            n->rhs = rhs;
-            lhs = n;
+            lhs = new_node_with_lr(ND_REM, lhs, parse_unary());
         }
     }
 
@@ -501,18 +493,10 @@ Node *parse_shift() {
     while (cur_token_is("<<") || cur_token_is(">>")) {
         if (cur_token_is("<<")) {
             next_token();
-            Node *rhs = parse_add();
-            Node *n = new_node(ND_LSHIFT, 0);
-            n->lhs = lhs;
-            n->rhs = rhs;
-            lhs = n;
+            lhs = new_node_with_lr(ND_LSHIFT, lhs, parse_add());
         } else {
             next_token();
-            Node *rhs = parse_add();
-            Node *n = new_node(ND_RSHIFT, 0);
-            n->lhs = lhs;
-            n->rhs = rhs;
-            lhs = n;
+            lhs = new_node_with_lr(ND_RSHIFT, lhs, parse_add());
         }
     }
 
@@ -527,32 +511,16 @@ Node *parse_relational() {
 
         if (cur_token_is("<")) {
             next_token();
-            Node *rhs = parse_shift();
-            Node *n = new_node(ND_LT, 0);
-            n->lhs = lhs;
-            n->rhs = rhs;
-            lhs = n;
+            lhs = new_node_with_lr(ND_LT, lhs, parse_shift());
         } else if (cur_token_is("<=")) {
             next_token();
-            Node *rhs = parse_shift();
-            Node *n = new_node(ND_LE, 0);
-            n->lhs = lhs;
-            n->rhs = rhs;
-            lhs = n;
+            lhs = new_node_with_lr(ND_LE, lhs, parse_shift());
         } else if (cur_token_is(">")) {
             next_token();
-            Node *rhs = parse_shift();
-            Node *n = new_node(ND_LT, 0);
-            n->lhs = rhs;
-            n->rhs = lhs;
-            lhs = n;
+            lhs = new_node_with_lr(ND_LT, lhs, parse_shift());
         } else {
             next_token();
-            Node *rhs = parse_shift();
-            Node *n = new_node(ND_LE, 0);
-            n->lhs = rhs;
-            n->rhs = lhs;
-            lhs = n;
+            lhs = new_node_with_lr(ND_LE, lhs, parse_shift());
         }
     }
 
@@ -565,18 +533,10 @@ Node *parse_equality() {
     while (cur_token_is("==") || cur_token_is("!=")) {
         if (cur_token_is("==")) {
             next_token();
-            Node *rhs = parse_relational();
-            Node *n = new_node(ND_EQ, 0);
-            n->lhs = lhs;
-            n->rhs = rhs;
-            lhs = n;
+            lhs = new_node_with_lr(ND_EQ, lhs, parse_relational());
         } else {
             next_token();
-            Node *rhs = parse_relational();
-            Node *n = new_node(ND_NE, 0);
-            n->lhs = lhs;
-            n->rhs = rhs;
-            lhs = n;
+            lhs = new_node_with_lr(ND_NE, lhs, parse_relational());
         }
     }
 
@@ -588,95 +548,35 @@ Node *parse_assign() {
 
     if (cur_token_is("=")) {
         next_token();
-        Node *rhs = parse_assign();
-        Node *n = new_node(ND_ASSIGN, 0);
-        n->lhs = lhs;
-        n->rhs = rhs;
-        lhs = n;
+        lhs = new_node_with_lr(ND_ASSIGN, lhs, parse_assign());
     } else if (cur_token_is("+=")) {
         next_token();
-        Node *rhs = parse_equality();
-        Node *add = new_node(ND_ADD, 0);
-        add->lhs = lhs;
-        add->rhs = rhs;
-
-        Node *assign = new_node(ND_ASSIGN, 0);
-        assign->lhs = lhs;
-        assign->rhs = add;
-
-        lhs = assign;
+        Node *add = new_node_with_lr(ND_ADD, lhs, parse_equality());
+        lhs = new_node_with_lr(ND_ASSIGN, lhs, add);
     } else if (cur_token_is("-=")) {
         next_token();
-        Node *rhs = parse_equality();
-        Node *sub = new_node(ND_SUB, 0);
-        sub->lhs = lhs;
-        sub->rhs = rhs;
-
-        Node *assign = new_node(ND_ASSIGN, 0);
-        assign->lhs = lhs;
-        assign->rhs = sub;
-
-        lhs = assign;
+        Node *sub = new_node_with_lr(ND_SUB, lhs, parse_equality());
+        lhs = new_node_with_lr(ND_ASSIGN, lhs, sub);
     } else if (cur_token_is("*=")) {
         next_token();
-        Node *rhs = parse_equality();
-        Node *sub = new_node(ND_MUL, 0);
-        sub->lhs = lhs;
-        sub->rhs = rhs;
-
-        Node *assign = new_node(ND_ASSIGN, 0);
-        assign->lhs = lhs;
-        assign->rhs = sub;
-
-        lhs = assign;
+        Node *mul = new_node_with_lr(ND_MUL, lhs, parse_equality());
+        lhs = new_node_with_lr(ND_ASSIGN, lhs, mul);
     } else if (cur_token_is("/=")) {
         next_token();
-        Node *rhs = parse_equality();
-        Node *div = new_node(ND_DIV, 0);
-        div->lhs = lhs;
-        div->rhs = rhs;
-
-        Node *assign = new_node(ND_ASSIGN, 0);
-        assign->lhs = lhs;
-        assign->rhs = div;
-
-        lhs = assign;
+        Node *div = new_node_with_lr(ND_DIV, lhs, parse_equality());
+        lhs = new_node_with_lr(ND_ASSIGN, lhs, div);
     } else if (cur_token_is("%=")) {
         next_token();
-        Node *rhs = parse_equality();
-        Node *rem = new_node(ND_REM, 0);
-        rem->lhs = lhs;
-        rem->rhs = rhs;
-
-        Node *assign = new_node(ND_ASSIGN, 0);
-        assign->lhs = lhs;
-        assign->rhs = rem;
-
-        lhs = assign;
+        Node *rem = new_node_with_lr(ND_REM, lhs, parse_equality());
+        lhs = new_node_with_lr(ND_ASSIGN, lhs, rem);
     } else if (cur_token_is("<<=")) {
         next_token();
-        Node *rhs = parse_equality();
-        Node *lshift = new_node(ND_LSHIFT, 0);
-        lshift->lhs = lhs;
-        lshift->rhs = rhs;
-
-        Node *assign = new_node(ND_ASSIGN, 0);
-        assign->lhs = lhs;
-        assign->rhs = lshift;
-
-        lhs = assign;
+        Node *lshift = new_node_with_lr(ND_LSHIFT, lhs, parse_equality());
+        lhs = new_node_with_lr(ND_ASSIGN, lhs, lshift);
     } else if (cur_token_is(">>=")) {
         next_token();
-        Node *rhs = parse_equality();
-        Node *rshift = new_node(ND_RSHIFT, 0);
-        rshift->lhs = lhs;
-        rshift->rhs = rhs;
-
-        Node *assign = new_node(ND_ASSIGN, 0);
-        assign->lhs = lhs;
-        assign->rhs = rshift;
-
-        lhs = assign;
+        Node *rshift = new_node_with_lr(ND_RSHIFT, lhs, parse_equality());
+        lhs = new_node_with_lr(ND_ASSIGN, lhs, rshift);
     }
 
     return lhs;
@@ -713,10 +613,9 @@ Node *parse_declaration(IdentKind ik) {
 Node *parse_stmt() {
     Node *n;
     if (cur_token_is("return")) {
-        next_token();
-        Node *lhs = parse_expr();
         n = new_node(ND_RETURN, 0);
-        n->expr = lhs;
+        next_token();
+        n->expr = parse_expr();
         expect(TK_SEMICOLON);
     } else if (cur_token_is("if")) {
         n = new_node(ND_IF, 0);
@@ -831,16 +730,12 @@ Node *parse_stmt() {
                     size_t size_of_elem = total_bytes / element_count;
                     index->rhs = new_node(ND_NUM, size_of_elem);
 
-                    Node *add = new_node(ND_ADD, 0);
-                    add->lhs = array;
-                    add->rhs = index;
+                    Node *add = new_node_with_lr(ND_ADD, array, index);
 
                     Node *deref = new_node(ND_DEREF, 0);
                     deref->expr = add;
 
-                    Node *assign = new_node(ND_ASSIGN, 0);
-                    assign->lhs = deref;
-                    assign->rhs = elem;
+                    Node *assign = new_node_with_lr(ND_ASSIGN, deref, elem);
 
                     cur->next = assign;
                     cur = assign;
@@ -852,15 +747,9 @@ Node *parse_stmt() {
                 n = assigns;
                 expect(TK_RBRACE);
             } else {
-                Node *assign = new_node(ND_ASSIGN, 0);
-
                 Node *lhs = new_node(ND_LVAR, 0);
                 lhs->ident = get_ident(n->ident.name);
-
-                assign->lhs = lhs;
-                assign->rhs = parse_equality();
-
-                n = assign;
+                n = new_node_with_lr(ND_ASSIGN, lhs, parse_equality());
             }
         }
         expect(TK_SEMICOLON);
