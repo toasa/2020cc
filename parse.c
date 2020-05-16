@@ -233,7 +233,7 @@ Ident get_ident(char *name) {
 
 size_t get_type_size(TypeKind t) {
     if (t == INT) {
-        // TODO: It should will be 4, but currently any local variable assign to 64bit register in code generating, so treat size of 'INT' as 8bytes.
+        // TODO?: Should will be 4?
         return 8;
     }
     return 8;
