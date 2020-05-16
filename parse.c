@@ -80,16 +80,16 @@ void add_type(Node *n) {
     add_type(n->post);
     add_type(n->inc);
 
-    for (Node *n_i = n->block; n_i != NULL; n_i = n_i->next){
+    for (Node *n_i = n->block; n_i != NULL; n_i = n_i->next) {
         add_type(n_i);
     }
 
     if (n->nk == ND_FUNC || n->nk == ND_CALL) {
-        for (Node *n_i = n->func.body; n_i != NULL; n_i = n_i->next){
+        for (Node *n_i = n->func.body; n_i != NULL; n_i = n_i->next) {
             add_type(n_i);
         }
         if (n->func.args_num > 0) {
-            for (Node *n_i = n->func.args; n_i != NULL; n_i = n_i->next){
+            for (Node *n_i = n->func.args; n_i != NULL; n_i = n_i->next) {
                 add_type(n_i);
             }
         }
