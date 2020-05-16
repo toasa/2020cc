@@ -242,7 +242,7 @@ size_t get_type_msize(TypeKind t) {
 // to calculate `sizeof` operator.
 size_t size_of(Type *t) {
     if (t->tk == ARRAY) {
-        return t->array_size * size_of(t->arr_of);
+        return t->arr_size * size_of(t->arr_of);
     } else if (t->tk == PTR) {
         return 8;
     } else {
@@ -288,8 +288,8 @@ Type *parse_type() {
             // array initialization allow that the number of array elements is not specified.
         } else {
             assert(cur_tokenkind_is(TK_NUM), "array size must be integer literal");
-            t->array_size = token->val;
-            t->size = base->size * t->array_size;
+            t->arr_size = token->val;
+            t->size = base->size * t->arr_size;
             next_token();
         }
 
@@ -777,12 +777,12 @@ Node *parse_stmt() {
                 head->next = cur;
 
                 // if array size not determined yet, resolve here.
-                if (n->ident.type->array_size == 0) {
+                if (n->ident.type->arr_size == 0) {
                     IdentNode *ident_iter = ident_head;
                     int offset = 0;
                     while (1) {
                         if (equal_strings(n->ident.name, ident_iter->data.name)) {
-                            ident_iter->data.type->array_size = result.count;
+                            ident_iter->data.type->arr_size = result.count;
                             size_t size = ident_iter->data.type->arr_of->size * result.count;
                             ident_iter->data.type->size = size;
                             ident_iter->data.offset = offset + size;
@@ -813,7 +813,7 @@ Node *parse_stmt() {
                     Node *index = new_node(ND_MUL, 0);
                     index->lhs = new_node(ND_NUM, i);
 
-                    size_t element_count = array->ident.type->array_size;
+                    size_t element_count = array->ident.type->arr_size;
                     size_t total_bytes = array->ident.type->size;
                     size_t size_of_elem = total_bytes / element_count;
                     index->rhs = new_node(ND_NUM, size_of_elem);
