@@ -287,29 +287,29 @@ Type *parse_type() {
     return t;
 }
 
-Node *parse_array() {
-    // array index operator
-    // TODO: should handle `3[arr]`.
-    Node *array = new_node(ND_LVAR, 0);
-    array->ident = get_ident(token->str);
-
-    expect(TK_IDENT);
-    expect(TK_LBRACKET);
-
-    // array index expression
-    Node *index = new_node(ND_MUL, 0);
-    index->lhs = parse_expr();
-    size_t element_count = array->ident.type->array_size;
-    size_t total_bytes = array->ident.type->size;
-    size_t size_of_elem = total_bytes / element_count;
-    index->rhs = new_node(ND_NUM, size_of_elem);
-
-    Node *add = new_node_with_lr(ND_ADD, array, index);
+Node *parse_array(Node *lhs) {
+    Node *rhs = parse_expr();
+    add_type(lhs);
+    add_type(rhs);
 
     expect(TK_RBRACKET);
 
+    // canonicalize 'expr[ptr]' to 'ptr[expr]'.
+    if (!is_pointer(lhs) && is_pointer(rhs)) {
+        Node *tmp = lhs;
+        lhs = rhs;
+        rhs = tmp;
+    }
+
+    if (lhs->ty->tk == PTR) {
+        rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->ptr_to->size));
+    } else if (lhs->ty->tk == ARRAY) {
+        rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->arr_of->size));
+    }
+
     Node *n = new_node(ND_DEREF, 0);
-    n->expr = add;
+    n->expr = new_node_with_lr(ND_ADD, lhs, rhs);
+
     return n;
 }
 
@@ -369,8 +369,6 @@ Node *parse_primary() {
 
             n->func = fd;
             expect(TK_RPARENT);
-        } else if (next_tokenkind_is(TK_LBRACKET)) {
-            n = parse_array();
         } else {
             // identifier (it must be declared already)
             n = new_node(ND_LVAR, 0);
@@ -384,7 +382,10 @@ Node *parse_primary() {
 
     Node *new_n;
 
-    if (cur_token_is("++")) {
+    if (cur_token_is("[")) {
+        next_token();
+        n = parse_array(n);
+    } else if (cur_token_is("++")) {
         // post increment
         next_token();
         new_n = new_node(ND_POSTINC, 0);

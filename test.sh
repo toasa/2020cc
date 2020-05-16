@@ -465,6 +465,15 @@ int main() {
 }
 "
 
+test 5 "
+int main() {
+    int arr[10];
+    int *p1 = arr;
+    int *p2 = arr + 5;
+    return p2 - p1;
+}
+"
+
 test 10 "
 int main() {
     int a[3];
@@ -517,12 +526,23 @@ int main() {
 }
 "
 
-test 5 "
+test 30 "
 int main() {
-    int arr[10];
-    int *p1 = arr;
-    int *p2 = arr + 5;
-    return p2 - p1;
+    int a[3];
+    a[0] = 10;
+    a[1] = 20;
+    a[2] = 30;
+    return 2[a];
+}
+"
+
+test 30 "
+int main() {
+    int a[3];
+    0[a] = 10;
+    1[a] = 20;
+    2[a] = 30;
+    return 2[a];
 }
 "
 
