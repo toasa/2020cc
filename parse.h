@@ -37,11 +37,11 @@ typedef enum {
 
 typedef struct Type {
     TypeKind tk;
+    size_t size;
     struct Type *ptr_to;
     struct Type *arr_of;
     char *arr_name;
     size_t array_size;           // the number of elements
-    size_t size;
 } Type;
 
 typedef enum IdentKind {

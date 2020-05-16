@@ -362,9 +362,27 @@ int main() {
 }
 "
 
+test 8 "
+int main() {
+    int ***ptr;
+    return sizeof(ptr);
+}
+"
+
 test 4 "
 int main() {
-    return sizeof(3);
+    int *ptr;
+    return sizeof(*ptr);
+}
+"
+
+test 4 "
+int main() {
+    int x = 20;
+    int *y = &x;
+    int **z = &y;
+    int ***ptr = &z;
+    return sizeof(***ptr);
 }
 "
 
@@ -496,6 +514,15 @@ int main() {
     int i;
     i = 1;
     return a[i];
+}
+"
+
+test 5 "
+int main() {
+    int arr[10];
+    int *p1 = arr;
+    int *p2 = arr + 5;
+    return p2 - p1;
 }
 "
 

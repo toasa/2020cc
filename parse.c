@@ -34,7 +34,6 @@ int next_tokenkind_is(TokenKind tk) {
     if (token->tk == TK_EOF) {
         return 0;
     }
-
     return (token->next->tk == tk);
 }
 
@@ -51,26 +50,100 @@ void expect(TokenKind tk) {
 
 Node *parse_expr();
 
-int is_pointer(Node *n) {
-    if (n->nk == ND_ADDR) { return 1; }
-    if (n->nk == ND_LVAR) {
-        if (n->ident.type->tk == PTR || n->ident.type->tk == ARRAY) {
-            return 1;
+Type *int_t = &(Type){INT, 8};
+
+Type *new_type(TypeKind tk, Type *ptr_to) {
+    Type *t = calloc(1, sizeof(Type));
+    t->tk = tk;
+    t->ptr_to = ptr_to;
+    return t;
+}
+
+Type *pointer_to(Type *base) {
+    Type *t = new_type(PTR, base);
+    t->size = 8;
+    return t;
+}
+
+void add_type(Node *n) {
+    if (n == NULL || n->ty != NULL) {
+        return;
+    }
+
+    add_type(n->lhs);
+    add_type(n->rhs);
+    add_type(n->init);
+    add_type(n->cond);
+    add_type(n->then);
+    add_type(n->alt);
+    add_type(n->expr);
+    add_type(n->post);
+    add_type(n->inc);
+
+    for (Node *n_i = n->block; n_i != NULL; n_i = n_i->next){
+        add_type(n_i);
+    }
+
+    if (n->nk == ND_FUNC || n->nk == ND_CALL) {
+        for (Node *n_i = n->func.body; n_i != NULL; n_i = n_i->next){
+            add_type(n_i);
+        }
+        if (n->func.args_num > 0) {
+            for (Node *n_i = n->func.args; n_i != NULL; n_i = n_i->next){
+                add_type(n_i);
+            }
         }
     }
 
-    // TODO? it should be recursive?
-    if (n->lhs != NULL) {
-        if (is_pointer(n->lhs)) {
-            return 1;
+    switch (n->nk) {
+    case ND_NUM:
+    case ND_EQ:
+    case ND_NE:
+    case ND_LT:
+    case ND_LE:
+    case ND_CALL:
+        n->ty = int_t;
+        return;
+    case ND_LVAR:
+    case ND_DECL:
+        n->ty = n->ident.type;
+        return;
+    case ND_ADD:
+    case ND_SUB:
+    case ND_MUL:
+    case ND_DIV:
+    case ND_REM:
+    case ND_LSHIFT:
+    case ND_RSHIFT:
+    case ND_ASSIGN:
+        n->ty = n->lhs->ty;
+        return;
+    case ND_ADDR:
+        if (n->expr->ty->tk == ARRAY) {
+            n->ty = pointer_to(n->expr->ty->arr_of);
+        } else {
+            n->ty = pointer_to(n->expr->ty);
         }
-    }
-    if (n->rhs != NULL) {
-        if (is_pointer(n->rhs)) {
-            return 1;
+        return;
+    case ND_DEREF:
+        if (n->expr->ty->tk == ARRAY) {
+            n->ty = n->expr->ty->arr_of;
+        } else if (n->expr->ty->tk == PTR) {
+            n->ty = n->expr->ty->ptr_to;
         }
+        return;
+    default:;
     }
-    return 0;
+}
+
+int is_pointer(Node *n) {
+    if (n->ty == NULL) { return 0; }
+    return (n->ty->tk == PTR) || (n->ty->tk == ARRAY);
+}
+
+int is_integer(Node *n) {
+    if (n->ty == NULL) { return 0; }
+    return n->ty->tk == INT;
 }
 
 FuncData new_func_data() {
@@ -158,13 +231,6 @@ Ident get_ident(char *name) {
     return ident_iter->data;
 }
 
-Type *new_type(TypeKind tk, Type *ptr_to) {
-    Type *t = calloc(1, sizeof(Type));
-    t->tk = tk;
-    t->ptr_to = ptr_to;
-    return t;
-}
-
 size_t get_type_size(TypeKind t) {
     if (t == INT) {
         // TODO: It should will be 4, but currently any local variable assign to 64bit register in code generating, so treat size of 'INT' as 8bytes.
@@ -238,9 +304,7 @@ Node *parse_array() {
     size_t size_of_elem = total_bytes / element_count;
     index->rhs = new_node(ND_NUM, size_of_elem);
 
-    Node *add = new_node(ND_ADD, 0);
-    add->lhs = array;
-    add->rhs = index;
+    Node *add = new_node_with_lr(ND_ADD, array, index);
 
     expect(TK_RBRACKET);
 
@@ -325,8 +389,9 @@ Node *parse_primary() {
         next_token();
         new_n = new_node(ND_POSTINC, 0);
         new_n->expr = n;
+        add_type(n);
         if (is_pointer(n)) {
-            new_n->inc = new_node(ND_NUM, 8);
+            new_n->inc = new_node(ND_NUM, n->ty->size);
         } else {
             new_n->inc = new_node(ND_NUM, 1);
         }
@@ -337,8 +402,9 @@ Node *parse_primary() {
         next_token();
         new_n = new_node(ND_POSTDEC, 0);
         new_n->expr = n;
+        add_type(n);
         if (is_pointer(n)) {
-            new_n->inc = new_node(ND_NUM, 8);
+            new_n->inc = new_node(ND_NUM, n->ty->size);
         } else {
             new_n->inc = new_node(ND_NUM, 1);
         }
@@ -373,8 +439,9 @@ Node *parse_unary() {
         next_token();
         n = new_node(ND_PREINC, 0);
         n->expr = parse_primary();
+        add_type(n->expr);
         if (is_pointer(n->expr)) {
-            n->inc = new_node(ND_NUM, 8);
+            n->inc = new_node(ND_NUM, n->expr->ty->size);
         } else {
             n->inc = new_node(ND_NUM, 1);
         }
@@ -383,14 +450,16 @@ Node *parse_unary() {
         next_token();
         n = new_node(ND_PREDEC, 0);
         n->expr = parse_primary();
+        add_type(n->expr);
         if (is_pointer(n->expr)) {
-            n->inc = new_node(ND_NUM, 8);
+            n->inc = new_node(ND_NUM, n->expr->ty->size);
         } else {
             n->inc = new_node(ND_NUM, 1);
         }
     } else if (cur_token_is("sizeof")) {
         next_token();
         Node *tmp = parse_unary();
+        add_type(tmp);
         // 構文木 n に紐付いている型が int なら 4 を
         // ポインタなら 8 を生成する
         // TODO: implement for a case of array.
@@ -426,49 +495,59 @@ Node *parse_mul() {
 }
 
 Node *new_add(Node *lhs) {
-    Node *n = new_node(ND_ADD, 0);
     Node *rhs = parse_mul();
+    add_type(lhs);
+    add_type(rhs);
 
-    // TODO? it should handle pointer + pointer?
-    if (is_pointer(lhs) && !is_pointer(rhs)) {
-        Node *new_rhs = new_node(ND_MUL, 0);
-        // TODO: 8 is work around, it should be size of 'lhs'.
-        new_rhs->lhs = new_node(ND_NUM, 8);
-        new_rhs->rhs = rhs;
-        rhs = new_rhs;
-    } else if (!is_pointer(lhs) && is_pointer(rhs)) {
-        Node *new_lhs = new_node(ND_MUL, 0);
-        // TODO: 8 is work around, it should be size of 'rhs'.
-        new_lhs->lhs = new_node(ND_NUM, 8);
-        new_lhs->rhs = rhs;
-        lhs = new_lhs;
+    // `int` + `int`
+    if (is_integer(lhs) && is_integer(rhs)) {
+        return new_node_with_lr(ND_ADD, lhs, rhs);
     }
-    n->lhs = lhs;
-    n->rhs = rhs;
-    return n;
+
+    // Canonicalize `num + ptr` to `ptr + num`.
+    if (!is_pointer(lhs) && is_pointer(rhs)) {
+        Node *tmp = lhs;
+        lhs = rhs;
+        rhs = tmp;
+    }
+
+    // ptr + num
+    if (lhs->ty->tk == PTR) {
+        rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->ptr_to->size));
+    } else if (lhs->ty->tk == ARRAY) {
+        rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->arr_of->size));
+    }
+    return new_node_with_lr(ND_ADD, lhs, rhs);
 }
 
 Node *new_sub(Node *lhs) {
-    Node *n = new_node(ND_SUB, 0);
     Node *rhs = parse_mul();
+    add_type(lhs);
+    add_type(rhs);
 
-    // TODO? it should handle pointer - pointer?
-    if (is_pointer(lhs) && !is_pointer(rhs)) {
-        Node *new_rhs = new_node(ND_MUL, 0);
-        // TODO: 8 is work around, it should be size of 'lhs'.
-        new_rhs->lhs = new_node(ND_NUM, 8);
-        new_rhs->rhs = rhs;
-        rhs = new_rhs;
-    } else if (!is_pointer(lhs) && is_pointer(rhs)) {
-        Node *new_lhs = new_node(ND_MUL, 0);
-        // TODO: 8 is work around, it should be size of 'rhs'.
-        new_lhs->lhs = new_node(ND_NUM, 8);
-        new_lhs->rhs = rhs;
-        lhs = new_lhs;
+    // `int` - `int`
+    if (is_integer(lhs) && is_integer(rhs)) {
+        return new_node_with_lr(ND_SUB, lhs, rhs);
     }
-    n->lhs = lhs;
-    n->rhs = rhs;
-    return n;
+
+    // `ptr` - `int`
+    if (is_pointer(lhs) && !is_pointer(rhs)) {
+        if (lhs->ty->tk == PTR) {
+            rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->ptr_to->size));
+        } else if (lhs->ty->tk == ARRAY) {
+            rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->arr_of->size));
+        }
+        return new_node_with_lr(ND_SUB, lhs, rhs);
+    }
+
+    // `ptr` - `ptr`
+    if (is_pointer(lhs) && is_pointer(rhs)) {
+        Node *sub = new_node_with_lr(ND_SUB, lhs, rhs);
+        return new_node_with_lr(ND_DIV, sub, new_node(ND_NUM, lhs->ty->size));
+    }
+
+    error("invalid - operation");
+    return NULL;
 }
 
 Node *parse_add() {
@@ -591,6 +670,7 @@ Node *parse_declaration(IdentKind ik) {
 
     // declaration statement;
     Type *t = parse_type();
+    n->ty = t;
 
     char *ident_name;
     if (t->tk == ARRAY) {
@@ -659,11 +739,13 @@ Node *parse_stmt() {
         if (!cur_token_is("}")) {
             Node *head = calloc(1, sizeof(Node));
             Node *cur = parse_stmt();
+            add_type(cur);
             head->next = cur;
             while (!cur_token_is("}")) {
                 Node *tmp = parse_stmt();
                 cur->next = tmp;
                 cur = tmp;
+                add_type(cur);
             }
             n->block = head->next;
         }
