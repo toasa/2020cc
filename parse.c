@@ -231,12 +231,24 @@ Ident get_ident(char *name) {
     return ident_iter->data;
 }
 
-size_t get_type_size(TypeKind t) {
+// memory size allocated in stack.
+size_t get_type_msize(TypeKind t) {
     if (t == INT) {
-        // TODO?: Should will be 4?
         return 8;
     }
     return 8;
+}
+
+// to calculate `sizeof` operator.
+size_t size_of(Type *t) {
+    if (t->tk == ARRAY) {
+        return t->array_size * size_of(t->arr_of);
+    } else if (t->tk == PTR) {
+        return 8;
+    } else {
+        // INT
+        return 4;
+    }
 }
 
 Type *parse_type() {
@@ -247,7 +259,7 @@ Type *parse_type() {
 
     // local identifier
     t = new_type(type_base, NULL);
-    t->size = get_type_size(type_base);
+    t->size = get_type_msize(type_base);
 
     next_token();
 
@@ -255,7 +267,7 @@ Type *parse_type() {
         // pointer
         do {
             Type *p = new_type(PTR, t);
-            p->size = get_type_size(PTR);
+            p->size = get_type_msize(PTR);
             t = p;
             next_token();
         } while (cur_token_is("*"));
@@ -461,14 +473,7 @@ Node *parse_unary() {
         next_token();
         Node *tmp = parse_unary();
         add_type(tmp);
-        // 構文木 n に紐付いている型が int なら 4 を
-        // ポインタなら 8 を生成する
-        // TODO: implement for a case of array.
-        if (is_pointer(tmp)) {
-            n = new_node(ND_NUM, 8);
-        } else {
-            n = new_node(ND_NUM, 4);
-        }
+        n = new_node(ND_NUM, size_of(tmp->ty));
     } else {
         n = parse_primary();
     }

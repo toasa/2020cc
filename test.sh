@@ -386,6 +386,13 @@ int main() {
 }
 "
 
+test 40 "
+int main() {
+    int arr[10];
+    return sizeof(arr);
+}
+"
+
 test 10 "
 int main() {
     int a[3];
