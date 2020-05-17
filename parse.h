@@ -38,10 +38,9 @@ typedef enum {
 typedef struct Type {
     TypeKind tk;
     size_t size;
-    struct Type *ptr_to;
-    struct Type *arr_of;
+    struct Type *base; // base type of array or pointer
     char *arr_name;
-    size_t arr_size;           // the number of elements
+    size_t arr_size;   // the number of elements
 } Type;
 
 typedef enum IdentKind {

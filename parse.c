@@ -52,10 +52,10 @@ Node *parse_expr();
 
 Type *int_t = &(Type){INT, 8};
 
-Type *new_type(TypeKind tk, Type *ptr_to) {
+Type *new_type(TypeKind tk, Type *base) {
     Type *t = calloc(1, sizeof(Type));
     t->tk = tk;
-    t->ptr_to = ptr_to;
+    t->base = base;
     return t;
 }
 
@@ -120,17 +120,13 @@ void add_type(Node *n) {
         return;
     case ND_ADDR:
         if (n->expr->ty->tk == ARRAY) {
-            n->ty = pointer_to(n->expr->ty->arr_of);
+            n->ty = pointer_to(n->expr->ty->base);
         } else {
             n->ty = pointer_to(n->expr->ty);
         }
         return;
     case ND_DEREF:
-        if (n->expr->ty->tk == ARRAY) {
-            n->ty = n->expr->ty->arr_of;
-        } else if (n->expr->ty->tk == PTR) {
-            n->ty = n->expr->ty->ptr_to;
-        }
+        n->ty = n->expr->ty->base;
         return;
     default:;
     }
@@ -242,7 +238,7 @@ size_t get_type_msize(TypeKind t) {
 // to calculate `sizeof` operator.
 size_t size_of(Type *t) {
     if (t->tk == ARRAY) {
-        return t->arr_size * size_of(t->arr_of);
+        return t->arr_size * size_of(t->base);
     } else if (t->tk == PTR) {
         return 8;
     } else {
@@ -279,7 +275,7 @@ Type *parse_type() {
         // array
         t = new_type(ARRAY, NULL);
         t->arr_name = token->str;
-        t->arr_of = base;
+        t->base = base;
 
         expect(TK_IDENT);
         expect(TK_LBRACKET);
@@ -313,11 +309,7 @@ Node *parse_array(Node *lhs) {
         rhs = tmp;
     }
 
-    if (lhs->ty->tk == PTR) {
-        rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->ptr_to->size));
-    } else if (lhs->ty->tk == ARRAY) {
-        rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->arr_of->size));
-    }
+    rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->base->size));
 
     Node *n = new_node(ND_DEREF, 0);
     n->expr = new_node_with_lr(ND_ADD, lhs, rhs);
@@ -518,11 +510,7 @@ Node *new_add(Node *lhs) {
     }
 
     // ptr + num
-    if (lhs->ty->tk == PTR) {
-        rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->ptr_to->size));
-    } else if (lhs->ty->tk == ARRAY) {
-        rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->arr_of->size));
-    }
+    rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->base->size));
     return new_node_with_lr(ND_ADD, lhs, rhs);
 }
 
@@ -538,11 +526,7 @@ Node *new_sub(Node *lhs) {
 
     // `ptr` - `int`
     if (is_pointer(lhs) && !is_pointer(rhs)) {
-        if (lhs->ty->tk == PTR) {
-            rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->ptr_to->size));
-        } else if (lhs->ty->tk == ARRAY) {
-            rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->arr_of->size));
-        }
+        rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->base->size));
         return new_node_with_lr(ND_SUB, lhs, rhs);
     }
 
@@ -783,7 +767,7 @@ Node *parse_stmt() {
                     while (1) {
                         if (equal_strings(n->ident.name, ident_iter->data.name)) {
                             ident_iter->data.type->arr_size = result.count;
-                            size_t size = ident_iter->data.type->arr_of->size * result.count;
+                            size_t size = ident_iter->data.type->base->size * result.count;
                             ident_iter->data.type->size = size;
                             ident_iter->data.offset = offset + size;
                             break;
