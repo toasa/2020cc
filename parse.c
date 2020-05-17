@@ -178,11 +178,7 @@ void register_new_ident(Ident i) {
     int offset = 0;
 
     if (ident_head == NULL) {
-        if (i.type->tk == ARRAY) {
-            new_i->data.offset = i.type->size;
-        } else {
-            new_i->data.offset = i.type->size;
-        }
+        new_i->data.offset = i.type->size;
         ident_head = new_i;
         return;
     }
