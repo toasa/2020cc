@@ -790,13 +790,10 @@ Node *parse_stmt() {
                     array->ident = get_ident(n->ident.name);
 
                     // array index expression
-                    Node *index = new_node(ND_MUL, 0);
-                    index->lhs = new_node(ND_NUM, i);
-
-                    size_t element_count = array->ident.type->arr_size;
-                    size_t total_bytes = array->ident.type->size;
-                    size_t size_of_elem = total_bytes / element_count;
-                    index->rhs = new_node(ND_NUM, size_of_elem);
+                    Node *index = new_node_with_lr(
+                        ND_MUL,
+                        new_node(ND_NUM, i),
+                        new_node(ND_NUM, array->ident.type->base->size));
 
                     Node *add = new_node_with_lr(ND_ADD, array, index);
 
