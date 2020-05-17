@@ -15,7 +15,7 @@ void gen_expr(Node *n);
 void gen_addr(Node *n) {
     if (n->nk == ND_LVAR) {
         printf("    mov rax, rbp\n");
-        printf("    sub rax, %d\n", n->ident.offset);
+        printf("    sub rax, %d\n", n->var.offset);
         printf("    push rax\n");
     } else if (n->nk == ND_DEREF) {
         gen_expr(n->expr);
@@ -35,7 +35,7 @@ void gen_expr(Node *n) {
         printf("    push %d\n", n->val);
         return;
     } else if (n->nk == ND_LVAR) {
-        if (n->ident.type->tk == ARRAY) {
+        if (n->var.type->tk == ARRAY) {
             gen_addr(n);
         } else {
             gen_addr(n);
@@ -273,18 +273,18 @@ void gen_func(Node *n) {
 
     // allocate for local variables in stack area.
     int stack_size = 0;
-    for (IdentNode *ident = n->func.idents; ident != NULL; ident = ident->next) {
-        stack_size += ident->data.type->size;
+    for (VarNode *var = n->func.vars; var != NULL; var = var->next) {
+        stack_size += var->data.type->size;
     }
     printf("    sub rsp, %d\n", stack_size);
 
     // arguments
     if (n->func.args_num > 0) {
-        // iterate the linked list of `idents`.
-        IdentNode *arg = n->func.idents;
+        // iterate the linked list of `vars`.
+        VarNode *arg = n->func.vars;
         for (int i = 0; i < n->func.args_num; i++) {
 
-            if (arg->data.ik != ID_ARG) {
+            if (arg->data.vk != ARG) {
                 error("argument preparing error");
             }
 

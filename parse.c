@@ -106,7 +106,7 @@ void add_type(Node *n) {
         return;
     case ND_LVAR:
     case ND_DECL:
-        n->ty = n->ident.type;
+        n->ty = n->var.type;
         return;
     case ND_ADD:
     case ND_SUB:
@@ -145,82 +145,82 @@ int is_integer(Node *n) {
 FuncData new_func_data() {
     FuncData data;
     data.name = NULL;
-    data.idents = NULL;
+    data.vars = NULL;
     data.body = NULL;
     data.args_num = 0;
     return data;
 }
 
-Ident new_ident(IdentKind ik, char *name, Type *t) {
-    Ident i;
-    i.ik = ik;
-    i.name = name;
-    i.type = t;
-    return i;
+Var new_var(VarKind vk, char *name, Type *t) {
+    Var v;
+    v.vk = vk;
+    v.name = name;
+    v.type = t;
+    return v;
 }
 
-IdentNode *new_ident_node(Ident i) {
-    IdentNode *ident_node = calloc(1, sizeof(IdentNode));
-    ident_node->data = i;
-    ident_node->next = NULL;
-    return ident_node;
+VarNode *new_var_node(Var v) {
+    VarNode *var_node = calloc(1, sizeof(VarNode));
+    var_node->data = v;
+    var_node->next = NULL;
+    return var_node;
 }
 
-// a head of linked list stored identifier infomation.
-IdentNode *ident_head = NULL;
+// a head of linked list which store local variables.
+VarNode *lvar_head = NULL;
 
-// add one `IdentNode` at tail of linked list which stored idefifier
+// add one `VarNode` at tail of linked list which stored idefifier
 // which occurs in currently parsing function.
-void register_new_ident(Ident i) {
-    IdentNode *new_i = new_ident_node(i);
+void register_new_var(Var v) {
+    VarNode *new_v = new_var_node(v);
 
-    // To calculate a offset for new identifier, add size of each identifier while iterate the linked list.
+    // To calculate a offset for new local variable, add size of each variable while iterate the linked list.
     int offset = 0;
 
-    if (ident_head == NULL) {
-        new_i->data.offset = i.type->size;
-        ident_head = new_i;
+    if (lvar_head == NULL) {
+        new_v->data.offset = v.type->size;
+        lvar_head = new_v;
         return;
     }
 
-    offset += ident_head->data.type->size;
+    offset += lvar_head->data.type->size;
 
-    IdentNode *ident_iter = ident_head;
-    while (ident_iter->next != NULL) {
-        char *cur_name = ident_iter->data.name;
-        // check duplication of identifier declaration.
-        if (equal_strings(cur_name, i.name)) {
-            error("duplicate of identifier declaration.");
+    VarNode *var_iter = lvar_head;
+    while (var_iter->next != NULL) {
+        char *cur_name = var_iter->data.name;
+        // check duplication of variable declaration.
+        if (equal_strings(cur_name, v.name)) {
+            error("duplicate of variable declaration.");
         }
 
-        offset += ident_iter->data.type->size;
-        ident_iter = ident_iter->next;
+        offset += var_iter->data.type->size;
+        var_iter = var_iter->next;
     }
 
-    new_i->data.offset = i.type->size + offset;
+    new_v->data.offset = v.type->size + offset;
 
-    ident_iter->next = new_i;
+    var_iter->next = new_v;
 }
 
-// search the 'name' from the linked list of identifier.
-// if the identifier 'name' is not declared then occur compile error
+// search the 'name' from the linked list of variable.
+// if the variable 'name' is not declared then occur compile error
 // and abort.
-Ident get_ident(char *name) {
-    IdentNode *ident_iter = ident_head;
-    while (ident_iter != NULL) {
-        char *cur_name = ident_iter->data.name;
+Var get_var(char *name) {
+    VarNode *var_iter = lvar_head;
+    while (var_iter != NULL) {
+        char *cur_name = var_iter->data.name;
         if (equal_strings(cur_name, name)) {
             break;
         }
-        ident_iter = ident_iter->next;
+        var_iter = var_iter->next;
     }
 
-    if (ident_iter == NULL) {
-        // found a undeclared identifier.
-        error("%s: undeclared identifier.", name);
+    if (var_iter == NULL) {
+        // found a undeclared variable.
+        error("%s: undeclared variable.", name);
     }
 
-    return ident_iter->data;
+    return var_iter->data;
 }
 
 // memory size allocated in stack.
@@ -249,7 +249,7 @@ Type *parse_type() {
 
     TypeKind type_base = INT;
 
-    // local identifier
+    // local variable
     t = new_type(type_base, NULL);
     t->size = get_type_msize(type_base);
 
@@ -370,9 +370,9 @@ Node *parse_primary() {
             n->func = fd;
             expect(TK_RPARENT);
         } else {
-            // identifier (it must be declared already)
+            // variable (it must be declared already)
             n = new_node(ND_LVAR, 0);
-            n->ident = get_ident(token->str);
+            n->var = get_var(token->str);
             next_token();
         }
     } else {
@@ -651,27 +651,27 @@ Node *parse_expr() {
     return parse_assign();
 }
 
-Node *parse_declaration(IdentKind ik) {
+Node *parse_declaration(VarKind ik) {
     Node *n = new_node(ND_DECL, 0);
 
     // declaration statement;
     Type *t = parse_type();
     n->ty = t;
 
-    char *ident_name;
+    char *var_name;
     if (t->tk == ARRAY) {
-        ident_name = t->arr_name;
+        var_name = t->arr_name;
     } else {
-        ident_name = token->str;
+        var_name = token->str;
         next_token();
     }
 
-    Ident i = new_ident(ik, ident_name, t);
+    Var i = new_var(ik, var_name, t);
 
-    // add new ident node at tail of linked list.
-    register_new_ident(i);
+    // add new var node at tail of linked list.
+    register_new_var(i);
 
-    n->ident = i;
+    n->var = i;
 
     return n;
 }
@@ -738,13 +738,13 @@ Node *parse_stmt() {
         expect(TK_RBRACE);
     } else if (cur_tokenkind_is(TK_TYPE)) {
         // `n` 's NodeKind is 'ND_DECL'.
-        n = parse_declaration(ID_LOCAL);
+        n = parse_declaration(LOCAL);
 
-        // simultaneously initialize identifer on declaration.
+        // simultaneously initialize variable on declaration.
         if (cur_token_is("=")) {
             next_token();
 
-            if (n->ident.type->tk == ARRAY) {
+            if (n->var.type->tk == ARRAY) {
                 expect(TK_LBRACE);
 
                 // parse elements of array.
@@ -757,19 +757,19 @@ Node *parse_stmt() {
                 head->next = cur;
 
                 // if array size not determined yet, resolve here.
-                if (n->ident.type->arr_size == 0) {
-                    IdentNode *ident_iter = ident_head;
+                if (n->var.type->arr_size == 0) {
+                    VarNode *var_iter = lvar_head;
                     int offset = 0;
                     while (1) {
-                        if (equal_strings(n->ident.name, ident_iter->data.name)) {
-                            ident_iter->data.type->arr_size = result.count;
-                            size_t size = ident_iter->data.type->base->size * result.count;
-                            ident_iter->data.type->size = size;
-                            ident_iter->data.offset = offset + size;
+                        if (equal_strings(n->var.name, var_iter->data.name)) {
+                            var_iter->data.type->arr_size = result.count;
+                            size_t size = var_iter->data.type->base->size * result.count;
+                            var_iter->data.type->size = size;
+                            var_iter->data.offset = offset + size;
                             break;
                         }
-                        offset += ident_iter->data.type->size;
-                        ident_iter = ident_iter->next;
+                        offset += var_iter->data.type->size;
+                        var_iter = var_iter->next;
                     }
                 }
 
@@ -787,13 +787,13 @@ Node *parse_stmt() {
                 // ```
                 for (int i = 0; i < result.count; i++) {
                     Node *array = new_node(ND_LVAR, 0);
-                    array->ident = get_ident(n->ident.name);
+                    array->var = get_var(n->var.name);
 
                     // array index expression
                     Node *index = new_node_with_lr(
                         ND_MUL,
                         new_node(ND_NUM, i),
-                        new_node(ND_NUM, array->ident.type->base->size));
+                        new_node(ND_NUM, array->var.type->base->size));
 
                     Node *add = new_node_with_lr(ND_ADD, array, index);
 
@@ -813,7 +813,7 @@ Node *parse_stmt() {
                 expect(TK_RBRACE);
             } else {
                 Node *lhs = new_node(ND_LVAR, 0);
-                lhs->ident = get_ident(n->ident.name);
+                lhs->var = get_var(n->var.name);
                 n = new_node_with_lr(ND_ASSIGN, lhs, parse_equality());
             }
         }
@@ -826,7 +826,7 @@ Node *parse_stmt() {
 }
 
 void init_function_context() {
-    ident_head = NULL;
+    lvar_head = NULL;
 }
 
 Node *parse_toplevel_func() {
@@ -846,10 +846,10 @@ Node *parse_toplevel_func() {
     if (!cur_token_is(")")) {
         // function arguments
         int args_num = 1;
-        parse_declaration(ID_ARG);
+        parse_declaration(ARG);
         while (!cur_token_is(")")) {
             expect(TK_COMMA);
-            parse_declaration(ID_ARG);
+            parse_declaration(ARG);
             args_num++;
         }
         func_data.args_num = args_num;
@@ -860,8 +860,8 @@ Node *parse_toplevel_func() {
     // parse function body
     func_data.body = parse_stmt();
 
-    // store the head of linked list which include identifiers.
-    func_data.idents = ident_head;
+    // store the head of linked list which include local variables.
+    func_data.vars = lvar_head;
 
     n->func = func_data;
     return n;

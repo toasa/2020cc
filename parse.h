@@ -43,24 +43,24 @@ typedef struct Type {
     size_t arr_size;   // the number of elements
 } Type;
 
-typedef enum IdentKind {
-    ID_LOCAL,
-    ID_GLOBAL,
-    ID_ARG,
-} IdentKind;
+typedef enum VarKind {
+    LOCAL,
+    GLOBAL,
+    ARG,
+} VarKind;
 
-typedef struct Ident {
-    IdentKind ik;
+typedef struct Var {
+    VarKind vk;
     char *name;
     int offset;
     Type *type;
     int is_global;
-} Ident;
+} Var;
 
-typedef struct IdentNode {
-    Ident data;
-    struct IdentNode *next;
-} IdentNode;
+typedef struct VarNode {
+    Var data;
+    struct VarNode *next;
+} VarNode;
 
 typedef struct FuncData {
     char *name;
@@ -68,9 +68,9 @@ typedef struct FuncData {
     Type *return_type;
 
     int args_num;
-    struct Node *args;   // nkがND_CALLの場合に使う。次の引数には`next`メンバからアクセスする。
+    struct Node *args; // nkがND_CALLの場合に使う。次の引数には`next`メンバからアクセスする。
 
-    IdentNode *idents;   // nkがND_FUNCの場合に引数のオフセット値を取得する
+    VarNode *vars;     // nkがND_FUNCの場合に引数のオフセット値を取得する
 } FuncData;
 
 typedef struct Node {
@@ -81,7 +81,7 @@ typedef struct Node {
 
     Type *ty;
 
-    Ident ident;        // nkがND_LVAR, ND_DECLの場合に使う
+    Var var;            // nkがND_LVAR, ND_DECLの場合に使う
     FuncData func;      // nkがND_CALL, ND_FUNCの場合に使う
 
     struct Node *init;  // nkがND_FORの場合に使う
