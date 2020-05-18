@@ -5,7 +5,7 @@ test() {
     input=$2
 
     ./main "$input" > tmp.s
-    cc tmp.s extern_funcs.o -o tmp
+    cc -no-pie tmp.s extern_funcs.o -o tmp
     ./tmp
     result=$?
 
@@ -639,5 +639,16 @@ int main() {
     return i;
 }
 "
+
+test 0 "int x; int main() { return x; }"
+test 3 "int x; int main() { x=3; return x; }"
+test 7 "int x; int y; int main() { x=3; y=4; return x+y; }"
+test 3 "int x; int main() { int x = 3; return x; }"
+test 0 "int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[0]; }"
+test 1 "int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[1]; }"
+test 2 "int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[2]; }"
+test 3 "int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[3]; }"
+test 4 "int x; int main() { return sizeof(x); }"
+test 16 "int x[4]; int main() { return sizeof(x); }"
 
 echo "OK"

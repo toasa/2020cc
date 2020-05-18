@@ -14,8 +14,12 @@ void gen_expr(Node *n);
 
 void gen_addr(Node *n) {
     if (n->nk == ND_LVAR) {
-        printf("    mov rax, rbp\n");
-        printf("    sub rax, %d\n", n->var.offset);
+        if (n->var.is_global) {
+            printf("    mov rax, offset %s\n", n->var.name);
+        } else {
+            printf("    mov rax, rbp\n");
+            printf("    sub rax, %d\n", n->var.offset);
+        }
         printf("    push rax\n");
     } else if (n->nk == ND_DEREF) {
         gen_expr(n->expr);
@@ -308,18 +312,34 @@ void gen_func(Node *n) {
     printf("    ret\n\n");
 }
 
-void gen(Node **funcs) {
+void gen_data(Program *p) {
+    printf(".data\n");
+
+    for (VarNode *var = p->gvars; var != NULL; var = var->next) {
+        printf("%s:\n", var->data.name);
+        printf("  .zero %zu\n\n", var->data.type->size);
+    }
+}
+
+void gen_text(Program *p) {
+    printf(".text\n");
+
+    for (int i = 0; p->funcs[i] != NULL; i++) {
+        gen_func(p->funcs[i]);
+    }
+}
+
+void gen(Program *p) {
     printf(".intel_syntax noprefix\n");
 
-    for (int i = 0; funcs[i] != NULL; i++) {
-        gen_func(funcs[i]);
-    }
+    gen_data(p);
+    gen_text(p);
 }
 
 int main(int argc, char **argv) {
     char *input = argv[1];
     Token *t = tokenize(input);
-    Node **code = parse(t);
-    gen(code);
+    Program *p = parse(t);
+    gen(p);
 }
 

@@ -95,4 +95,9 @@ typedef struct Node {
     struct Node *inc;   // nkがND_PREINC, ND_PREDEC, ND_POSTINC, ND_POSTDECの場合に使う
 } Node;
 
-Node **parse(Token *t);
+typedef struct Program {
+    struct Node **funcs;
+    VarNode *gvars;
+} Program;
+
+Program *parse(Token *t);

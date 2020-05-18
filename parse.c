@@ -156,6 +156,11 @@ Var new_var(VarKind vk, char *name, Type *t) {
     v.vk = vk;
     v.name = name;
     v.type = t;
+    if (vk == GLOBAL) {
+        v.is_global = 1;
+    } else {
+        v.is_global = 0;
+    }
     return v;
 }
 
@@ -169,9 +174,12 @@ VarNode *new_var_node(Var v) {
 // a head of linked list which store local variables.
 VarNode *lvar_head = NULL;
 
+// a head of linked list which store global variables.
+VarNode *gvar_head = NULL;
+
 // add one `VarNode` at tail of linked list which stored idefifier
 // which occurs in currently parsing function.
-void register_new_var(Var v) {
+void register_new_lvar(Var v) {
     VarNode *new_v = new_var_node(v);
 
     // To calculate a offset for new local variable, add size of each variable while iterate the linked list.
@@ -202,25 +210,60 @@ void register_new_var(Var v) {
     var_iter->next = new_v;
 }
 
-// search the 'name' from the linked list of variable.
-// if the variable 'name' is not declared then occur compile error
-// and abort.
-Var get_var(char *name) {
-    VarNode *var_iter = lvar_head;
+void register_new_gvar(Var v) {
+    VarNode *new_v = new_var_node(v);
+
+    if (gvar_head == NULL) {
+        new_v->data.offset = v.type->size;
+        gvar_head = new_v;
+        return;
+    }
+
+    VarNode *var_iter = gvar_head;
+    while (var_iter->next != NULL) {
+        char *cur_name = var_iter->data.name;
+        // check duplication of variable declaration.
+        if (equal_strings(cur_name, v.name)) {
+            error("duplicate of variable declaration.");
+        }
+
+        var_iter = var_iter->next;
+    }
+
+    var_iter->next = new_v;
+}
+
+// `head` is `lvar_head` or `gvar_head`.
+VarNode *look_up_var(char *name, VarNode *head) {
+    // VarNode *var_iter = lvar_head;
+    VarNode *var_iter = head;
     while (var_iter != NULL) {
         char *cur_name = var_iter->data.name;
         if (equal_strings(cur_name, name)) {
-            break;
+            return var_iter;
         }
         var_iter = var_iter->next;
     }
 
-    if (var_iter == NULL) {
-        // found a undeclared variable.
-        error("%s: undeclared variable.", name);
+    return NULL;
+}
+
+// Search the 'name' from the linked list of variable.
+// First, look up the local variables, the next, look up the global variables.
+// If not found then occur compile error and abort.
+Var get_var(char *name) {
+    VarNode *v;
+
+    v = look_up_var(name, lvar_head);
+    if (v != NULL) {
+        return v->data;
     }
 
-    return var_iter->data;
+    v = look_up_var(name, gvar_head);
+    if (v == NULL) {
+        error("%s: undeclared variable.", name);
+    }
+    return v->data;
 }
 
 // memory size allocated in stack.
@@ -651,7 +694,7 @@ Node *parse_expr() {
     return parse_assign();
 }
 
-Node *parse_declaration(VarKind ik) {
+Node *parse_declaration(VarKind vk) {
     Node *n = new_node(ND_DECL, 0);
 
     // declaration statement;
@@ -666,12 +709,12 @@ Node *parse_declaration(VarKind ik) {
         next_token();
     }
 
-    Var i = new_var(ik, var_name, t);
+    Var v = new_var(vk, var_name, t);
 
     // add new var node at tail of linked list.
-    register_new_var(i);
+    register_new_lvar(v);
 
-    n->var = i;
+    n->var = v;
 
     return n;
 }
@@ -829,17 +872,16 @@ void init_function_context() {
     lvar_head = NULL;
 }
 
-Node *parse_toplevel_func() {
+Node *parse_toplevel_func(Type *ret_t, char *func_name) {
     init_function_context();
     Node *n = new_node(ND_FUNC, 0);
     FuncData func_data = new_func_data();
 
     // return type
-    func_data.return_type = parse_type();
+    func_data.return_type = ret_t;
 
     // function name
-    func_data.name = token->str;
-    next_token();
+    func_data.name = func_name;
 
     // parse argument
     expect(TK_LPARENT);
@@ -867,19 +909,47 @@ Node *parse_toplevel_func() {
     return n;
 }
 
-Node *funcs[100];
-
-void parse_program() {
-    int i = 0;
-    while (token->tk != TK_EOF) {
-        funcs[i] = parse_toplevel_func();
-        i++;
-    }
-    funcs[i] = NULL;
+void parse_toplevel_global_var(Type *t, char *gname) {
+    Var v = new_var(GLOBAL, gname, t);
+    register_new_gvar(v);
+    expect(TK_SEMICOLON);
 }
 
-Node **parse(Token *t) {
+Node *funcs[100];
+int func_count = 0;
+
+// parse type and identifier, and switch parsing if token is '(' or not.
+void parse_toplevel() {
+    Type *t = parse_type();
+    char *ident_name;
+    if (t->tk == ARRAY) {
+        ident_name = t->arr_name;
+    } else {
+        ident_name = token->str;
+        next_token();
+    }
+
+    if (cur_token_is("(")) {
+        // top level function definition
+        funcs[func_count++] = parse_toplevel_func(t, ident_name);
+    } else {
+        // global variable declaration
+        parse_toplevel_global_var(t, ident_name);
+    }
+}
+
+void parse_program() {
+    while (token->tk != TK_EOF) {
+        parse_toplevel();
+    }
+    funcs[func_count] = NULL;
+}
+
+Program *parse(Token *t) {
     token = t;
     parse_program();
-    return funcs;
+    Program *p = calloc(1, sizeof(Program));
+    p->funcs = funcs;
+    p->gvars = gvar_head;
+    return p;
 }
