@@ -328,7 +328,14 @@ void gen_data(Program *p) {
 
     for (VarNode *var = p->gvars; var != NULL; var = var->next) {
         printf("%s:\n", var->data.name);
-        printf("  .zero %zu\n\n", var->data.type->size);
+
+        if (var->data.str == NULL) {
+            printf("  .zero %zu\n\n", var->data.type->size);
+            continue;
+        }
+
+        // string literal
+        printf("    .string \"%s\"\n\n", var->data.str);
     }
 }
 

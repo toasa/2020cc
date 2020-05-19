@@ -665,4 +665,10 @@ int main() {
 }"
 test 4 "int main() { return sub_char(7, 1, 2); } int sub_char(char a, char b, char c) { return a-b-c; }"
 
+test 97 'int main() { return "abc"[0]; }'
+test 98 'int main() { return "abc"[1]; }'
+test 99 'int main() { return "abc"[2]; }'
+test 0 'int main() { return "abc"[3]; }'
+test 4 'int main() { return sizeof("abc"); }'
+
 echo "OK"

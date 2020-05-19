@@ -51,6 +51,15 @@ int is_type(char *str) {
     return 0;
 }
 
+Token *new_token(Token *prev, TokenKind tk, int val, char *str) {
+    Token *t = calloc(1, sizeof(Token));
+    t->tk = tk;
+    t->val = val;
+    t->str = str;
+    prev->next = t;
+    return t;
+}
+
 void skip(char **input) {
     while (can_skip(**input)) {
         (*input)++;
@@ -68,7 +77,7 @@ int read_number(char **input) {
 
 // 一文字目はchar、二文字目以降はchar, 数字, `_`のいづれかの文字を読み、
 // 新たにメモリを確保した上で文字列を返す
-char *read_str(char **input) {
+char *read_ident(char **input) {
     char *input_org = *input;
 
     int str_count = 0;
@@ -88,13 +97,20 @@ char *read_str(char **input) {
     return str;
 }
 
-Token *new_token(Token *prev, TokenKind tk, int val, char *str) {
-    Token *t = calloc(1, sizeof(Token));
-    t->tk = tk;
-    t->val = val;
-    t->str = str;
-    prev->next = t;
-    return t;
+Token *new_str_token(Token *cur_token, char **input) {
+    char *input_org = *input;
+
+    int str_count = 0;
+    while (**input != '"') {
+        (*input)++;
+        str_count++;
+    }
+    char *str = calloc(1, sizeof(char) * (str_count + 1));
+    strncpy(str, input_org, str_count);
+
+    Token *str_token = new_token(cur_token, TK_STR, 0, str);
+    str_token->str_len = str_count + 1;
+    return str_token;
 }
 
 Token *tokenize(char *input) {
@@ -107,7 +123,7 @@ Token *tokenize(char *input) {
             int num = read_number(&input);
             cur_token = new_token(cur_token, TK_NUM, num, "");
         } else if (is_char(*input)) {
-            char *str = read_str(&input);
+            char *str = read_ident(&input);
             if (is_keyword(str)) {
                 cur_token = new_token(cur_token, TK_RESERVED, 0, str);
             } else if (is_type(str)) {
@@ -116,6 +132,10 @@ Token *tokenize(char *input) {
                 // identifier
                 cur_token = new_token(cur_token, TK_IDENT, 0, str);
             }
+        } else if (*input == '"') {
+            input++;
+            cur_token = new_str_token(cur_token, &input);
+            input++;
         } else if (*input == '+') {
             input++;
             if (*input == '=') {

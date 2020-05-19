@@ -43,7 +43,7 @@ void next_token() {
 
 void expect(TokenKind tk) {
     if (token->tk != tk) {
-        error("expect token error");
+        error("expect %d token, but got %d", tk, token->tk);
     }
     next_token();
 }
@@ -60,9 +60,39 @@ Type *new_type(TypeKind tk, Type *base) {
     return t;
 }
 
+// memory size allocated in stack.
+size_t get_type_msize(TypeKind t) {
+    if (t == INT) {
+        return 8;
+    } else if (t == CHAR) {
+        return 1;
+    }
+    return 8;
+}
+
+// to calculate `sizeof` operator.
+size_t size_of(Type *t) {
+    if (t->tk == ARRAY) {
+        return t->arr_size * size_of(t->base);
+    } else if (t->tk == PTR) {
+        return 8;
+    } else if (t->tk == CHAR) {
+        return 1;
+    }
+    // INT
+    return 4;
+}
+
 Type *pointer_to(Type *base) {
     Type *t = new_type(PTR, base);
     t->size = 8;
+    return t;
+}
+
+Type *array_of(Type *base, int len) {
+    Type *t = new_type(ARRAY, base);
+    t->arr_size = len;
+    t->size = get_type_msize(base->tk) * len;
     return t;
 }
 
@@ -157,6 +187,9 @@ Var new_var(VarKind vk, char *name, Type *t) {
     v.vk = vk;
     v.name = name;
     v.type = t;
+    v.offset = 0;
+    v.str = NULL;
+    v.str_len = 0;
     if (vk == GLOBAL) {
         v.is_global = 1;
     } else {
@@ -267,29 +300,6 @@ Var get_var(char *name) {
     return v->data;
 }
 
-// memory size allocated in stack.
-size_t get_type_msize(TypeKind t) {
-    if (t == INT) {
-        return 8;
-    } else if (t == CHAR) {
-        return 1;
-    }
-    return 8;
-}
-
-// to calculate `sizeof` operator.
-size_t size_of(Type *t) {
-    if (t->tk == ARRAY) {
-        return t->arr_size * size_of(t->base);
-    } else if (t->tk == PTR) {
-        return 8;
-    } else if (t->tk == CHAR) {
-        return 1;
-    }
-    // INT
-    return 4;
-}
-
 Type *parse_type() {
     Type *t;
     assert(cur_tokenkind_is(TK_TYPE), "%s is not type", token->str);
@@ -397,6 +407,13 @@ Exprs parse_exprs(char *terminator) {
     return result;
 }
 
+char *new_label(void) {
+    static int count = 0;
+    char *buf = malloc(20);
+    sprintf(buf, ".L.data.%d", count++);
+    return buf;
+}
+
 Node *parse_primary() {
     Node *n;
     if (token->tk == TK_LPARENT) {
@@ -429,9 +446,23 @@ Node *parse_primary() {
             n->var = get_var(token->str);
             next_token();
         }
-    } else {
+    } else if (cur_tokenkind_is(TK_NUM)) {
         n = new_node(ND_NUM, token->val);
         next_token();
+    } else if (cur_tokenkind_is(TK_STR)) {
+        Type *t = array_of(char_t, token->str_len);
+        Var v = new_var(GLOBAL, new_label(), t);
+        v.str = token->str;
+        v.str_len = token->str_len;
+
+        register_new_gvar(v);
+
+        n = new_node(ND_LVAR, 0);
+        n->var = v;
+
+        next_token();
+    } else {
+        error("invalid primary");
     }
 
     Node *new_n;

@@ -53,9 +53,15 @@ typedef enum VarKind {
 typedef struct Var {
     VarKind vk;
     char *name;
-    int offset;
     Type *type;
     int is_global;
+
+    // local variable
+    int offset;
+
+    // global variable
+    char *str;
+    int str_len;
 } Var;
 
 typedef struct VarNode {

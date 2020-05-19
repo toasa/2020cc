@@ -11,6 +11,7 @@ typedef enum {
     TK_SEMICOLON, // ;
     TK_COMMA,     // ,
     TK_TYPE,      // 'int', 'void', 'char',...
+    TK_STR,
     TK_EOF,
 } TokenKind;
 
@@ -18,6 +19,7 @@ typedef struct Token {
     TokenKind tk;
     int val;
     char *str;
+    int str_len;        // tkがTK_STRの場合に使用
     struct Token *next;
 } Token;
 
