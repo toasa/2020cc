@@ -31,6 +31,7 @@ typedef enum {
 
 typedef enum {
     INT,
+    CHAR,
     PTR,
     ARRAY
 } TypeKind;

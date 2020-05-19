@@ -51,6 +51,7 @@ void expect(TokenKind tk) {
 Node *parse_expr();
 
 Type *int_t = &(Type){INT, 8};
+Type *char_t = &(Type){CHAR, 1};
 
 Type *new_type(TypeKind tk, Type *base) {
     Type *t = calloc(1, sizeof(Type));
@@ -139,7 +140,7 @@ int is_pointer(Node *n) {
 
 int is_integer(Node *n) {
     if (n->ty == NULL) { return 0; }
-    return n->ty->tk == INT;
+    return (n->ty->tk == INT) || (n->ty->tk == CHAR);
 }
 
 FuncData new_func_data() {
@@ -270,6 +271,8 @@ Var get_var(char *name) {
 size_t get_type_msize(TypeKind t) {
     if (t == INT) {
         return 8;
+    } else if (t == CHAR) {
+        return 1;
     }
     return 8;
 }
@@ -280,17 +283,25 @@ size_t size_of(Type *t) {
         return t->arr_size * size_of(t->base);
     } else if (t->tk == PTR) {
         return 8;
-    } else {
-        // INT
-        return 4;
+    } else if (t->tk == CHAR) {
+        return 1;
     }
+    // INT
+    return 4;
 }
 
 Type *parse_type() {
     Type *t;
     assert(cur_tokenkind_is(TK_TYPE), "%s is not type", token->str);
 
-    TypeKind type_base = INT;
+    TypeKind type_base;
+    if (cur_token_is("int")) {
+        type_base = INT;
+    } else if (cur_token_is("char")) {
+        type_base = CHAR;
+    } else {
+        error("invalid base type: %s", token->str);
+    }
 
     // local variable
     t = new_type(type_base, NULL);
@@ -536,7 +547,7 @@ Node *new_add(Node *lhs) {
     add_type(lhs);
     add_type(rhs);
 
-    // `int` + `int`
+    // num + num
     if (is_integer(lhs) && is_integer(rhs)) {
         return new_node_with_lr(ND_ADD, lhs, rhs);
     }
@@ -558,18 +569,18 @@ Node *new_sub(Node *lhs) {
     add_type(lhs);
     add_type(rhs);
 
-    // `int` - `int`
+    // num - num
     if (is_integer(lhs) && is_integer(rhs)) {
         return new_node_with_lr(ND_SUB, lhs, rhs);
     }
 
-    // `ptr` - `int`
+    // ptr - num
     if (is_pointer(lhs) && !is_pointer(rhs)) {
         rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->base->size));
         return new_node_with_lr(ND_SUB, lhs, rhs);
     }
 
-    // `ptr` - `ptr`
+    // ptr - ptr
     if (is_pointer(lhs) && is_pointer(rhs)) {
         Node *sub = new_node_with_lr(ND_SUB, lhs, rhs);
         return new_node_with_lr(ND_DIV, sub, new_node(ND_NUM, lhs->ty->size));

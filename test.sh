@@ -651,4 +651,18 @@ test 3 "int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[3]; }"
 test 4 "int x; int main() { return sizeof(x); }"
 test 16 "int x[4]; int main() { return sizeof(x); }"
 
+test 1 "int main() { char x = 1; return x; }"
+test 1 "int main() { char x = 1; char y = 2; return x; }"
+test 2 "int main() { char x = 1; char y = 2; return y; }"
+test 1 "int main() { char x; return sizeof(x); }"
+test 10 "int main() { char x[10]; return sizeof(x); }"
+test 100 "int main() { char arr[3] = { 1, 10, 111 }; return arr[2] - arr[1] - arr[0]; }"
+test 3 "
+int main() {
+    char arr[3] = { -1, 2, 111 };
+    int y = 4;
+    return arr[0] + y;
+}"
+test 4 "int main() { return sub_char(7, 1, 2); } int sub_char(char a, char b, char c) { return a-b-c; }"
+
 echo "OK"

@@ -40,6 +40,7 @@ int is_keyword(char *str) {
 int is_type(char *str) {
     char *types[] = {
         "int",
+        "char",
         NULL,
     };
     for (int i = 0; types[i] != NULL; i++) {

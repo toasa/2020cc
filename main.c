@@ -5,10 +5,8 @@
 #include "parse.h"
 #include "util.h"
 
-char *regs[6] = {
-    "rdi", "rsi", "rdx",
-    "rcx", "r8", "r9"
-};
+char *regs_64[6] = { "rdi", "rsi", "rdx", "rcx", "r8", "r9" };
+char *regs_8[6] = { "dil", "sil", "dl", "cl", "r8b", "r9b" };
 
 void gen_expr(Node *n);
 
@@ -26,9 +24,13 @@ void gen_addr(Node *n) {
     }
 }
 
-void load() {
+void load(Node *n) {
     printf("    pop rax\n");
-    printf("    mov rax, [rax]\n");
+    if (n->ty->size == 1) {
+        printf("    movsx rax, byte ptr [rax]\n");
+    } else {
+        printf("    mov rax, [rax]\n");
+    }
     printf("    push rax\n");
 }
 
@@ -43,7 +45,7 @@ void gen_expr(Node *n) {
             gen_addr(n);
         } else {
             gen_addr(n);
-            load();
+            load(n);
         }
         return;
     } else if (n->nk == ND_CALL) {
@@ -53,7 +55,7 @@ void gen_expr(Node *n) {
             for (int count = 0; count < callee.args_num; count++) {
                 gen_expr(arg);
                 printf("    pop rax\n");
-                printf("    mov %s, rax\n", regs[count]);
+                printf("    mov %s, rax\n", regs_64[count]);
                 arg = arg->next;
             }
         }
@@ -64,7 +66,7 @@ void gen_expr(Node *n) {
         return;
     } else if (n->nk == ND_DEREF) {
         gen_expr(n->expr);
-        load();
+        load(n->expr);
         return;
     } else if (n->nk == ND_ADDR) {
         gen_addr(n->expr);
@@ -254,7 +256,11 @@ void gen_stmt(Node *n) {
 
         printf("    pop rdi\n");
         printf("    pop rax\n");
-        printf("    mov [rax], rdi\n");
+        if (n->ty->size == 1) {
+            printf("    mov byte ptr [rax], dil\n");
+        } else {
+            printf("    mov [rax], rdi\n");
+        }
     } else if (n->nk == ND_DECL) {
         // need to do something?
     } else {
@@ -287,7 +293,6 @@ void gen_func(Node *n) {
         // iterate the linked list of `vars`.
         VarNode *arg = n->func.vars;
         for (int i = 0; i < n->func.args_num; i++) {
-
             if (arg->data.vk != ARG) {
                 error("argument preparing error");
             }
@@ -297,7 +302,13 @@ void gen_func(Node *n) {
             // TODO? extract 'store' function.
             printf("    mov rax, rbp\n");
             printf("    sub rax, %d\n", arg->data.offset);
-            printf("    mov [rax], %s\n", regs[i]);
+            if (arg->data.type->size == 1) {
+                printf("    mov [rax], %s\n", regs_8[i]);
+            } else if (arg->data.type->size == 8) {
+                printf("    mov [rax], %s\n", regs_64[i]);
+            } else {
+                error("invalid size of argument");
+            }
             arg = arg->next;
         }
     }
