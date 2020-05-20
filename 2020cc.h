@@ -1,3 +1,36 @@
+//
+// token.c
+//
+typedef enum {
+    TK_NUM,
+    TK_RESERVED,
+    TK_IDENT,
+    TK_LPARENT,   // (
+    TK_RPARENT,   // )
+    TK_LBRACE,    // {
+    TK_RBRACE,    // }
+    TK_LBRACKET,  // [
+    TK_RBRACKET,  // ]
+    TK_SEMICOLON, // ;
+    TK_COMMA,     // ,
+    TK_TYPE,      // 'int', 'void', 'char',...
+    TK_STR,
+    TK_EOF,
+} TokenKind;
+
+typedef struct Token {
+    TokenKind tk;
+    int val;
+    char *str;
+    int str_len;        // tkがTK_STRの場合に使用
+    struct Token *next;
+} Token;
+
+Token *tokenize(char *input);
+
+//
+// parce.c
+//
 typedef enum {
     ND_NUM,
     ND_LVAR,
@@ -108,3 +141,22 @@ typedef struct Program {
 } Program;
 
 Program *parse(Token *t);
+
+//
+// type.c
+//
+extern Type *int_t;
+extern Type *char_t;
+Type *new_type(TypeKind tk, Type *base);
+size_t get_type_msize(TypeKind t);
+size_t size_of(Type *t);
+Type *pointer_to(Type *base);
+Type *array_of(Type *base, int len);
+void add_type(Node *n);
+
+//
+// util.c
+//
+int equal_strings(char *s1, char *s2);
+void assert(int result, char *fmt, ...);
+void error(char *fmt, ...);

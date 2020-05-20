@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "token.h"
-#include "parse.h"
-#include "util.h"
+#include "2020cc.h"
 
 char *regs_64[6] = { "rdi", "rsi", "rdx", "rcx", "r8", "r9" };
 char *regs_8[6] = { "dil", "sil", "dl", "cl", "r8b", "r9b" };

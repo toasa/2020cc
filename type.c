@@ -1,20 +1,50 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "type.h"
-#include "parse.h"
+#include "2020cc.h"
 
 Type *int_t = &(Type){INT, 8};
+Type *char_t = &(Type){CHAR, 1};
 
-Type *new_type(TypeKind tk, Type *ptr_to) {
+Type *new_type(TypeKind tk, Type *base) {
     Type *t = calloc(1, sizeof(Type));
     t->tk = tk;
-    t->ptr_to = ptr_to;
+    t->base = base;
     return t;
+}
+
+// memory size allocated in stack.
+size_t get_type_msize(TypeKind t) {
+    if (t == INT) {
+        return 8;
+    } else if (t == CHAR) {
+        return 1;
+    }
+    return 8;
+}
+
+// to calculate `sizeof` operator.
+size_t size_of(Type *t) {
+    if (t->tk == ARRAY) {
+        return t->arr_size * size_of(t->base);
+    } else if (t->tk == PTR) {
+        return 8;
+    } else if (t->tk == CHAR) {
+        return 1;
+    }
+    // INT
+    return 4;
 }
 
 Type *pointer_to(Type *base) {
     Type *t = new_type(PTR, base);
     t->size = 8;
+    return t;
+}
+
+Type *array_of(Type *base, int len) {
+    Type *t = new_type(ARRAY, base);
+    t->arr_size = len;
+    t->size = get_type_msize(base->tk) * len;
     return t;
 }
 
@@ -33,16 +63,16 @@ void add_type(Node *n) {
     add_type(n->post);
     add_type(n->inc);
 
-    for (Node *n_i = n->block; n_i != NULL; n_i = n_i->next){
+    for (Node *n_i = n->block; n_i != NULL; n_i = n_i->next) {
         add_type(n_i);
     }
 
     if (n->nk == ND_FUNC || n->nk == ND_CALL) {
-        for (Node *n_i = n->func.body; n_i != NULL; n_i = n_i->next){
+        for (Node *n_i = n->func.body; n_i != NULL; n_i = n_i->next) {
             add_type(n_i);
         }
         if (n->func.args_num > 0) {
-            for (Node *n_i = n->func.args; n_i != NULL; n_i = n_i->next){
+            for (Node *n_i = n->func.args; n_i != NULL; n_i = n_i->next) {
                 add_type(n_i);
             }
         }
@@ -59,7 +89,7 @@ void add_type(Node *n) {
         return;
     case ND_LVAR:
     case ND_DECL:
-        n->ty = n->ident.type;
+        n->ty = n->var.type;
         return;
     case ND_ADD:
     case ND_SUB:
@@ -73,17 +103,13 @@ void add_type(Node *n) {
         return;
     case ND_ADDR:
         if (n->expr->ty->tk == ARRAY) {
-            n->ty = pointer_to(n->expr->ty->arr_of);
+            n->ty = pointer_to(n->expr->ty->base);
         } else {
             n->ty = pointer_to(n->expr->ty);
         }
         return;
     case ND_DEREF:
-        if (n->expr->ty->tk == ARRAY) {
-            n->ty = n->expr->ty->arr_of;
-        } else if (n->expr->ty->tk == PTR) {
-            n->ty = n->expr->ty->ptr_to;
-        }
+        n->ty = n->expr->ty->base;
         return;
     default:;
     }

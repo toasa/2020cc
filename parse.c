@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "token.h"
-#include "parse.h"
-#include "util.h"
+#include "2020cc.h"
 
 Node *new_node(NodeKind nk, int val) {
     Node *n = calloc(1, sizeof(Node));
@@ -49,119 +47,6 @@ void expect(TokenKind tk) {
 }
 
 Node *parse_expr();
-
-Type *int_t = &(Type){INT, 8};
-Type *char_t = &(Type){CHAR, 1};
-
-Type *new_type(TypeKind tk, Type *base) {
-    Type *t = calloc(1, sizeof(Type));
-    t->tk = tk;
-    t->base = base;
-    return t;
-}
-
-// memory size allocated in stack.
-size_t get_type_msize(TypeKind t) {
-    if (t == INT) {
-        return 8;
-    } else if (t == CHAR) {
-        return 1;
-    }
-    return 8;
-}
-
-// to calculate `sizeof` operator.
-size_t size_of(Type *t) {
-    if (t->tk == ARRAY) {
-        return t->arr_size * size_of(t->base);
-    } else if (t->tk == PTR) {
-        return 8;
-    } else if (t->tk == CHAR) {
-        return 1;
-    }
-    // INT
-    return 4;
-}
-
-Type *pointer_to(Type *base) {
-    Type *t = new_type(PTR, base);
-    t->size = 8;
-    return t;
-}
-
-Type *array_of(Type *base, int len) {
-    Type *t = new_type(ARRAY, base);
-    t->arr_size = len;
-    t->size = get_type_msize(base->tk) * len;
-    return t;
-}
-
-void add_type(Node *n) {
-    if (n == NULL || n->ty != NULL) {
-        return;
-    }
-
-    add_type(n->lhs);
-    add_type(n->rhs);
-    add_type(n->init);
-    add_type(n->cond);
-    add_type(n->then);
-    add_type(n->alt);
-    add_type(n->expr);
-    add_type(n->post);
-    add_type(n->inc);
-
-    for (Node *n_i = n->block; n_i != NULL; n_i = n_i->next) {
-        add_type(n_i);
-    }
-
-    if (n->nk == ND_FUNC || n->nk == ND_CALL) {
-        for (Node *n_i = n->func.body; n_i != NULL; n_i = n_i->next) {
-            add_type(n_i);
-        }
-        if (n->func.args_num > 0) {
-            for (Node *n_i = n->func.args; n_i != NULL; n_i = n_i->next) {
-                add_type(n_i);
-            }
-        }
-    }
-
-    switch (n->nk) {
-    case ND_NUM:
-    case ND_EQ:
-    case ND_NE:
-    case ND_LT:
-    case ND_LE:
-    case ND_CALL:
-        n->ty = int_t;
-        return;
-    case ND_LVAR:
-    case ND_DECL:
-        n->ty = n->var.type;
-        return;
-    case ND_ADD:
-    case ND_SUB:
-    case ND_MUL:
-    case ND_DIV:
-    case ND_REM:
-    case ND_LSHIFT:
-    case ND_RSHIFT:
-    case ND_ASSIGN:
-        n->ty = n->lhs->ty;
-        return;
-    case ND_ADDR:
-        if (n->expr->ty->tk == ARRAY) {
-            n->ty = pointer_to(n->expr->ty->base);
-        } else {
-            n->ty = pointer_to(n->expr->ty);
-        }
-        return;
-    case ND_DEREF:
-        n->ty = n->expr->ty->base;
-        return;
-    default:;
-    }
-}
 
 int is_pointer(Node *n) {
     if (n->ty == NULL) { return 0; }
@@ -987,7 +872,7 @@ void parse_program() {
     funcs[func_count] = NULL;
 }
 
-Program *parse(Token *t) {
+Program *parse(struct Token *t) {
     token = t;
     parse_program();
     Program *p = calloc(1, sizeof(Program));
