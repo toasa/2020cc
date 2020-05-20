@@ -671,4 +671,17 @@ test 99 'int main() { return "abc"[2]; }'
 test 0 'int main() { return "abc"[3]; }'
 test 4 'int main() { return sizeof("abc"); }'
 
+test 7 'int main() { return "\a"[0]; }'
+test 8 'int main() { return "\b"[0]; }'
+test 9 'int main() { return "\t"[0]; }'
+test 10 'int main() { return "\n"[0]; }'
+test 11 'int main() { return "\v"[0]; }'
+test 12 'int main() { return "\f"[0]; }'
+test 13 'int main() { return "\r"[0]; }'
+test 27 'int main() { return "\e"[0]; }'
+
+test 106 'int main() { return "\j"[0]; }'
+test 107 'int main() { return "\k"[0]; }'
+test 108 'int main() { return "\l"[0]; }'
+
 echo "OK"

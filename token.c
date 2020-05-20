@@ -96,6 +96,20 @@ char *read_ident(char **input) {
     return str;
 }
 
+char read_escaped_char(char c) {
+    switch (c) {
+        case 'a': return '\a';
+        case 'b': return '\b';
+        case 't': return '\t';
+        case 'n': return '\n';
+        case 'v': return '\v';
+        case 'f': return '\f';
+        case 'r': return '\r';
+        case 'e': return 27;
+        default: return c;
+    }
+}
+
 Token *new_str_token(Token *cur_token, char **input) {
     char *input_org = *input;
 
@@ -104,8 +118,18 @@ Token *new_str_token(Token *cur_token, char **input) {
         (*input)++;
         str_count++;
     }
+
     char *str = calloc(1, sizeof(char) * (str_count + 1));
-    strncpy(str, input_org, str_count);
+    int i = 0;
+    for (char *c = input_org; *c != '"'; c++) {
+        if (*c == '\\') {
+            c++;
+            str[i] = read_escaped_char(*c);
+        } else {
+            str[i] = *c;
+        }
+        i++;
+    }
 
     Token *str_token = new_token(cur_token, TK_STR, 0, str);
     str_token->str_len = str_count + 1;
