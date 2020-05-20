@@ -155,6 +155,11 @@ Type *array_of(Type *base, int len);
 void add_type(Node *n);
 
 //
+// codegen.c
+//
+void gen(Program *p);
+
+//
 // util.c
 //
 int equal_strings(char *s1, char *s2);
