@@ -6,6 +6,7 @@ char *regs_64[6] = { "rdi", "rsi", "rdx", "rcx", "r8", "r9" };
 char *regs_8[6] = { "dil", "sil", "dl", "cl", "r8b", "r9b" };
 
 void gen_expr(Node *n);
+void gen_stmt(Node *n);
 
 void gen_addr(Node *n) {
     if (n->nk == ND_LVAR) {
@@ -125,6 +126,18 @@ void gen_expr(Node *n) {
         printf("    mov [rax], rdi\n");
 
         printf("    push rsi\n");
+        return;
+    } else if (n->nk == ND_STMT_EXPR) {
+        Node *stmt = n->block;
+        while (stmt != NULL) {
+            int is_return = (stmt->nk == ND_RETURN);
+            gen_stmt(stmt);
+            if (is_return) {
+                break;
+            }
+            printf("    push rax\n");
+            stmt = stmt->next;
+        }
         return;
     }
 

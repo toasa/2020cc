@@ -185,6 +185,31 @@ Var get_var(char *name) {
     return v->data;
 }
 
+// return value of `parse_exprs`.
+typedef struct Exprs {
+    int count;
+    Node *head;
+} Exprs;
+
+Type *parse_type();
+Exprs parse_exprs(char *terminator);
+Node *parse_primary();
+Node *parse_unary();
+Node *parse_mul();
+Node *parse_add();
+Node *parse_shift();
+Node *parse_relational();
+Node *parse_equality();
+Node *parse_assign();
+Node *parse_expr();
+Node *parse_declaration(VarKind vk);
+Node *parse_compound_stmt();
+Node *parse_stmt();
+Node *parse_toplevel_func(Type *ret_t, char *func_name);
+void parse_toplevel_global_var(Type *t, char *gname);
+void parse_toplevel();
+void parse_program();
+
 Type *parse_type() {
     Type *t;
     assert(cur_tokenkind_is(TK_TYPE), "%s is not type", token->str);
@@ -262,12 +287,6 @@ Node *parse_array(Node *lhs) {
     return n;
 }
 
-// return value of `parse_exprs`.
-typedef struct Exprs {
-    int count;
-    Node *head;
-} Exprs;
-
 // parse some expressions which is separated comma,
 // and return a linked list of expressions.
 // ex. 20, 40, x, y + 20
@@ -303,7 +322,15 @@ Node *parse_primary() {
     Node *n;
     if (token->tk == TK_LPARENT) {
         next_token();
-        n = parse_expr();
+        if (cur_token_is("{")) {
+            next_token();
+            n = new_node(ND_STMT_EXPR, 0);
+            n = parse_compound_stmt(n);
+            expect(TK_RBRACE);
+            add_type(n);
+        } else {
+            n = parse_expr();
+        }
         expect(TK_RPARENT);
     } else if (token->tk == TK_IDENT) {
         if (next_tokenkind_is(TK_LPARENT)) {
@@ -646,6 +673,24 @@ Node *parse_declaration(VarKind vk) {
     return n;
 }
 
+// parse stmt, stmt, ... "}"
+Node *parse_compound_stmt(Node *n) {
+    if (!cur_token_is("}")) {
+        Node *head = calloc(1, sizeof(Node));
+        Node *cur = parse_stmt();
+        add_type(cur);
+        head->next = cur;
+        while (!cur_token_is("}")) {
+            Node *tmp = parse_stmt();
+            cur->next = tmp;
+            cur = tmp;
+            add_type(cur);
+        }
+        n->block = head->next;
+    }
+    return n;
+}
+
 Node *parse_stmt() {
     Node *n;
     if (cur_token_is("return")) {
@@ -653,6 +698,7 @@ Node *parse_stmt() {
         next_token();
         n->expr = parse_expr();
         expect(TK_SEMICOLON);
+        return n;
     } else if (cur_token_is("if")) {
         n = new_node(ND_IF, 0);
         next_token();
@@ -664,6 +710,7 @@ Node *parse_stmt() {
             next_token();
             n->alt = parse_stmt();
         }
+        return n;
     } else if (cur_token_is("while")) {
         n = new_node(ND_WHILE, 0);
         next_token();
@@ -671,6 +718,7 @@ Node *parse_stmt() {
         n->cond = parse_expr();
         expect(TK_RPARENT);
         n->then = parse_stmt();
+        return n;
     } else if (cur_token_is("for")) {
         n = new_node(ND_FOR, 0);
         next_token();
@@ -689,23 +737,13 @@ Node *parse_stmt() {
         }
         expect(TK_RPARENT);
         n->then = parse_stmt();
+        return n;
     } else if (cur_token_is("{")) {
         n = new_node(ND_BLOCK, 0);
         next_token();
-        if (!cur_token_is("}")) {
-            Node *head = calloc(1, sizeof(Node));
-            Node *cur = parse_stmt();
-            add_type(cur);
-            head->next = cur;
-            while (!cur_token_is("}")) {
-                Node *tmp = parse_stmt();
-                cur->next = tmp;
-                cur = tmp;
-                add_type(cur);
-            }
-            n->block = head->next;
-        }
+        n = parse_compound_stmt(n);
         expect(TK_RBRACE);
+        return n;
     } else if (cur_tokenkind_is(TK_TYPE)) {
         // `n` 's NodeKind is 'ND_DECL'.
         n = parse_declaration(LOCAL);
@@ -788,6 +826,7 @@ Node *parse_stmt() {
             }
         }
         expect(TK_SEMICOLON);
+        return n;
     } else {
         n = parse_expr();
         expect(TK_SEMICOLON);

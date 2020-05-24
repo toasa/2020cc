@@ -38,28 +38,29 @@ typedef enum {
     ND_SUB,
     ND_MUL,
     ND_DIV,
-    ND_REM,     // %
-    ND_LSHIFT,  // <<
-    ND_RSHIFT,  // >>
-    ND_DEREF,   // *
-    ND_ADDR,    // &
-    ND_EQ,      // ==
-    ND_NE,      // !=
-    ND_LT,      // <
-    ND_LE,      // <=
-    ND_ASSIGN,  // =
-    ND_PREINC,  // ++
-    ND_POSTINC, // ++
-    ND_PREDEC,  // --
-    ND_POSTDEC, // --
-    ND_RETURN,  // return
-    ND_IF,      // if
-    ND_WHILE,   // while
-    ND_FOR,     // for
-    ND_BLOCK,   // { ... }
-    ND_CALL,    // function call
-    ND_FUNC,    // function definition
-    ND_DECL,    // local variable declaration
+    ND_REM,       // %
+    ND_LSHIFT,    // <<
+    ND_RSHIFT,    // >>
+    ND_DEREF,     // *
+    ND_ADDR,      // &
+    ND_EQ,        // ==
+    ND_NE,        // !=
+    ND_LT,        // <
+    ND_LE,        // <=
+    ND_ASSIGN,    // =
+    ND_PREINC,    // ++
+    ND_POSTINC,   // ++
+    ND_PREDEC,    // --
+    ND_POSTDEC,   // --
+    ND_RETURN,    // return
+    ND_IF,        // if
+    ND_WHILE,     // while
+    ND_FOR,       // for
+    ND_BLOCK,     // { ... }
+    ND_CALL,      // function call
+    ND_FUNC,      // function definition
+    ND_DECL,      // local variable declaration
+    ND_STMT_EXPR, // statement expression
 } NodeKind;
 
 typedef enum {
@@ -131,7 +132,7 @@ typedef struct Node {
     struct Node *expr;  // nkがND_RETURN, ND_DEREF, ND_ADDRの場合に使う
     struct Node *post;  // nkがND_FORの場合に使う
     struct Node *next;  // nkがND_BLOCK, ND_CALL, ND_FUNCの場合に使う
-    struct Node *block; // nkがND_BLOCKの場合に使う
+    struct Node *block; // nkがND_BLOCK, ND_STMT_EXPRの場合に使う
     struct Node *inc;   // nkがND_PREINC, ND_PREDEC, ND_POSTINC, ND_POSTDECの場合に使う
 } Node;
 

@@ -61,6 +61,7 @@ void add_type(Node *n) {
     add_type(n->alt);
     add_type(n->expr);
     add_type(n->post);
+    add_type(n->block);
     add_type(n->inc);
 
     for (Node *n_i = n->block; n_i != NULL; n_i = n_i->next) {
@@ -77,6 +78,8 @@ void add_type(Node *n) {
             }
         }
     }
+
+    Node *stmt;
 
     switch (n->nk) {
     case ND_NUM:
@@ -100,6 +103,13 @@ void add_type(Node *n) {
     case ND_RSHIFT:
     case ND_ASSIGN:
         n->ty = n->lhs->ty;
+        return;
+    case ND_STMT_EXPR:
+        stmt = n->block;
+        while (stmt->next != NULL) {
+            stmt = stmt->next;
+        }
+        n->ty = stmt->ty;
         return;
     case ND_ADDR:
         if (n->expr->ty->tk == ARRAY) {

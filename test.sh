@@ -684,4 +684,11 @@ test 106 'int main() { return "\j"[0]; }'
 test 107 'int main() { return "\k"[0]; }'
 test 108 'int main() { return "\l"[0]; }'
 
+test 0 'int main() { return ({ 0; }); }'
+test 2 'int main() { return ({ 0; 1; 2; }); }'
+test 1 'int main() { return ({ 0; return 1; 2; }); return 3; }'
+test 30 'int main() { return ({ 10; }) + 20; }'
+test 6 'int main() { return ({ 1; }) + ({ 2; }) + ({ 3; }); }'
+test 3 'int main() { return ({ int x=3; x; }); }'
+
 echo "OK"
