@@ -194,6 +194,19 @@ Token *tokenize(char *input) {
             if (*input == '=') {
                 input++;
                 cur_token = new_token(cur_token, TK_RESERVED, 0, "/=");
+            } else if (*input == '*') {
+                input++;
+                while (!(*input == '*' && *(input + 1) == '/')) {
+                    input++;
+                }
+                input += 2;
+                continue;
+            } else if (*input == '/') {
+                while (*input != '\n') {
+                    input++;
+                }
+                input++;
+                continue;
             } else {
                 cur_token = new_token(cur_token, TK_RESERVED, 0, "/");
             }

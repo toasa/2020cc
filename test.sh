@@ -691,4 +691,11 @@ test 30 'int main() { return ({ 10; }) + 20; }'
 test 6 'int main() { return ({ 1; }) + ({ 2; }) + ({ 3; }); }'
 test 3 'int main() { return ({ int x=3; x; }); }'
 
+test 2 "int main() { /* return 1; */ return 2; }"
+test 2 "
+int main() {
+    // return 1;
+    return 2;
+}"
+
 echo "OK"
