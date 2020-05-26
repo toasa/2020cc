@@ -345,7 +345,9 @@ void gen_data(Program *p) {
         }
 
         // string literal
-        printf("    .string \"%s\"\n\n", var->data.str);
+        for (int i = 0; i < var->data.str_len; i++) {
+            printf("    .byte %d\n", var->data.str[i]);
+        }
     }
 }
 
