@@ -4,7 +4,9 @@ run:
 	clang -o main main.c token.c parse.c codegen.c type.c util.c
 
 test: run
-	./test.sh
+	./main test.c > tmp.s
+	cc -no-pie tmp.s -o tmp
+	./tmp
 
 clean:
 	rm tmp* main
