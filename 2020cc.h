@@ -103,6 +103,14 @@ typedef struct VarNode {
     struct VarNode *next;
 } VarNode;
 
+typedef struct Scope {
+    struct Scope *high;
+    struct Scope *low;
+    VarNode *lvar_head;
+    size_t depth;
+    size_t total_var_size;
+} Scope;
+
 typedef struct FuncData {
     char *name;
     struct Node *body;
@@ -111,7 +119,7 @@ typedef struct FuncData {
     int args_num;
     struct Node *args; // nkがND_CALLの場合に使う。次の引数には`next`メンバからアクセスする。
 
-    VarNode *vars;     // nkがND_FUNCの場合に引数のオフセット値を取得する
+    Scope *toplevel_scope;
 } FuncData;
 
 typedef struct Node {

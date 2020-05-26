@@ -135,9 +135,9 @@ void gen_expr(Node *n) {
             if (is_return) {
                 break;
             }
-            printf("    push rax\n");
             stmt = stmt->next;
         }
+        printf("    push rax\n");
         return;
     }
 
@@ -293,15 +293,15 @@ void gen_func(Node *n) {
 
     // allocate for local variables in stack area.
     int stack_size = 0;
-    for (VarNode *var = n->func.vars; var != NULL; var = var->next) {
-        stack_size += var->data.type->size;
+    for (Scope *s = n->func.toplevel_scope; s != NULL; s = s->low) {
+        stack_size += s->total_var_size;
     }
     printf("    sub rsp, %d\n", stack_size);
 
     // arguments
     if (n->func.args_num > 0) {
         // iterate the linked list of `vars`.
-        VarNode *arg = n->func.vars;
+        VarNode *arg = n->func.toplevel_scope->lvar_head;
         for (int i = 0; i < n->func.args_num; i++) {
             if (arg->data.vk != ARG) {
                 error("argument preparing error");
