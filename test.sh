@@ -152,6 +152,39 @@ int add(int x, int y) {
 }
 "
 
+test 110 "
+int main() {
+    return add(100, 8 + 2);
+}
+
+int add(int x, int y) {
+    return x + y;
+}
+"
+
+test 30 "
+int main() {
+    return add(7 + 6/ 2, 8 + 2 + (20 - 10));
+}
+
+int add(int x, int y) {
+    return x + y;
+}
+"
+
+test 60 "
+int main() {
+    // return f(7+(6/2), 1+1+1+1+1+1+1+1+1+1, (30-25)*2, (2 + 3) * (4/2), 10, 60/6);
+    //                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~
+    //                                                           これだめ？(第四引数以降）
+    return f(7+(6/2), 1+1+1+1+1+1+1+1+1+1, (30-25)*2, 10,10, 10);
+}
+
+int f(int x1, int x2, int x3, int x4, int x5, int x6) {
+    return x1+x2+x3+x4+x5+x6;
+}
+"
+
 test 97 "
 int sub(int x, int y) {
     return x - y;

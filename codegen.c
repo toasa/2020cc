@@ -73,59 +73,59 @@ void gen_expr(Node *n) {
         gen_expr(n->expr);
         gen_expr(n->inc);
         printf("    pop rax\n");
-        printf("    pop rdi\n");
-        printf("    add rdi, rax\n");
+        printf("    pop r10\n");
+        printf("    add r10, rax\n");
 
         gen_addr(n->expr);
 
         printf("    pop rax\n");
-        printf("    mov [rax], rdi\n");
+        printf("    mov [rax], r10\n");
 
-        printf("    push rdi\n");
+        printf("    push r10\n");
         return;
     } else if (n->nk == ND_PREDEC) {
         gen_expr(n->expr);
         gen_expr(n->inc);
         printf("    pop rax\n");
-        printf("    pop rdi\n");
-        printf("    sub rdi, rax\n");
+        printf("    pop r10\n");
+        printf("    sub r10, rax\n");
 
         gen_addr(n->expr);
 
         printf("    pop rax\n");
-        printf("    mov [rax], rdi\n");
+        printf("    mov [rax], r10\n");
 
-        printf("    push rdi\n");
+        printf("    push r10\n");
         return;
     } else if (n->nk == ND_POSTINC) {
         gen_expr(n->expr);
         gen_expr(n->inc);
         printf("    pop rax\n");
-        printf("    pop rdi\n");
-        printf("    mov rsi, rdi\n");
-        printf("    add rdi, rax\n");
+        printf("    pop r10\n");
+        printf("    mov r11, r10\n");
+        printf("    add r10, rax\n");
 
         gen_addr(n->expr);
 
         printf("    pop rax\n");
-        printf("    mov [rax], rdi\n");
+        printf("    mov [rax], r10\n");
 
-        printf("    push rsi\n");
+        printf("    push r11\n");
         return;
     } else if (n->nk == ND_POSTDEC) {
         gen_expr(n->expr);
         gen_expr(n->inc);
         printf("    pop rax\n");
-        printf("    pop rdi\n");
-        printf("    mov rsi, rdi\n");
-        printf("    sub rdi, rax\n");
+        printf("    pop r10\n");
+        printf("    mov r11, r10\n");
+        printf("    sub r10, rax\n");
 
         gen_addr(n->expr);
 
         printf("    pop rax\n");
-        printf("    mov [rax], rdi\n");
+        printf("    mov [rax], r10\n");
 
-        printf("    push rsi\n");
+        printf("    push r11\n");
         return;
     } else if (n->nk == ND_STMT_EXPR) {
         Node *stmt = n->block;
@@ -143,43 +143,43 @@ void gen_expr(Node *n) {
 
     gen_expr(n->lhs);
     gen_expr(n->rhs);
-    printf("    pop rdi\n");
+    printf("    pop r10\n");
     printf("    pop rax\n");
 
     if (n->nk == ND_ADD) {
-        printf("    add rax, rdi\n");
+        printf("    add rax, r10\n");
     } else if (n->nk == ND_SUB) {
-        printf("    sub rax, rdi\n");
+        printf("    sub rax, r10\n");
     } else if (n->nk == ND_MUL) {
-        printf("    imul rdi\n");
+        printf("    imul r10\n");
     } else if (n->nk == ND_DIV) {
         printf("    cqo\n");
-        printf("    idiv rdi\n");
+        printf("    idiv r10\n");
     } else if (n->nk == ND_REM) {
         printf("    cqo\n");
         printf("    xor rdx, rdx\n");
-        printf("    idiv rdi\n");
+        printf("    idiv r10\n");
         printf("    mov rax, rdx\n");
     } else if (n->nk == ND_LSHIFT) {
-        printf("    mov rcx, rdi\n");
+        printf("    mov rcx, r10\n");
         printf("    shl rax, cl\n");
     } else if (n->nk == ND_RSHIFT) {
-        printf("    mov rcx, rdi\n");
+        printf("    mov rcx, r10\n");
         printf("    shr rax, cl\n");
     } else if (n->nk == ND_EQ) {
-        printf("    cmp rax, rdi\n");
+        printf("    cmp rax, r10\n");
         printf("    sete al\n");
         printf("    movzb rax, al\n");
     } else if (n->nk == ND_NE) {
-        printf("    cmp rax, rdi\n");
+        printf("    cmp rax, r10\n");
         printf("    setne al\n");
         printf("    movzb rax, al\n");
     } else if (n->nk == ND_LT) {
-        printf("    cmp rax, rdi\n");
+        printf("    cmp rax, r10\n");
         printf("    setl al\n");
         printf("    movzb rax, al\n");
     } else if (n->nk == ND_LE) {
-        printf("    cmp rax, rdi\n");
+        printf("    cmp rax, r10\n");
         printf("    setle al\n");
         printf("    movzb rax, al\n");
     }
@@ -264,12 +264,12 @@ void gen_stmt(Node *n) {
         gen_addr(n->lhs);
         gen_expr(n->rhs);
 
-        printf("    pop rdi\n");
+        printf("    pop r10\n");
         printf("    pop rax\n");
         if (n->ty->size == 1) {
-            printf("    mov byte ptr [rax], dil\n");
+            printf("    mov byte ptr [rax], r10b\n");
         } else {
-            printf("    mov [rax], rdi\n");
+            printf("    mov [rax], r10\n");
         }
     } else if (n->nk == ND_DECL) {
         // need to do something?
