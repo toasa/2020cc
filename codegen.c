@@ -292,11 +292,7 @@ void gen_func(Node *n) {
     printf("    mov rbp, rsp\n");
 
     // allocate for local variables in stack area.
-    int stack_size = 0;
-    for (Scope *s = n->func.toplevel_scope; s != NULL; s = s->low) {
-        stack_size += s->total_var_size;
-    }
-    printf("    sub rsp, %d\n", stack_size);
+    printf("    sub rsp, %zu\n", n->func.stack_frame_size);
 
     // arguments
     if (n->func.args_num > 0) {

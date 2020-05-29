@@ -65,6 +65,7 @@ FuncData new_func_data() {
     data.args_num = 0;
     data.args = NULL;
     data.toplevel_scope = NULL;
+    data.stack_frame_size = 0;
     return data;
 }
 
@@ -103,6 +104,7 @@ VarNode *gvar_head = NULL;
 size_t scope_depth = 0;
 Scope *toplevel_scope = NULL;
 Scope *cur_scope = NULL;
+size_t stack_frame_size = 0;
 
 void enter_scope() {
     Scope *s = new_scope(scope_depth);
@@ -111,9 +113,6 @@ void enter_scope() {
         toplevel_scope = s;
     }
 
-    if (cur_scope != NULL) {
-        cur_scope->low = s;
-    }
     s->high = cur_scope;
     cur_scope = s;
     scope_depth++;
@@ -124,29 +123,14 @@ void leave_scope() {
     scope_depth--;
 }
 
-// To calculate a offset for new variable, calculate
-// the sum of offset size of variables in higher scope.
-int get_total_higher_offset() {
-    int total_higher_offset = 0;
-    if (cur_scope->depth != 0) {
-        Scope *scope_iter = toplevel_scope;
-        while (scope_iter->depth != cur_scope->depth) {
-            total_higher_offset += scope_iter->total_var_size;
-            scope_iter = scope_iter->low;
-        }
-    }
-    return total_higher_offset;
-}
-
 // add one `VarNode` at tail of linked list which stored idefifier in current scope.
 void register_new_lvar(Var v) {
     VarNode *lvar_head = cur_scope->lvar_head;
     VarNode *new_v = new_var_node(v);
 
-    int total_higher_offset = get_total_higher_offset();
-
     if (lvar_head == NULL) {
-        new_v->data.offset = v.type->size + total_higher_offset;
+        stack_frame_size += v.type->size;
+        new_v->data.offset = stack_frame_size;
         cur_scope->total_var_size = v.type->size;
         cur_scope->lvar_head = new_v;
         return;
@@ -159,7 +143,8 @@ void register_new_lvar(Var v) {
     }
 
     cur_scope->total_var_size += v.type->size;
-    new_v->data.offset = cur_scope->total_var_size + total_higher_offset;
+    stack_frame_size += v.type->size;
+    new_v->data.offset = stack_frame_size;
     var_iter->next = new_v;
 }
 
@@ -807,17 +792,16 @@ Node *parse_stmt() {
                 // if array size not determined yet, resolve here.
                 if (n->var.type->arr_size == 0) {
                     VarNode *var_iter = cur_scope->lvar_head;
-                    int offset = get_total_higher_offset();
                     while (1) {
                         if (equal_strings(n->var.name, var_iter->data.name)) {
                             var_iter->data.type->arr_size = result.count;
                             size_t size = var_iter->data.type->base->size * result.count;
                             var_iter->data.type->size = size;
-                            var_iter->data.offset = offset + size;
+                            stack_frame_size += size;
+                            var_iter->data.offset = stack_frame_size;
                             cur_scope->total_var_size += size;
                             break;
                         }
-                        offset += var_iter->data.type->size;
                         var_iter = var_iter->next;
                     }
                 }
@@ -885,6 +869,7 @@ void init_function_context() {
     toplevel_scope = NULL;
     cur_scope = NULL;
     scope_depth = 0;
+    stack_frame_size = 0;
 }
 
 Node *parse_toplevel_func(Type *ret_t, char *func_name) {
@@ -924,6 +909,7 @@ Node *parse_toplevel_func(Type *ret_t, char *func_name) {
     // store the head of linked list which include local variables.
     // func_data.vars = cur_scope->lvar_head;
     func_data.toplevel_scope = toplevel_scope;
+    func_data.stack_frame_size = stack_frame_size;
 
     n->func = func_data;
     leave_scope();

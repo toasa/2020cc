@@ -735,4 +735,26 @@ test 2 "int main() { int x = 2; { int x = 3; } return x;}"
 test 2 "int main() { int x = 2; { int x = 3; } { int y = 4; return x; }}"
 test 3 "int main() { int x = 2; { x = 3; } return x;}"
 
+test 30 "int main() { int x = ({ int a; a = 30; int b; b = 11; int c; c = b - 10; int d; d = a * (b - c); d / 10; }); return x; }"
+test 20 "int main() { int x = ({ int abc; abc = 20; abc; }); return x; }"
+
+test 30 "
+int main() {
+    int x = ({ int a; a = 30; int b; b = 11; int c; c = b - 10; int d; d = a * (b - c); d / 10; });
+    int y = ({ int abc = 20; });
+    return x;
+}"
+test 20 "
+int main() {
+    int x = ({ int a; a = 30; int b; b = 11; int c; c = b - 10; int d; d = a * (b - c); d / 10; });
+    int y = ({ int abc; abc = 20; abc; });
+    return y;
+}"
+test 50 "
+int main() {
+    int x = ({ int a; a = 30; int b; b = 11; int c; c = b - 10; int d; d = a * (b - c); d / 10; });
+    int y = ({ int abc; abc = 20; abc; });
+    return x+y;
+}"
+
 echo "OK"

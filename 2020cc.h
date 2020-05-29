@@ -105,7 +105,6 @@ typedef struct VarNode {
 
 typedef struct Scope {
     struct Scope *high;
-    struct Scope *low;
     VarNode *lvar_head;
     size_t depth;
     size_t total_var_size;
@@ -119,6 +118,7 @@ typedef struct FuncData {
     int args_num;
     struct Node *args; // nkがND_CALLの場合に使う。次の引数には`next`メンバからアクセスする。
 
+    size_t stack_frame_size;
     Scope *toplevel_scope;
 } FuncData;
 
