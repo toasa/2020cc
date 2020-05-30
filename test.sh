@@ -164,6 +164,30 @@ int add(int x, int y) {
 
 test 30 "
 int main() {
+    return add(10, id(20));
+}
+
+int add(int x, int y) {
+    return x + y;
+}
+
+int id(int x) {
+    return x;
+}
+"
+
+test 18 "
+int main() {
+    return add(add(1,1,1), add(2,2,2), add(3,3,3));
+}
+
+int add(int x, int y, int z) {
+    return x + y + z;
+}
+"
+
+test 30 "
+int main() {
     return add(7 + 6/ 2, 8 + 2 + (20 - 10));
 }
 

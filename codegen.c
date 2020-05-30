@@ -48,14 +48,20 @@ void gen_expr(Node *n) {
         return;
     } else if (n->nk == ND_CALL) {
         FuncData callee = n->func;
+
+        // generate expression code for each argument.
         if (callee.args_num > 0) {
             Node *arg = callee.args;
             for (int count = 0; count < callee.args_num; count++) {
                 gen_expr(arg);
-                printf("    pop rax\n");
-                printf("    mov %s, rax\n", regs_64[count]);
                 arg = arg->next;
             }
+        }
+
+        // generated value of argument move to specified register for function calling.
+        for (int arg_i = callee.args_num; arg_i > 0; arg_i--) {
+            printf("    pop rax\n");
+            printf("    mov %s, rax\n", regs_64[arg_i-1]);
         }
 
         printf("    mov rax, 0\n");
@@ -289,6 +295,12 @@ void gen_func(Node *n) {
 
     // prologue
     printf("    push rbp\n");
+    printf("    push r10\n");
+    printf("    push r11\n");
+    printf("    push r12\n");
+    printf("    push r13\n");
+    printf("    push r14\n");
+    printf("    push r15\n");
     printf("    mov rbp, rsp\n");
 
     // allocate for local variables in stack area.
@@ -325,6 +337,12 @@ void gen_func(Node *n) {
     // epilogue
     printf(".Lreturn_%s:\n", n->func.name);
     printf("    mov rsp, rbp\n");
+    printf("    pop r15\n");
+    printf("    pop r14\n");
+    printf("    pop r13\n");
+    printf("    pop r12\n");
+    printf("    pop r11\n");
+    printf("    pop r10\n");
     printf("    pop rbp\n");
     printf("    ret\n\n");
 }
