@@ -115,6 +115,10 @@ Token *new_str_token(Token *cur_token, char **input) {
 
     int str_count = 0;
     while (**input != '"') {
+        if (**input == '\\' && *(*input+1) == '"') {
+            (*input)++;
+            str_count++;
+        }
         (*input)++;
         str_count++;
     }

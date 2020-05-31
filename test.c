@@ -253,7 +253,7 @@ int main() {
     test(98, "abc"[1], "abc[1]");
     test(99, "abc"[2], "abc[2]");
     test(0, "abc"[3], "abc[3]");
-    test(4, sizeof("abc"), "sizeof(abc)");
+    test(4, sizeof("abc"), "sizeof(\"abc\")");
 
     test(7, "\a"[0], "\\a[0]");
     test(8, "\b"[0], "\\b[0]");
@@ -323,7 +323,7 @@ int main() {
             int y = ({ int abc; abc = 20; abc; });
             x+y;
         })");
-
+    printf("%s\n", "He said \"Howdy? Toasa!\".");
     printf("OK\n");
     return 0;
 }
