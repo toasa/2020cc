@@ -70,7 +70,7 @@ void gen_expr(Node *n) {
         return;
     } else if (n->nk == ND_DEREF) {
         gen_expr(n->expr);
-        load(n->expr);
+        load(n);
         return;
     } else if (n->nk == ND_ADDR) {
         gen_addr(n->expr);
