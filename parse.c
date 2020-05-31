@@ -264,7 +264,7 @@ Type *parse_type() {
 
     Type *base = t;
 
-    if  (cur_tokenkind_is(TK_IDENT) && next_tokenkind_is(TK_LBRACKET)) {
+    if (cur_tokenkind_is(TK_IDENT) && next_tokenkind_is(TK_LBRACKET)) {
         // array
         t = new_type(ARRAY, NULL);
         t->arr_name = token->str;
