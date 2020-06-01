@@ -288,7 +288,7 @@ Type *parse_type() {
     return t;
 }
 
-Node *parse_array(Node *lhs) {
+Node *parse_indexing(Node *lhs) {
     Node *rhs = parse_expr();
     add_type(lhs);
     add_type(rhs);
@@ -404,7 +404,7 @@ Node *parse_primary() {
 
     if (cur_token_is("[")) {
         next_token();
-        n = parse_array(n);
+        n = parse_indexing(n);
     } else if (cur_token_is("++")) {
         // post increment
         next_token();
