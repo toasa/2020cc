@@ -147,6 +147,7 @@ int main() {
     test(7, ({ int x; int y; x = 3; y = 5; *(&y + 1) = 7; x; }), "({ int x; int y; x = 3; y = 5; *(&y + 1) = 7; x; })");
 
     test(4, ({ int x; sizeof(x); }), "({ int x; sizeof(x); })");
+    test(4, ({ int x; sizeof x ; }), "({ int x; sizeof x ; })");
     test(8, ({ int *x; sizeof(x); }), "({ int *x; sizeof(x); })");
     test(4, ({ int x; sizeof(x + 3); }), "({ int x; sizeof(x + 3); })");
     test(8, ({ int *x; sizeof(x + 3); }), "({ int *x; sizeof(x + 3); })");
@@ -155,6 +156,12 @@ int main() {
     test(4, ({ int *ptr; sizeof(*ptr); }), "({ int *ptr; sizeof(*ptr); })");
     test(4, ({ int x = 20; int *y = &x; int **z = &y; int ***ptr = &z; sizeof(***ptr); }), "({ int x = 20; int *y = &x; int **z = &y; int ***ptr = &z; sizeof(***ptr); })");
     test(40, ({ int arr[10]; sizeof(arr); }), "({ int arr[10]; sizeof(arr); })");
+    test(120, ({ int arr[10][3]; sizeof(arr); }), "({ int arr[10][3]; sizeof(arr); })");
+    test(12, ({ int arr[10][3]; sizeof(*arr); }), "({ int arr[10][3]; sizeof(*arr); })");
+    test(4, ({ int arr[10][3]; sizeof(**arr); }), "({ int arr[10][3]; sizeof(**arr); })");
+    test(5, ({ int arr[10][3]; sizeof(**arr) + 1; }), "({ int arr[10][3]; sizeof(**arr) + 1; })");
+    test(5, ({ int arr[10][3]; sizeof **arr  + 1; }), "({ int arr[10][3]; sizeof **arr  + 1; })");
+    test(4, ({ int arr[10][3]; sizeof(**arr + 1); }), "({ int arr[10][3]; sizeof(**arr + 1); })");
 
     test(10, ({ int a[3]; *(a+0) = 10; *(a+1) = 20; *(a+2) = 30; *(a+0); }), "({ int a[3]; *(a+0) = 10; *(a+1) = 20; *(a+2) = 30; *(a+0); })");
     test(20, ({ int a[3]; *(a+0) = 10; *(a+1) = 20; *(a+2) = 30; *(a+1); }), "({ int a[3]; *(a+0) = 10; *(a+1) = 20; *(a+2) = 30; *(a+1); })");
