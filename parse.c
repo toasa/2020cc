@@ -308,6 +308,7 @@ Type *parse_type() {
     return t;
 }
 
+// `[]` operator
 Node *parse_indexing(Node *lhs) {
     Node *rhs = parse_expr();
     add_type(lhs);
@@ -423,8 +424,10 @@ Node *parse_primary() {
     Node *new_n;
 
     if (cur_token_is("[")) {
-        next_token();
-        n = parse_indexing(n);
+        while (cur_token_is("[")) {
+            next_token();
+            n = parse_indexing(n);
+        }
     } else if (cur_token_is("++")) {
         // post increment
         next_token();
