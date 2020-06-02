@@ -23,6 +23,10 @@ void gen_addr(Node *n) {
 }
 
 void load(Node *n) {
+    if (n->ty->tk == ARRAY) {
+        return;
+    }
+
     printf("    pop rax\n");
     if (n->ty->size == 1) {
         printf("    movsx rax, byte ptr [rax]\n");
@@ -39,12 +43,8 @@ void gen_expr(Node *n) {
         printf("    push %d\n", n->val);
         return;
     } else if (n->nk == ND_LVAR) {
-        if (n->var.type->tk == ARRAY) {
-            gen_addr(n);
-        } else {
-            gen_addr(n);
-            load(n);
-        }
+        gen_addr(n);
+        load(n);
         return;
     } else if (n->nk == ND_CALL) {
         FuncData callee = n->func;

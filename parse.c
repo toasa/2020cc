@@ -266,22 +266,32 @@ Type *parse_type_prefix() {
 
 // array
 Type *parse_type_suffix(Type *base, char *ident_name) {
-    Type *t = new_type(ARRAY, NULL);
-    t->arr_name = ident_name;
-    t->base = base;
+    if (!cur_token_is("[")) {
+        return base;
+    }
 
     expect(TK_LBRACKET);
 
+    int arr_size = 0;
     if (cur_token_is("]")) {
         // array initialization allow that the number of array elements is not specified.
     } else {
         assert(cur_tokenkind_is(TK_NUM), "array size must be integer literal");
-        t->arr_size = token->val;
-        t->size = base->size * t->arr_size;
+        arr_size = token->val;
         next_token();
     }
 
     expect(TK_RBRACKET);
+
+    // handle a multi-dimensional array
+    base = parse_type_suffix(base, ident_name);
+
+    Type *t = new_type(ARRAY, NULL);
+    t->arr_name = ident_name;
+    t->base = base;
+    t->arr_size = arr_size;
+    t->size = base->size * arr_size;
+
     return t;
 }
 
