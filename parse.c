@@ -233,7 +233,7 @@ void parse_toplevel_global_var(Type *t, char *gname);
 void parse_toplevel();
 void parse_program();
 
-Type *parse_type() {
+Type *parse_type_prefix() {
     Type *t;
     assert(cur_tokenkind_is(TK_TYPE), "%s is not type", token->str);
 
@@ -246,7 +246,6 @@ Type *parse_type() {
         error("invalid base type: %s", token->str);
     }
 
-    // local variable
     t = new_type(type_base, NULL);
     t->size = get_type_msize(type_base);
 
@@ -262,27 +261,38 @@ Type *parse_type() {
         } while (cur_token_is("*"));
     }
 
-    Type *base = t;
+    return t;
+}
 
+// array
+Type *parse_type_suffix(Type *base, char *ident_name) {
+    Type *t = new_type(ARRAY, NULL);
+    t->arr_name = ident_name;
+    t->base = base;
+
+    expect(TK_LBRACKET);
+
+    if (cur_token_is("]")) {
+        // array initialization allow that the number of array elements is not specified.
+    } else {
+        assert(cur_tokenkind_is(TK_NUM), "array size must be integer literal");
+        t->arr_size = token->val;
+        t->size = base->size * t->arr_size;
+        next_token();
+    }
+
+    expect(TK_RBRACKET);
+    return t;
+}
+
+Type *parse_type() {
+    Type *t = parse_type_prefix();
+
+    // array
     if (cur_tokenkind_is(TK_IDENT) && next_tokenkind_is(TK_LBRACKET)) {
-        // array
-        t = new_type(ARRAY, NULL);
-        t->arr_name = token->str;
-        t->base = base;
-
+        char *ident_name = token->str;
         expect(TK_IDENT);
-        expect(TK_LBRACKET);
-
-        if (cur_token_is("]")) {
-            // array initialization allow that the number of array elements is not specified.
-        } else {
-            assert(cur_tokenkind_is(TK_NUM), "array size must be integer literal");
-            t->arr_size = token->val;
-            t->size = base->size * t->arr_size;
-            next_token();
-        }
-
-        expect(TK_RBRACKET);
+        t = parse_type_suffix(t, ident_name);
     }
 
     return t;
