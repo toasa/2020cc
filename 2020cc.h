@@ -139,7 +139,7 @@ typedef struct Node {
     struct Node *alt;   // nkがND_IFの場合に使う
     struct Node *expr;  // nkがND_RETURN, ND_DEREF, ND_ADDRの場合に使う
     struct Node *post;  // nkがND_FORの場合に使う
-    struct Node *next;  // nkがND_BLOCK, ND_CALL, ND_FUNCの場合に使う
+    struct Node *next;  // nkがND_BLOCK, ND_CALL, ND_FUNC, ND_DECLの場合に使う
     struct Node *block; // nkがND_BLOCK, ND_STMT_EXPRの場合に使う
     struct Node *inc;   // nkがND_PREINC, ND_PREDEC, ND_POSTINC, ND_POSTDECの場合に使う
 } Node;

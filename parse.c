@@ -694,28 +694,44 @@ Node *parse_expr() {
     return parse_assign();
 }
 
+// parse declaration about only one type.
 Node *parse_declaration(VarKind vk) {
     Node *n = new_node(ND_DECL, 0);
+    Node *cur = new_node(ND_DECL, 0);
+    n->next = cur;
 
     // declaration statement;
     Type *t = parse_type();
     n->ty = t;
 
-    char *var_name;
-    if (t->tk == ARRAY) {
-        var_name = t->arr_name;
-    } else {
-        var_name = token->str;
-        next_token();
-    }
+    // handle multi variable declarations of the type `t`.
+    do {
+        if (cur_token_is(",")) {
+            next_token();
+        }
 
-    Var v = new_var(vk, var_name, t);
-    // add new var node at tail of linked list.
-    register_new_lvar(v);
+        char *var_name;
+        if (t->tk == ARRAY) {
+            var_name = t->arr_name;
+        } else {
+            var_name = token->str;
+            next_token();
+        }
 
-    n->var = v;
+        Var v = new_var(vk, var_name, t);
 
-    return n;
+        // add new var node at tail of linked list.
+        register_new_lvar(v);
+
+        Node *tmp = new_node(ND_DECL, 0);
+        tmp->var = v;
+        cur->next = tmp;
+        cur = tmp;
+
+    // if next token is a certain type (not `t`), another declaration begins.
+    } while (cur_token_is(",") && !next_tokenkind_is(TK_TYPE));
+
+    return n->next->next;
 }
 
 // parse stmt, stmt, ... "}"
@@ -912,6 +928,7 @@ Node *parse_toplevel_func(Type *ret_t, char *func_name) {
     expect(TK_LPARENT);
     if (!cur_token_is(")")) {
         // function arguments
+        // TODO: remove duplicated parsing.
         int args_num = 1;
         parse_declaration(ARG);
         while (!cur_token_is(")")) {

@@ -109,6 +109,8 @@ int main() {
     test(20, ({ int abc; abc = 20; abc; }), "({ int abc; abc = 20; abc; })");
     test(20, ({ int foo; int bar; foo = 30; bar = 20; (foo - bar) * 2; }), "({ int foo; int bar; foo = 30; bar = 20; (foo - bar) * 2; })");
 
+    test(8, ({ int x, y; x=3; y=5; x+y; }), "({ int x, y; x=3; y=5; x+y; })");
+
     test(20, ({ if (1) 20; }), "({ if (1) 20; })");
     test(20, ({ if (0+1) 20; }), "({ if (0+1) 20; })");
     test(30, ({ if (0) 20; 30; }), "({ if (0) 20; 30; })");
