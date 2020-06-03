@@ -337,13 +337,15 @@ Node *parse_indexing(Node *lhs) {
 Exprs parse_exprs(char *terminator) {
     Exprs result;
 
-    int count = 1;
-    Node *head = calloc(1, sizeof(Node));
-    Node *cur = parse_expr();
-    head->next = cur;
+    Node head;
+    Node *cur = calloc(1, sizeof(Node));
+    head.next = cur;
+    int count = 0;
 
     while (!cur_token_is(terminator)) {
-        expect(TK_COMMA);
+        if (cur_token_is(",")) {
+            expect(TK_COMMA);
+        }
         Node *tmp = parse_expr();
         cur->next = tmp;
         cur = tmp;
@@ -351,7 +353,7 @@ Exprs parse_exprs(char *terminator) {
     }
 
     result.count = count;
-    result.head = head->next;
+    result.head = head.next->next;
     return result;
 }
 
@@ -741,18 +743,17 @@ Node *parse_compound_stmt(Node *n, int from_func_body) {
         enter_scope();
     }
     if (!cur_token_is("}")) {
-        Node *head = calloc(1, sizeof(Node));
-        Node *cur = parse_stmt();
-        add_type(cur);
-        head->next = cur;
+        Node head;
+        Node *cur = calloc(1, sizeof(Node));
+        head.next = cur;
 
         while (!cur_token_is("}")) {
             Node *tmp = parse_stmt();
+            add_type(tmp);
             cur->next = tmp;
             cur = tmp;
-            add_type(cur);
         }
-        n->block = head->next;
+        n->block = head.next->next;
     }
     if (!from_func_body) {
         leave_scope();
@@ -928,11 +929,11 @@ Node *parse_toplevel_func(Type *ret_t, char *func_name) {
     expect(TK_LPARENT);
     if (!cur_token_is(")")) {
         // function arguments
-        // TODO: remove duplicated parsing.
-        int args_num = 1;
-        parse_declaration(ARG);
+        int args_num = 0;
         while (!cur_token_is(")")) {
-            expect(TK_COMMA);
+            if (cur_token_is(",")) {
+                expect(TK_COMMA);
+            }
             parse_declaration(ARG);
             args_num++;
         }
