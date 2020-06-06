@@ -233,6 +233,24 @@ void parse_toplevel_global_var(Type *t, char *gname);
 void parse_toplevel();
 void parse_program();
 
+Member *new_member(char *name, Type *t) {
+    Member *m = calloc(1, sizeof(Member));
+    m->name = name;
+    m->type = t;
+    return m;
+}
+
+Member *get_member(Member *m, char *name) {
+    Member *m_iter = m;
+    while (m_iter != NULL) {
+        if (equal_strings(m_iter->name, name)) {
+            return m_iter;
+        }
+        m_iter = m_iter->next;
+    }
+    return NULL;
+}
+
 Type *parse_type_prefix() {
     Type *t;
     assert(cur_tokenkind_is(TK_TYPE), "%s is not type", token->str);
@@ -242,14 +260,42 @@ Type *parse_type_prefix() {
         type_base = INT;
     } else if (cur_token_is("char")) {
         type_base = CHAR;
+    } else if (cur_token_is("struct")) {
+        type_base = STRUCT;
     } else {
         error("invalid base type: %s", token->str);
     }
 
-    t = new_type(type_base, NULL);
-    t->size = get_type_msize(type_base);
-
     next_token();
+
+    t = new_type(type_base, NULL);
+
+    if (type_base == STRUCT) {
+        expect(TK_LBRACE);
+        Member head;
+        Member *cur = calloc(1, sizeof(Member));
+        head.next = cur;
+        int total_size = 0;
+
+        while (!cur_tokenkind_is(TK_RBRACE)) {
+            Node *members = parse_declaration(MEMBER);
+            while (members != NULL) {
+                Var mvar = members->var;
+                Member *tmp = new_member(mvar.name, mvar.type);
+                tmp->offset = total_size;
+                total_size += mvar.type->size;
+                cur->next = tmp;
+                cur = tmp;
+                members = members->next;
+            }
+            expect(TK_SEMICOLON);
+        }
+        expect(TK_RBRACE);
+        t->member = head.next->next;
+        t->size = total_size;
+    } else {
+        t->size = get_type_msize(type_base);
+    }
 
     if (cur_token_is("*")) {
         // pointer
@@ -422,42 +468,66 @@ Node *parse_primary() {
     } else {
         error("invalid primary");
     }
+    return n;
+}
 
+Node *parse_suffix() {
+    Node *n = parse_primary();
     Node *new_n;
 
-    if (cur_token_is("[")) {
-        while (cur_token_is("[")) {
+    while (1) {
+        if (cur_token_is("[")) {
             next_token();
             n = parse_indexing(n);
-        }
-    } else if (cur_token_is("++")) {
-        // post increment
-        next_token();
-        new_n = new_node(ND_POSTINC, 0);
-        new_n->expr = n;
-        add_type(n);
-        if (is_pointer(n)) {
-            new_n->inc = new_node(ND_NUM, n->ty->size);
-        } else {
-            new_n->inc = new_node(ND_NUM, 1);
+            continue;
+        } else if (cur_token_is("++")) {
+            // post increment
+            next_token();
+            new_n = new_node(ND_POSTINC, 0);
+            new_n->expr = n;
+            add_type(n);
+            if (is_pointer(n)) {
+                new_n->inc = new_node(ND_NUM, n->ty->size);
+            } else {
+                new_n->inc = new_node(ND_NUM, 1);
+            }
+
+            n = new_n;
+            continue;
+        } else if (cur_token_is("--")) {
+            // post decrement
+            next_token();
+            new_n = new_node(ND_POSTDEC, 0);
+            new_n->expr = n;
+            add_type(n);
+            if (is_pointer(n)) {
+                new_n->inc = new_node(ND_NUM, n->ty->size);
+            } else {
+                new_n->inc = new_node(ND_NUM, 1);
+            }
+
+            n = new_n;
+            continue;
+        } else if (cur_token_is(".")) {
+            // member access operator
+            next_token();
+            add_type(n);
+            char *member_name = token->str;
+            next_token();
+            Member *m = get_member(n->ty->member, member_name);
+            if (m == NULL) {
+                error("unknown member specified: %s", member_name);
+            }
+            new_n = new_node(ND_MEMBER, 0);
+            new_n->member = m;
+            new_n->expr = n;
+
+            n = new_n;
+            continue;
         }
 
-        n = new_n;
-    } else if (cur_token_is("--")) {
-        // post decrement
-        next_token();
-        new_n = new_node(ND_POSTDEC, 0);
-        new_n->expr = n;
-        add_type(n);
-        if (is_pointer(n)) {
-            new_n->inc = new_node(ND_NUM, n->ty->size);
-        } else {
-            new_n->inc = new_node(ND_NUM, 1);
-        }
-
-        n = new_n;
+        break;
     }
-
     return n;
 }
 
@@ -466,11 +536,11 @@ Node *parse_unary() {
 
     if (cur_token_is("+")) {
         next_token();
-        n = parse_primary();
+        n = parse_suffix();
     } else if (cur_token_is("-")) {
         next_token();
         Node *lhs = new_node(ND_NUM, 0);
-        Node *rhs = parse_primary();
+        Node *rhs = parse_suffix();
         n = new_node_with_lr(ND_SUB, lhs, rhs);
     } else if (cur_token_is("*")) {
         next_token();
@@ -484,7 +554,7 @@ Node *parse_unary() {
         // pre increment
         next_token();
         n = new_node(ND_PREINC, 0);
-        n->expr = parse_primary();
+        n->expr = parse_suffix();
         add_type(n->expr);
         if (is_pointer(n->expr)) {
             n->inc = new_node(ND_NUM, n->expr->ty->size);
@@ -495,7 +565,7 @@ Node *parse_unary() {
         // pre decrement
         next_token();
         n = new_node(ND_PREDEC, 0);
-        n->expr = parse_primary();
+        n->expr = parse_suffix();
         add_type(n->expr);
         if (is_pointer(n->expr)) {
             n->inc = new_node(ND_NUM, n->expr->ty->size);
@@ -508,7 +578,7 @@ Node *parse_unary() {
         add_type(tmp);
         n = new_node(ND_NUM, size_of(tmp->ty));
     } else {
-        n = parse_primary();
+        n = parse_suffix();
     }
 
     return n;
@@ -697,6 +767,7 @@ Node *parse_expr() {
 }
 
 // parse declaration about only one type.
+// parse <type> (<ident name>|<ident name>*) <'[]'>*
 Node *parse_declaration(VarKind vk) {
     Node *n = new_node(ND_DECL, 0);
     Node *cur = new_node(ND_DECL, 0);
@@ -721,9 +792,6 @@ Node *parse_declaration(VarKind vk) {
         }
 
         Var v = new_var(vk, var_name, t);
-
-        // add new var node at tail of linked list.
-        register_new_lvar(v);
 
         Node *tmp = new_node(ND_DECL, 0);
         tmp->var = v;
@@ -817,6 +885,13 @@ Node *parse_stmt() {
     } else if (cur_tokenkind_is(TK_TYPE)) {
         // `n` 's NodeKind is 'ND_DECL'.
         n = parse_declaration(LOCAL);
+
+        // add new var node at tail of linked list.
+        Node *var_iter = n;
+        while (var_iter != NULL) {
+            register_new_lvar(var_iter->var);
+            var_iter = var_iter->next;
+        }
 
         // simultaneously initialize variable on declaration.
         if (cur_token_is("=")) {
@@ -934,7 +1009,10 @@ Node *parse_toplevel_func(Type *ret_t, char *func_name) {
             if (cur_token_is(",")) {
                 expect(TK_COMMA);
             }
-            parse_declaration(ARG);
+            Node *arg = parse_declaration(ARG);
+            // add new arg at tail of linked list.
+            register_new_lvar(arg->var);
+
             args_num++;
         }
         func_data.args_num = args_num;

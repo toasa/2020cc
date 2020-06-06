@@ -13,6 +13,7 @@ typedef enum {
     TK_RBRACKET,  // ]
     TK_SEMICOLON, // ;
     TK_COMMA,     // ,
+    TK_PERIOD,    // .
     TK_TYPE,      // 'int', 'void', 'char',...
     TK_STR,
     TK_EOF,
@@ -61,27 +62,42 @@ typedef enum {
     ND_FUNC,      // function definition
     ND_DECL,      // local variable declaration
     ND_STMT_EXPR, // statement expression
+    ND_MEMBER,    // . (struct member access)
 } NodeKind;
 
 typedef enum {
     INT,
     CHAR,
     PTR,
-    ARRAY
+    ARRAY,
+    STRUCT,
 } TypeKind;
+
+typedef struct Member Member;
 
 typedef struct Type {
     TypeKind tk;
     size_t size;
     struct Type *base; // base type of array or pointer
+
     char *arr_name;
     size_t arr_size;   // the number of elements
+
+    Member *member;    // struct
 } Type;
+
+struct Member {
+    char *name;
+    Type *type;
+    Member *next;
+    int offset;
+};
 
 typedef enum VarKind {
     LOCAL,
     GLOBAL,
     ARG,
+    MEMBER,
 } VarKind;
 
 typedef struct Var {
@@ -133,11 +149,13 @@ typedef struct Node {
     Var var;            // nkがND_LVAR, ND_DECLの場合に使う
     FuncData func;      // nkがND_CALL, ND_FUNCの場合に使う
 
+    Member *member;     // nkがND_MEMBERの場合に使う
+
     struct Node *init;  // nkがND_FORの場合に使う
     struct Node *cond;  // nkがND_IF, ND_WHILE, ND_FORの場合に使う
     struct Node *then;  // nkがND_IF, ND_WHILE, ND_FORの場合に使う
     struct Node *alt;   // nkがND_IFの場合に使う
-    struct Node *expr;  // nkがND_RETURN, ND_DEREF, ND_ADDRの場合に使う
+    struct Node *expr;  // nkがND_RETURN, ND_DEREF, ND_ADDR, ND_MEMBERの場合に使う
     struct Node *post;  // nkがND_FORの場合に使う
     struct Node *next;  // nkがND_BLOCK, ND_CALL, ND_FUNC, ND_DECLの場合に使う
     struct Node *block; // nkがND_BLOCK, ND_STMT_EXPRの場合に使う

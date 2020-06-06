@@ -40,6 +40,7 @@ int is_type(char *str) {
     char *types[] = {
         "int",
         "char",
+        "struct",
         NULL,
     };
     for (int i = 0; types[i] != NULL; i++) {
@@ -231,6 +232,9 @@ Token *tokenize(char *input) {
         } else if (*input == ',') {
             input++;
             cur_token = new_token(cur_token, TK_COMMA, 0, ",");
+        } else if (*input == '.') {
+            input++;
+            cur_token = new_token(cur_token, TK_PERIOD, 0, ".");
         } else if (*input == '(') {
             input++;
             cur_token = new_token(cur_token, TK_LPARENT, 0, "(");

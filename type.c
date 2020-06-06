@@ -30,6 +30,12 @@ size_t size_of(Type *t) {
         return 8;
     } else if (t->tk == CHAR) {
         return 1;
+    } else if (t->tk == STRUCT) {
+        size_t size = 0;
+        for (Member *m = t->member; m != NULL; m = m->next) {
+            size += size_of(m->type);
+        }
+        return size;
     }
     // INT
     return 4;
@@ -103,6 +109,9 @@ void add_type(Node *n) {
     case ND_RSHIFT:
     case ND_ASSIGN:
         n->ty = n->lhs->ty;
+        return;
+    case ND_MEMBER:
+        n->ty = n->member->type;
         return;
     case ND_STMT_EXPR:
         stmt = n->block;

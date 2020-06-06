@@ -17,6 +17,12 @@ void gen_addr(Node *n) {
             printf("    sub rax, %d\n", n->var.offset);
         }
         printf("    push rax\n");
+    } if (n->nk == ND_MEMBER) {
+        gen_addr(n->expr);
+        printf("    pop rax\n");
+        printf("    mov r10, %d\n", n->member->offset);
+        printf("    add rax, r10\n");
+        printf("    push rax\n");
     } else if (n->nk == ND_DEREF) {
         gen_expr(n->expr);
     }
@@ -42,7 +48,7 @@ void gen_expr(Node *n) {
     if (n->nk == ND_NUM) {
         printf("    push %d\n", n->val);
         return;
-    } else if (n->nk == ND_LVAR) {
+    } else if (n->nk == ND_LVAR || n->nk == ND_MEMBER) {
         gen_addr(n);
         load(n);
         return;
