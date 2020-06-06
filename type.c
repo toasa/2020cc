@@ -2,13 +2,14 @@
 #include <stdlib.h>
 #include "2020cc.h"
 
-Type *int_t = &(Type){INT, 8};
-Type *char_t = &(Type){CHAR, 1};
+Type *int_t = &(Type){INT, 8, 8};
+Type *char_t = &(Type){CHAR, 1, 1};
 
-Type *new_type(TypeKind tk, Type *base) {
+Type *new_type(TypeKind tk, Type *base, int align) {
     Type *t = calloc(1, sizeof(Type));
     t->tk = tk;
     t->base = base;
+    t->align = align;
     return t;
 }
 
@@ -41,14 +42,18 @@ size_t size_of(Type *t) {
     return 4;
 }
 
+int align_of(int n, int align) {
+    return (n + align - 1) & ~(align - 1);
+}
+
 Type *pointer_to(Type *base) {
-    Type *t = new_type(PTR, base);
+    Type *t = new_type(PTR, base, 8);
     t->size = 8;
     return t;
 }
 
 Type *array_of(Type *base, int len) {
-    Type *t = new_type(ARRAY, base);
+    Type *t = new_type(ARRAY, base, base->align);
     t->arr_size = len;
     t->size = get_type_msize(base->tk) * len;
     return t;

@@ -252,7 +252,7 @@ Member *get_member(Member *m, char *name) {
 }
 
 Type *parse_struct_decl() {
-    Type *t = new_type(STRUCT, NULL);
+    Type *t = new_type(STRUCT, NULL, 0);
     expect(TK_LBRACE);
     Member head;
     Member *cur = calloc(1, sizeof(Member));
@@ -260,16 +260,34 @@ Type *parse_struct_decl() {
     int total_size = 0;
 
     while (!cur_tokenkind_is(TK_RBRACE)) {
-        Node *members = parse_declaration(MEMBER);
-        while (members != NULL) {
-            Var mvar = members->var;
-            Member *tmp = new_member(mvar.name, mvar.type);
+        Type *member_t = parse_type();
+
+        // parse some members which have same type `member_t`.
+        do {
+            if (cur_token_is(",")) {
+                next_token();
+            }
+
+            char *member_name;
+            if (member_t->tk == ARRAY) {
+                member_name = member_t->arr_name;
+            } else {
+                member_name = token->str;
+                next_token();
+            }
+            Member *tmp = new_member(member_name, member_t);
+            total_size = align_of(total_size, member_t->align);
             tmp->offset = total_size;
-            total_size += mvar.type->size;
+            total_size += member_t->size;
+
+            if (t->align < member_t->align) {
+                t->align = member_t->align;
+            }
             cur->next = tmp;
             cur = tmp;
-            members = members->next;
-        }
+
+        } while(!cur_token_is(";"));
+
         expect(TK_SEMICOLON);
     }
     expect(TK_RBRACE);
