@@ -251,63 +251,59 @@ Member *get_member(Member *m, char *name) {
     return NULL;
 }
 
+Type *parse_struct_decl() {
+    Type *t = new_type(STRUCT, NULL);
+    expect(TK_LBRACE);
+    Member head;
+    Member *cur = calloc(1, sizeof(Member));
+    head.next = cur;
+    int total_size = 0;
+
+    while (!cur_tokenkind_is(TK_RBRACE)) {
+        Node *members = parse_declaration(MEMBER);
+        while (members != NULL) {
+            Var mvar = members->var;
+            Member *tmp = new_member(mvar.name, mvar.type);
+            tmp->offset = total_size;
+            total_size += mvar.type->size;
+            cur->next = tmp;
+            cur = tmp;
+            members = members->next;
+        }
+        expect(TK_SEMICOLON);
+    }
+    expect(TK_RBRACE);
+    t->member = head.next->next;
+    t->size = total_size;
+    return t;
+}
+
 Type *parse_type_prefix() {
     Type *t;
     assert(cur_tokenkind_is(TK_TYPE), "%s is not type", token->str);
 
     TypeKind type_base;
     if (cur_token_is("int")) {
-        type_base = INT;
+        next_token();
+        t = int_t;
     } else if (cur_token_is("char")) {
-        type_base = CHAR;
+        next_token();
+        t = char_t;
     } else if (cur_token_is("struct")) {
-        type_base = STRUCT;
+        next_token();
+        t = parse_struct_decl();
     } else {
         error("invalid base type: %s", token->str);
     }
-
-    next_token();
-
-    t = new_type(type_base, NULL);
-
-    if (type_base == STRUCT) {
-        expect(TK_LBRACE);
-        Member head;
-        Member *cur = calloc(1, sizeof(Member));
-        head.next = cur;
-        int total_size = 0;
-
-        while (!cur_tokenkind_is(TK_RBRACE)) {
-            Node *members = parse_declaration(MEMBER);
-            while (members != NULL) {
-                Var mvar = members->var;
-                Member *tmp = new_member(mvar.name, mvar.type);
-                tmp->offset = total_size;
-                total_size += mvar.type->size;
-                cur->next = tmp;
-                cur = tmp;
-                members = members->next;
-            }
-            expect(TK_SEMICOLON);
-        }
-        expect(TK_RBRACE);
-        t->member = head.next->next;
-        t->size = total_size;
-    } else {
-        t->size = get_type_msize(type_base);
-    }
-
-    if (cur_token_is("*")) {
-        // pointer
-        do {
-            Type *p = new_type(PTR, t);
-            p->size = get_type_msize(PTR);
-            t = p;
-            next_token();
-        } while (cur_token_is("*"));
-    }
-
     return t;
+}
+
+Type *parse_pointer_type(Type *base) {
+    do {
+        base = pointer_to(base);
+        next_token();
+    } while (cur_token_is("*"));
+    return base;
 }
 
 // array
@@ -332,17 +328,17 @@ Type *parse_type_suffix(Type *base, char *ident_name) {
     // handle a multi-dimensional array
     base = parse_type_suffix(base, ident_name);
 
-    Type *t = new_type(ARRAY, NULL);
+    Type *t = array_of(base, arr_size);
     t->arr_name = ident_name;
-    t->base = base;
-    t->arr_size = arr_size;
-    t->size = base->size * arr_size;
-
     return t;
 }
 
 Type *parse_type() {
     Type *t = parse_type_prefix();
+
+    if (cur_token_is("*")) {
+        t = parse_pointer_type(t);
+    }
 
     // array
     if (cur_tokenkind_is(TK_IDENT) && next_tokenkind_is(TK_LBRACKET)) {
