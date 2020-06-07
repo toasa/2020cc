@@ -121,9 +121,16 @@ typedef struct VarNode {
     struct VarNode *next;
 } VarNode;
 
+typedef struct Tag {
+    char *name;
+    Type *type; // typekind is STRUCT only.
+    struct Tag *next;
+} Tag;
+
 typedef struct Scope {
     struct Scope *high;
     VarNode *lvar_head;
+    Tag *tag_head;
     size_t depth;
     size_t total_var_size;
 } Scope;

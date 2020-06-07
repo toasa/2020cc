@@ -208,6 +208,39 @@ Var get_var(char *name) {
     return v->data;
 }
 
+Tag *new_tag(char *tag_name, Type *type) {
+    assert(type->tk == STRUCT, "tag is used for struct only");
+    Tag *t = calloc(1, sizeof(Tag));
+    t->name = tag_name;
+    t->type = type;
+    return t;
+}
+
+void register_new_tag(Tag *tag) {
+    if (cur_scope->tag_head == NULL) {
+        cur_scope->tag_head = tag;
+        return;
+    }
+
+    Tag *t_iter = cur_scope->tag_head;
+    while (t_iter->next != NULL) {
+        t_iter = t_iter->next;
+    }
+
+    t_iter->next = tag;
+}
+
+Tag *get_tag(char *tag_name) {
+    Tag *t_iter = cur_scope->tag_head;
+    while (t_iter != NULL) {
+        if (equal_strings(t_iter->name, tag_name)) {
+            return t_iter;
+        }
+        t_iter = t_iter->next;
+    }
+    return NULL;
+}
+
 // return value of `parse_exprs`.
 typedef struct Exprs {
     int count;
@@ -253,6 +286,22 @@ Member *get_member(Member *m, char *name) {
 
 Type *parse_struct_decl() {
     Type *t = new_type(STRUCT, NULL, 0);
+
+    // A tag of struct is omittable.
+    int tag_exists = 0;
+    char *tag_name;
+    if (cur_tokenkind_is(TK_IDENT)) {
+        tag_name = token->str;
+        Tag *registered = get_tag(tag_name);
+        if (registered != NULL) {
+            next_token();
+            return registered->type;
+        }
+
+        tag_exists = 1;
+        next_token();
+    }
+
     expect(TK_LBRACE);
     Member head;
     Member *cur = calloc(1, sizeof(Member));
@@ -293,6 +342,12 @@ Type *parse_struct_decl() {
     expect(TK_RBRACE);
     t->member = head.next->next;
     t->size = total_size;
+
+    if (tag_exists) {
+        Tag *tag = new_tag(tag_name, t);
+        register_new_tag(tag);
+    }
+
     return t;
 }
 
@@ -468,6 +523,7 @@ Node *parse_primary() {
         n = new_node(ND_NUM, token->val);
         next_token();
     } else if (cur_tokenkind_is(TK_STR)) {
+        // string literal
         Type *t = array_of(char_t, token->str_len);
         Var v = new_var(GLOBAL, new_label(), t);
         v.str = token->str;
@@ -780,16 +836,22 @@ Node *parse_expr() {
     return parse_assign();
 }
 
-// parse declaration about only one type.
-// parse <type> (<ident name>|<ident name>*) <'[]'>*
+// parse declaration either variables or struct tag.
+// 1. variables
+//   - <type> (<ident name>|<ident name>*) ('[' <integer> ']')*
+// 2. struct tag
+//   - 'struct' <tag name> '{' <member declaration> '}' ';'
 Node *parse_declaration(VarKind vk) {
     Node *n = new_node(ND_DECL, 0);
     Node *cur = new_node(ND_DECL, 0);
     n->next = cur;
 
-    // declaration statement;
     Type *t = parse_type();
-    n->ty = t;
+
+    // declaration of struct tag only (not any variables).
+    if (t->tk == STRUCT && cur_tokenkind_is(TK_SEMICOLON)) {
+        return n;
+    }
 
     // handle multi variable declarations of the type `t`.
     do {
@@ -806,8 +868,11 @@ Node *parse_declaration(VarKind vk) {
         }
 
         Var v = new_var(vk, var_name, t);
+        // add new node of variable at tail of linked list.
+        register_new_lvar(v);
 
         Node *tmp = new_node(ND_DECL, 0);
+        tmp->ty = t;
         tmp->var = v;
         cur->next = tmp;
         cur = tmp;
@@ -899,13 +964,6 @@ Node *parse_stmt() {
     } else if (cur_tokenkind_is(TK_TYPE)) {
         // `n` 's NodeKind is 'ND_DECL'.
         n = parse_declaration(LOCAL);
-
-        // add new var node at tail of linked list.
-        Node *var_iter = n;
-        while (var_iter != NULL) {
-            register_new_lvar(var_iter->var);
-            var_iter = var_iter->next;
-        }
 
         // simultaneously initialize variable on declaration.
         if (cur_token_is("=")) {
@@ -1024,9 +1082,6 @@ Node *parse_toplevel_func(Type *ret_t, char *func_name) {
                 expect(TK_COMMA);
             }
             Node *arg = parse_declaration(ARG);
-            // add new arg at tail of linked list.
-            register_new_lvar(arg->var);
-
             args_num++;
         }
         func_data.args_num = args_num;
