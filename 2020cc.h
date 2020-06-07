@@ -14,6 +14,7 @@ typedef enum {
     TK_SEMICOLON, // ;
     TK_COMMA,     // ,
     TK_PERIOD,    // .
+    TK_ARROW,     // ->
     TK_TYPE,      // 'int', 'void', 'char',...
     TK_STR,
     TK_EOF,

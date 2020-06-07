@@ -17,6 +17,13 @@ Node *new_node_with_lr(NodeKind nk, Node *lhs, Node *rhs) {
     return n;
 }
 
+Node *new_struct_member_node(Node *stru, Member *mem, char *mem_name) {
+    Node *mem_node = new_node(ND_MEMBER, 0);
+    mem_node->member = mem;
+    mem_node->expr = stru;
+    return mem_node;
+}
+
 // 現在検査中のトークン
 Token *token;
 
@@ -588,11 +595,23 @@ Node *parse_suffix() {
             if (m == NULL) {
                 error("unknown member specified: %s", member_name);
             }
-            new_n = new_node(ND_MEMBER, 0);
-            new_n->member = m;
-            new_n->expr = n;
+            n = new_struct_member_node(n, m, member_name);
+            continue;
+        } else if (cur_token_is("->")) {
+            next_token();
+            add_type(n);
 
-            n = new_n;
+            char *member_name = token->str;
+            next_token();
+            Member *m = get_member(n->ty->base->member, member_name);
+            if (m == NULL) {
+                error("unknown member specified: %s", member_name);
+            }
+
+            Node *deref = new_node(ND_DEREF, 0);
+            deref->expr = n;
+
+            n = new_struct_member_node(deref, m, member_name);
             continue;
         }
 
