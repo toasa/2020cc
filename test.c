@@ -396,6 +396,11 @@ int main() {
     test(0, ({ union { int a; char b[4]; } x; x.a = 515; x.b[2]; }), "({ union { int a; char b[4]; } x; x.a = 515; x.b[2]; })");
     test(0, ({ union { int a; char b[4]; } x; x.a = 515; x.b[3]; }), "({ union { int a; char b[4]; } x; x.a = 515; x.b[3]; })");
 
+    test(10, ({ int a = 20, b, c = 10, d, e; c; }), "({ int a = 20, b, c = 10, d, e; c; })");
+    test(20, ({ int a = 20, *p = &a; *p; }), "({ int a = 20, *p = &a; *p; })");
+    test(60, ({ int a = 20, arr[4] = { 1,2,3,4 }; arr[2] * a; }), "({ int a = 20, arr[4] = { 1,2,3,4 }; arr[2] * a; })");
+    test(7, ({ struct t {int a,b;}; struct t x; x.a=7; struct t y, *p=&x, *q=&y; *q=*p; y.a; }), "({ struct t {int a,b;}; struct t x; x.a=7; struct t y, *p=&x, *q=&y; *q=*p; y.a; })");
+
     printf("OK\n");
     return 0;
 }

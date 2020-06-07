@@ -915,51 +915,150 @@ Node *parse_expr() {
     return parse_assign();
 }
 
+Node *parse_initialize(Node *n) {
+    // skip '='
+    next_token();
+
+    if (n->var.type->tk == ARRAY) {
+        expect(TK_LBRACE);
+
+        // parse elements of array.
+        Exprs result = parse_exprs("}");
+        Node *assigns = new_node(ND_BLOCK, 0);
+
+        // if array size not determined yet, resolve here.
+        if (n->var.type->arr_size == 0) {
+            VarNode *var_iter = cur_scope->lvar_head;
+            while (1) {
+                if (equal_strings(n->var.name, var_iter->data.name)) {
+                    var_iter->data.type->arr_size = result.count;
+                    size_t size = var_iter->data.type->base->size * result.count;
+                    var_iter->data.type->size = size;
+                    stack_frame_size += size;
+                    var_iter->data.offset = stack_frame_size;
+                    cur_scope->total_var_size += size;
+                    break;
+                }
+                var_iter = var_iter->next;
+            }
+        }
+
+        // preparation of linked list
+        Node *head = calloc(1, sizeof(Node));
+        Node *cur = calloc(1, sizeof(Node));
+        head->next = cur;
+
+        Node *elem = result.head;
+        // create a linked list which preserve the assigning of each array index.
+        // ex.
+        // ```
+        //     arr[3] = { 10, 20, 30 };
+        //
+        //     // above converts to below
+        //
+        //     arr[0] = 10;
+        //     arr[1] = 20;
+        //     arr[2] = 30;
+        // ```
+        for (int i = 0; i < result.count; i++) {
+            Node *array = new_node(ND_LVAR, 0);
+            array->var = get_var(n->var.name);
+
+            // array index expression
+            Node *index = new_node_with_lr(
+                    ND_MUL,
+                    new_node(ND_NUM, i),
+                    new_node(ND_NUM, array->var.type->base->size));
+
+            Node *add = new_node_with_lr(ND_ADD, array, index);
+
+            Node *deref = new_node(ND_DEREF, 0);
+            deref->expr = add;
+
+            Node *assign = new_node_with_lr(ND_ASSIGN, deref, elem);
+
+            cur->next = assign;
+            cur = assign;
+
+            elem = elem->next;
+        }
+
+        assigns->block = head->next->next;
+        n = assigns;
+        expect(TK_RBRACE);
+    } else {
+        Node *lhs = new_node(ND_LVAR, 0);
+        lhs->var = get_var(n->var.name);
+
+        n = new_node_with_lr(ND_ASSIGN, lhs, parse_equality());
+    }
+    return n;
+}
+
 // parse declaration either variables or struct tag.
 // 1. variables
-//   - <type> (<ident name>|<ident name>*) ('[' <integer> ']')*
+//   - <type> ('*'? <ident name> ) (',' '*'? <ident name>)* ('[' <integer> ']')*
 // 2. struct tag
 //   - 'struct' <tag name> '{' <member declaration> '}' ';'
 Node *parse_declaration(VarKind vk) {
-    Node *n = new_node(ND_DECL, 0);
-    Node *cur = new_node(ND_DECL, 0);
-    n->next = cur;
-
     Type *t = parse_type();
 
     // declaration of struct tag only (not any variables).
     if (t->tk == STRUCT && cur_tokenkind_is(TK_SEMICOLON)) {
-        return n;
+        return new_node(ND_DECL, 0);
     }
+
+    Node n;
+    Node *cur = new_node(ND_DECL, 0);
+    n.next = cur;
 
     // handle multi variable declarations of the type `t`.
     do {
+        Type *each_type = t;
+
         if (cur_token_is(",")) {
             next_token();
         }
 
+        // pointer
+        if (cur_token_is("*")) {
+            each_type = parse_pointer_type(each_type);
+        }
+
         char *var_name;
-        if (t->tk == ARRAY) {
-            var_name = t->arr_name;
+        if (each_type->tk == ARRAY) {
+            var_name = each_type->arr_name;
         } else {
             var_name = token->str;
             next_token();
         }
 
-        Var v = new_var(vk, var_name, t);
+        // array
+        if (cur_token_is("[")) {
+            each_type = parse_type_suffix(each_type, var_name);
+        }
+
+        Var v = new_var(vk, var_name, each_type);
         // add new node of variable at tail of linked list.
         register_new_lvar(v);
 
         Node *tmp = new_node(ND_DECL, 0);
-        tmp->ty = t;
+        tmp->ty = each_type;
         tmp->var = v;
+        // simultaneously initialize variable on declaration.
+        if (cur_token_is("=")) {
+            tmp = parse_initialize(tmp);
+        }
+
         cur->next = tmp;
         cur = tmp;
 
     // if next token is a certain type (not `t`), another declaration begins.
     } while (cur_token_is(",") && !next_tokenkind_is(TK_TYPE));
 
-    return n->next->next;
+    Node *b = new_node(ND_BLOCK, 0);
+    b->block = n.next->next;
+    return b;
 }
 
 // parse stmt, stmt, ... "}"
@@ -1044,84 +1143,6 @@ Node *parse_stmt() {
         // `n` 's NodeKind is 'ND_DECL'.
         n = parse_declaration(LOCAL);
 
-        // simultaneously initialize variable on declaration.
-        if (cur_token_is("=")) {
-            next_token();
-
-            if (n->var.type->tk == ARRAY) {
-                expect(TK_LBRACE);
-
-                // parse elements of array.
-                Exprs result = parse_exprs("}");
-                Node *assigns = new_node(ND_BLOCK, 0);
-
-                // if array size not determined yet, resolve here.
-                if (n->var.type->arr_size == 0) {
-                    VarNode *var_iter = cur_scope->lvar_head;
-                    while (1) {
-                        if (equal_strings(n->var.name, var_iter->data.name)) {
-                            var_iter->data.type->arr_size = result.count;
-                            size_t size = var_iter->data.type->base->size * result.count;
-                            var_iter->data.type->size = size;
-                            stack_frame_size += size;
-                            var_iter->data.offset = stack_frame_size;
-                            cur_scope->total_var_size += size;
-                            break;
-                        }
-                        var_iter = var_iter->next;
-                    }
-                }
-
-                // preparation of linked list
-                Node *head = calloc(1, sizeof(Node));
-                Node *cur = calloc(1, sizeof(Node));
-                head->next = cur;
-
-                Node *elem = result.head;
-                // create a linked list which preserve the assigning of each array index.
-                // ex.
-                // ```
-                //     arr[3] = { 10, 20, 30 };
-                //
-                //     // above converts to below
-                //
-                //     arr[0] = 10;
-                //     arr[1] = 20;
-                //     arr[2] = 30;
-                // ```
-                for (int i = 0; i < result.count; i++) {
-                    Node *array = new_node(ND_LVAR, 0);
-                    array->var = get_var(n->var.name);
-
-                    // array index expression
-                    Node *index = new_node_with_lr(
-                        ND_MUL,
-                        new_node(ND_NUM, i),
-                        new_node(ND_NUM, array->var.type->base->size));
-
-                    Node *add = new_node_with_lr(ND_ADD, array, index);
-
-                    Node *deref = new_node(ND_DEREF, 0);
-                    deref->expr = add;
-
-                    Node *assign = new_node_with_lr(ND_ASSIGN, deref, elem);
-
-                    cur->next = assign;
-                    cur = assign;
-
-                    elem = elem->next;
-                }
-
-                assigns->block = head->next->next;
-                n = assigns;
-                expect(TK_RBRACE);
-            } else {
-                Node *lhs = new_node(ND_LVAR, 0);
-                lhs->var = get_var(n->var.name);
-
-                n = new_node_with_lr(ND_ASSIGN, lhs, parse_equality());
-            }
-        }
         expect(TK_SEMICOLON);
         return n;
     } else {
