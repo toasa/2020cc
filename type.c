@@ -37,6 +37,14 @@ size_t size_of(Type *t) {
             size += size_of(m->type);
         }
         return size;
+    } else if (t->tk == UNION) {
+        size_t size = 0;
+        for (Member *m = t->member; m != NULL; m = m->next) {
+            if (size < size_of(m->type)) {
+                size = size_of(m->type);
+            }
+        }
+        return size;
     }
     // INT
     return 4;

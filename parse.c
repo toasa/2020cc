@@ -291,25 +291,7 @@ Member *get_member(Member *m, char *name) {
     return NULL;
 }
 
-Type *parse_struct_decl() {
-    Type *t = new_type(STRUCT, NULL, 0);
-
-    // A tag of struct is omittable.
-    int tag_exists = 0;
-    char *tag_name;
-    if (cur_tokenkind_is(TK_IDENT)) {
-        tag_name = token->str;
-        Tag *registered = get_tag(tag_name);
-        if (registered != NULL) {
-            next_token();
-            return registered->type;
-        }
-
-        tag_exists = 1;
-        next_token();
-    }
-
-    expect(TK_LBRACE);
+Type *parse_struct_decl(Type *t) {
     Member head;
     Member *cur = calloc(1, sizeof(Member));
     head.next = cur;
@@ -346,9 +328,83 @@ Type *parse_struct_decl() {
 
         expect(TK_SEMICOLON);
     }
-    expect(TK_RBRACE);
     t->member = head.next->next;
     t->size = total_size;
+
+    return t;
+}
+
+Type *parse_union_decl(Type *t) {
+    Member head;
+    Member *cur = calloc(1, sizeof(Member));
+    head.next = cur;
+
+    while (!cur_tokenkind_is(TK_RBRACE)) {
+        Type *member_t = parse_type();
+
+        // parse some members which have same type `member_t`.
+        do {
+            if (cur_token_is(",")) {
+                next_token();
+            }
+
+            char *member_name;
+            if (member_t->tk == ARRAY) {
+                member_name = member_t->arr_name;
+            } else {
+                member_name = token->str;
+                next_token();
+            }
+            Member *tmp = new_member(member_name, member_t);
+            if (t->align < member_t->align) {
+                t->align = member_t->align;
+            }
+            if (t->size < member_t->size) {
+                t->size = member_t->size;
+            }
+            cur->next = tmp;
+            cur = tmp;
+
+        } while(!cur_token_is(";"));
+
+        expect(TK_SEMICOLON);
+    }
+    t->member = head.next->next;
+
+    return t;
+}
+
+Type *parse_struct_union_decl(TypeKind tk) {
+    if (tk != STRUCT && tk != UNION) {
+        error("invalid type kind specified: %d", tk);
+    }
+
+    Type *t = new_type(tk, NULL, 0);
+
+    // A tag of struct is omittable.
+    int tag_exists = 0;
+    char *tag_name;
+    if (cur_tokenkind_is(TK_IDENT)) {
+        tag_name = token->str;
+        Tag *registered = get_tag(tag_name);
+        if (registered != NULL) {
+            next_token();
+            return registered->type;
+        }
+
+        tag_exists = 1;
+        next_token();
+    }
+
+    expect(TK_LBRACE);
+
+    if (tk == STRUCT) {
+        t = parse_struct_decl(t);
+    } else if (tk == UNION) {
+        t = parse_union_decl(t);
+    }
+
+    expect(TK_RBRACE);
 
     if (tag_exists) {
         Tag *tag = new_tag(tag_name, t);
@@ -371,7 +427,10 @@ Type *parse_type_prefix() {
         t = char_t;
     } else if (cur_token_is("struct")) {
         next_token();
-        t = parse_struct_decl();
+        t = parse_struct_union_decl(STRUCT);
+    } else if (cur_token_is("union")) {
+        next_token();
+        t = parse_struct_union_decl(UNION);
     } else {
         error("invalid base type: %s", token->str);
     }
@@ -607,6 +666,7 @@ Node *parse_suffix() {
             if (m == NULL) {
                 error("unknown member specified: %s", member_name);
             }
+
 
             Node *deref = new_node(ND_DEREF, 0);
             deref->expr = n;

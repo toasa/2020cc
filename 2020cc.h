@@ -72,6 +72,7 @@ typedef enum {
     PTR,
     ARRAY,
     STRUCT,
+    UNION,
 } TypeKind;
 
 typedef struct Member Member;
