@@ -55,17 +55,6 @@ void expect(TokenKind tk) {
 
 Node *parse_expr();
 
-int is_pointer(Node *n) {
-    if (n->ty == NULL) { return 0; }
-    return (n->ty->tk == PTR) || (n->ty->tk == ARRAY);
-}
-
-int is_integer(Node *n) {
-    if (n->ty == NULL) { return 0; }
-    return (n->ty->tk == INT) || (n->ty->tk == CHAR)
-          || (n->ty->tk == SHORT) || (n->ty->tk == LONG);
-}
-
 FuncData new_func_data() {
     FuncData data;
     data.name = NULL;

@@ -32,6 +32,17 @@ Type *array_of(Type *base, int len) {
     return t;
 }
 
+int is_pointer(Node *n) {
+    if (n->ty == NULL) { return 0; }
+    return (n->ty->tk == PTR) || (n->ty->tk == ARRAY);
+}
+
+int is_integer(Node *n) {
+    if (n->ty == NULL) { return 0; }
+    return (n->ty->tk == INT) || (n->ty->tk == CHAR)
+          || (n->ty->tk == SHORT) || (n->ty->tk == LONG);
+}
+
 void add_type(Node *n) {
     if (n == NULL || n->ty != NULL) {
         return;
