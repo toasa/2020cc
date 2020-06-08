@@ -67,8 +67,10 @@ typedef enum {
 } NodeKind;
 
 typedef enum {
-    INT,
     CHAR,
+    SHORT,
+    INT,
+    LONG,
     PTR,
     ARRAY,
     STRUCT,
@@ -183,8 +185,10 @@ Program *parse(Token *t);
 //
 // type.c
 //
-extern Type *int_t;
 extern Type *char_t;
+extern Type *short_t;
+extern Type *int_t;
+extern Type *long_t;
 Type *new_type(TypeKind tk, Type *base, int align);
 size_t size_of(Type *t);
 int align_to(int n, int align);

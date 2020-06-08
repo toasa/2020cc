@@ -38,8 +38,10 @@ int is_keyword(char *str) {
 
 int is_type(char *str) {
     char *types[] = {
-        "int",
         "char",
+        "short",
+        "int",
+        "long",
         "struct",
         "union",
         NULL,

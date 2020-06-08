@@ -62,7 +62,8 @@ int is_pointer(Node *n) {
 
 int is_integer(Node *n) {
     if (n->ty == NULL) { return 0; }
-    return (n->ty->tk == INT) || (n->ty->tk == CHAR);
+    return (n->ty->tk == INT) || (n->ty->tk == CHAR)
+          || (n->ty->tk == SHORT) || (n->ty->tk == LONG);
 }
 
 FuncData new_func_data() {
@@ -426,6 +427,12 @@ Type *parse_type_prefix() {
     } else if (cur_token_is("char")) {
         next_token();
         t = char_t;
+    } else if (cur_token_is("short")) {
+        next_token();
+        t = short_t;
+    } else if (cur_token_is("long")) {
+        next_token();
+        t = long_t;
     } else if (cur_token_is("struct")) {
         next_token();
         t = parse_struct_union_decl(STRUCT);

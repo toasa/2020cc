@@ -4,6 +4,7 @@
 
 char *regs_64[6] = { "rdi", "rsi", "rdx", "rcx", "r8", "r9" };
 char *regs_32[6] = { "edi", "esi", "edx", "ecx", "r8d", "r9d" };
+char *regs_16[6] = { "di", "si", "dx", "cx", "r8w", "r9w" };
 char *regs_8[6] = { "dil", "sil", "dl", "cl", "r8b", "r9b" };
 
 void gen_expr(Node *n);
@@ -37,11 +38,16 @@ void load(Node *n) {
     printf("    pop rax\n");
     if (n->ty->size == 1) {
         printf("    movsx rax, byte ptr [rax]\n");
+    } else if (n->ty->size == 2) {
+        printf("    movsx rax, word ptr [rax]\n");
     } else if (n->ty->size == 4) {
         printf("    movsx rax, dword ptr [rax]\n");
-    } else {
+    } else if (n->ty->size == 8) {
         printf("    mov rax, [rax]\n");
+    } else {
+        error("invalid type size");
     }
+
     printf("    push rax\n");
 }
 
@@ -283,11 +289,16 @@ void gen_stmt(Node *n) {
         printf("    pop rax\n");
         if (n->ty->size == 1) {
             printf("    mov byte ptr [rax], r10b\n");
+        } else if (n->ty->size == 2) {
+            printf("    mov word ptr [rax], r10w\n");
         } else if (n->ty->size == 4) {
             printf("    mov dword ptr [rax], r10d\n");
-        }else {
+        } else if (n->ty->size == 8) {
             printf("    mov [rax], r10\n");
+        } else {
+            error("invalid type size");
         }
+
     } else if (n->nk == ND_DECL) {
         // need to do something?
     } else {
@@ -334,6 +345,8 @@ void gen_func(Node *n) {
             int arg_size = arg->data.type->size;
             if (arg_size == 1) {
                 printf("    mov [rax], %s\n", regs_8[i]);
+            } else if (arg_size == 2) {
+                printf("    mov [rax], %s\n", regs_16[i]);
             } else if (arg_size == 4) {
                 printf("    mov [rax], %s\n", regs_32[i]);
             } else if (arg_size == 8) {

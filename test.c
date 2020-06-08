@@ -58,6 +58,14 @@ int sub_char(char a, char b, char c){
     return a-b-c;
 }
 
+int sub_short(short a, short b, short c) {
+    return a - b - c;
+}
+
+int sub_long(long a, long b, long c) {
+    return a - b - c;
+}
+
 int g1;
 int g2;
 int garr[4];
@@ -403,6 +411,15 @@ int main() {
     test(3, ({ struct {int a,b;} x,y; x.a=3; y=x; y.a; }), "({ struct {int a,b;} x,y; x.a=3; y=x; y.a; })");
     test(5, ({ struct t {int a,b;}; struct t x; x.a=5; struct t y=x; y.a; }), "({ struct t {int a,b;}; struct t x; x.a=5; struct t y=x; y.a; })");
     test(7, ({ struct t {int a,b;}; struct t x; x.a=7; struct t y; struct t *z=&y; *z=x; y.a; }), "({ struct t {int a,b;}; struct t x; x.a=7; struct t y; struct t *z=&y; *z=x; y.a; })");
+
+    test(2, ({ short x; sizeof(x); }), "({ short x; sizeof(x); })");
+    test(4, ({ struct {char a; short b;} x; sizeof(x); }), "({ struct {char a; short b;} x; sizeof(x); })");
+
+    test(8, ({ long x; sizeof(x); }), "({ long x; sizeof(x); })");
+    test(16, ({ struct {char a; long b;} x; sizeof(x); }), "({ struct {char a; long b;} x; sizeof(x); })");
+
+    test(1, sub_short(7, 3, 3), "sub_short(7, 3, 3)");
+    test(1, sub_long(7, 3, 3), "sub_long(7, 3, 3)");
 
     printf("OK\n");
     return 0;

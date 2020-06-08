@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include "2020cc.h"
 
-Type *int_t = &(Type){INT, 4, 4};
 Type *char_t = &(Type){CHAR, 1, 1};
+Type *short_t = &(Type){SHORT, 2, 2};
+Type *int_t = &(Type){INT, 4, 4};
+Type *long_t = &(Type){LONG, 8, 8};
 
 Type *new_type(TypeKind tk, Type *base, int align) {
     Type *t = calloc(1, sizeof(Type));
