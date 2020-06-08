@@ -15,33 +15,6 @@ Type *new_type(TypeKind tk, Type *base, int align) {
     return t;
 }
 
-// to calculate `sizeof` operator.
-size_t size_of(Type *t) {
-    if (t->tk == ARRAY) {
-        return t->arr_size * size_of(t->base);
-    } else if (t->tk == PTR) {
-        return 8;
-    } else if (t->tk == CHAR) {
-        return 1;
-    } else if (t->tk == STRUCT) {
-        size_t size = 0;
-        for (Member *m = t->member; m != NULL; m = m->next) {
-            size += size_of(m->type);
-        }
-        return size;
-    } else if (t->tk == UNION) {
-        size_t size = 0;
-        for (Member *m = t->member; m != NULL; m = m->next) {
-            if (size < size_of(m->type)) {
-                size = size_of(m->type);
-            }
-        }
-        return size;
-    }
-    // INT
-    return 4;
-}
-
 int align_to(int n, int align) {
     return (n + align - 1) & ~(align - 1);
 }

@@ -733,7 +733,6 @@ Node *parse_unary() {
         next_token();
         Node *tmp = parse_unary();
         add_type(tmp);
-        // n = new_node(ND_NUM, size_of(tmp->ty));
         n = new_node(ND_NUM, tmp->ty->size);
     } else {
         n = parse_suffix();
