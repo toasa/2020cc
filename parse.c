@@ -314,7 +314,7 @@ Type *parse_struct_decl(Type *t) {
                 next_token();
             }
             Member *tmp = new_member(member_name, member_t);
-            total_size = align_of(total_size, member_t->align);
+            total_size = align_to(total_size, member_t->align);
             tmp->offset = total_size;
             total_size += member_t->size;
 
@@ -370,7 +370,7 @@ Type *parse_union_decl(Type *t) {
         expect(TK_SEMICOLON);
     }
     t->member = head.next->next;
-    t->size = align_of(t->size, t->align);
+    t->size = align_to(t->size, t->align);
 
     return t;
 }

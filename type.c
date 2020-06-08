@@ -40,7 +40,7 @@ size_t size_of(Type *t) {
     return 4;
 }
 
-int align_of(int n, int align) {
+int align_to(int n, int align) {
     return (n + align - 1) & ~(align - 1);
 }
 

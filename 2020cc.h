@@ -187,7 +187,7 @@ extern Type *int_t;
 extern Type *char_t;
 Type *new_type(TypeKind tk, Type *base, int align);
 size_t size_of(Type *t);
-int align_of(int n, int align);
+int align_to(int n, int align);
 Type *pointer_to(Type *base);
 Type *array_of(Type *base, int len);
 void add_type(Node *n);
