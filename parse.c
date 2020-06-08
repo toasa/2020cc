@@ -370,6 +370,7 @@ Type *parse_union_decl(Type *t) {
         expect(TK_SEMICOLON);
     }
     t->member = head.next->next;
+    t->size = align_of(t->size, t->align);
 
     return t;
 }
@@ -623,7 +624,7 @@ Node *parse_suffix() {
             new_n->expr = n;
             add_type(n);
             if (is_pointer(n)) {
-                new_n->inc = new_node(ND_NUM, n->ty->size);
+                new_n->inc = new_node(ND_NUM, n->ty->base->size);
             } else {
                 new_n->inc = new_node(ND_NUM, 1);
             }
@@ -637,7 +638,7 @@ Node *parse_suffix() {
             new_n->expr = n;
             add_type(n);
             if (is_pointer(n)) {
-                new_n->inc = new_node(ND_NUM, n->ty->size);
+                new_n->inc = new_node(ND_NUM, n->ty->base->size);
             } else {
                 new_n->inc = new_node(ND_NUM, 1);
             }
@@ -706,7 +707,7 @@ Node *parse_unary() {
         n->expr = parse_suffix();
         add_type(n->expr);
         if (is_pointer(n->expr)) {
-            n->inc = new_node(ND_NUM, n->expr->ty->size);
+            n->inc = new_node(ND_NUM, n->expr->ty->base->size);
         } else {
             n->inc = new_node(ND_NUM, 1);
         }
@@ -717,7 +718,7 @@ Node *parse_unary() {
         n->expr = parse_suffix();
         add_type(n->expr);
         if (is_pointer(n->expr)) {
-            n->inc = new_node(ND_NUM, n->expr->ty->size);
+            n->inc = new_node(ND_NUM, n->expr->ty->base->size);
         } else {
             n->inc = new_node(ND_NUM, 1);
         }
@@ -725,7 +726,8 @@ Node *parse_unary() {
         next_token();
         Node *tmp = parse_unary();
         add_type(tmp);
-        n = new_node(ND_NUM, size_of(tmp->ty));
+        // n = new_node(ND_NUM, size_of(tmp->ty));
+        n = new_node(ND_NUM, tmp->ty->size);
     } else {
         n = parse_suffix();
     }
@@ -793,7 +795,7 @@ Node *new_sub(Node *lhs) {
     // ptr - ptr
     if (is_pointer(lhs) && is_pointer(rhs)) {
         Node *sub = new_node_with_lr(ND_SUB, lhs, rhs);
-        return new_node_with_lr(ND_DIV, sub, new_node(ND_NUM, lhs->ty->size));
+        return new_node_with_lr(ND_DIV, sub, new_node(ND_NUM, lhs->ty->base->size));
     }
 
     error("invalid - operation");

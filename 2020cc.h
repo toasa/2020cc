@@ -186,7 +186,6 @@ Program *parse(Token *t);
 extern Type *int_t;
 extern Type *char_t;
 Type *new_type(TypeKind tk, Type *base, int align);
-size_t get_type_msize(TypeKind t);
 size_t size_of(Type *t);
 int align_of(int n, int align);
 Type *pointer_to(Type *base);

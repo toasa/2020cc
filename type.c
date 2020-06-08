@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "2020cc.h"
 
-Type *int_t = &(Type){INT, 8, 8};
+Type *int_t = &(Type){INT, 4, 4};
 Type *char_t = &(Type){CHAR, 1, 1};
 
 Type *new_type(TypeKind tk, Type *base, int align) {
@@ -11,16 +11,6 @@ Type *new_type(TypeKind tk, Type *base, int align) {
     t->base = base;
     t->align = align;
     return t;
-}
-
-// memory size allocated in stack.
-size_t get_type_msize(TypeKind t) {
-    if (t == INT) {
-        return 8;
-    } else if (t == CHAR) {
-        return 1;
-    }
-    return 8;
 }
 
 // to calculate `sizeof` operator.
@@ -63,7 +53,7 @@ Type *pointer_to(Type *base) {
 Type *array_of(Type *base, int len) {
     Type *t = new_type(ARRAY, base, base->align);
     t->arr_size = len;
-    t->size = get_type_msize(base->tk) * len;
+    t->size = base->size * len;
     return t;
 }
 
