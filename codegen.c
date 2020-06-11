@@ -311,6 +311,11 @@ void gen_stmt(Node *n) {
 void gen_func(Node *n) {
     assert(n->nk == ND_FUNC, "top level node must be function.");
 
+    // function declaration only. (Not a function definition)
+    if (n->func.body == NULL) {
+        return;
+    }
+
     strcpy(cur_func, n->func.name);
     printf(".global %s\n", n->func.name);
     printf("%s:\n", n->func.name);

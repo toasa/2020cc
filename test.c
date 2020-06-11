@@ -66,6 +66,9 @@ int sub_long(long a, long b, long c) {
     return a - b - c;
 }
 
+int hehehe();
+int hahaha();
+
 int g1;
 int g2;
 int garr[4];

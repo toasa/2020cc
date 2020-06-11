@@ -1164,6 +1164,14 @@ Node *parse_toplevel_func(Type *ret_t, char *func_name) {
     }
     expect(TK_RPARENT);
 
+    // function declaration (Not definition)
+    if (cur_token_is(";")) {
+        expect(TK_SEMICOLON);
+        n->func = func_data;
+        leave_scope();
+        return n;
+    }
+
     // parse function body
     Node *body = new_node(ND_BLOCK, 0);
     expect(TK_LBRACE);
