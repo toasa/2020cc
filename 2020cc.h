@@ -83,10 +83,9 @@ typedef struct Type {
     TypeKind tk;
     size_t size;
     int align;
-
     struct Type *base; // base type of array or pointer
+    char *name;
 
-    char *arr_name;
     size_t arr_size;   // the number of elements
 
     Member *member;    // struct

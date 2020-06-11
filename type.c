@@ -22,6 +22,9 @@ int align_to(int n, int align) {
 Type *pointer_to(Type *base) {
     Type *t = new_type(PTR, base, 8);
     t->size = 8;
+    if (base->name != NULL) {
+        t->name = base->name;
+    }
     return t;
 }
 
@@ -29,6 +32,9 @@ Type *array_of(Type *base, int len) {
     Type *t = new_type(ARRAY, base, base->align);
     t->arr_size = len;
     t->size = base->size * len;
+    if (base->name != NULL) {
+        t->name = base->name;
+    }
     return t;
 }
 
