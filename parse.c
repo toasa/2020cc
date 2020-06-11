@@ -25,6 +25,12 @@ Node *new_struct_member_node(Node *stru, Member *mem, char *mem_name) {
     return mem_node;
 }
 
+Node *new_lvar_node(Var v) {
+    Node *n = new_node(ND_LVAR, 0);
+    n->var = v;
+    return n;
+}
+
 // 現在検査中のトークン
 Token *token;
 
@@ -431,6 +437,22 @@ Type *parse_type_specifier() {
     return t;
 }
 
+void resolve_array_size(Node *n, Exprs result) {
+    VarNode *var_iter = cur_scope->lvar_head;
+    while (1) {
+        if (equal_strings(n->var.name, var_iter->data.name)) {
+            var_iter->data.type->arr_size = result.count;
+            size_t size = var_iter->data.type->base->size * result.count;
+            var_iter->data.type->size = size;
+            stack_frame_size += size;
+            var_iter->data.offset = stack_frame_size;
+            cur_scope->total_var_size += size;
+            break;
+        }
+        var_iter = var_iter->next;
+    }
+}
+
 // initializer = assignment-expression
 //             | '{' initializer-list ','? '}'
 Node *parse_initializer(Node *n) {
@@ -439,29 +461,18 @@ Node *parse_initializer(Node *n) {
 
         // parse elements of array.
         Exprs result = parse_exprs("}");
-        Node *assigns = new_node(ND_BLOCK, 0);
 
         // if array size not determined yet, resolve here.
         if (n->var.type->arr_size == 0) {
-            VarNode *var_iter = cur_scope->lvar_head;
-            while (1) {
-                if (equal_strings(n->var.name, var_iter->data.name)) {
-                    var_iter->data.type->arr_size = result.count;
-                    size_t size = var_iter->data.type->base->size * result.count;
-                    var_iter->data.type->size = size;
-                    stack_frame_size += size;
-                    var_iter->data.offset = stack_frame_size;
-                    cur_scope->total_var_size += size;
-                    break;
-                }
-                var_iter = var_iter->next;
-            }
+            resolve_array_size(n, result);
         }
 
         // preparation of linked list
-        Node *head = calloc(1, sizeof(Node));
+        Node head;
         Node *cur = calloc(1, sizeof(Node));
-        head->next = cur;
+        head.next = cur;
+
+        Node *array = new_lvar_node(get_var(n->var.name));
 
         Node *elem = result.head;
         // create a linked list which preserve the assigning of each array index.
@@ -476,16 +487,7 @@ Node *parse_initializer(Node *n) {
         //     arr[2] = 30;
         // ```
         for (int i = 0; i < result.count; i++) {
-            Node *array = new_node(ND_LVAR, 0);
-            array->var = get_var(n->var.name);
-
-            // array index expression
-            Node *index = new_node_with_lr(
-                    ND_MUL,
-                    new_node(ND_NUM, i),
-                    new_node(ND_NUM, array->var.type->base->size));
-
-            Node *add = new_node_with_lr(ND_ADD, array, index);
+            Node *add = new_add(array, new_node(ND_NUM, i));
 
             Node *deref = new_node(ND_DEREF, 0);
             deref->expr = add;
@@ -498,13 +500,12 @@ Node *parse_initializer(Node *n) {
             elem = elem->next;
         }
 
-        assigns->block = head->next->next;
+        Node *assigns = new_node(ND_BLOCK, 0);
+        assigns->block = head.next->next;
         n = assigns;
         expect(TK_RBRACE);
     } else {
-        Node *lhs = new_node(ND_LVAR, 0);
-        lhs->var = get_var(n->var.name);
-
+        Node *lhs = new_lvar_node(get_var(n->var.name));
         n = new_node_with_lr(ND_ASSIGN, lhs, parse_equality());
     }
     return n;
@@ -707,8 +708,7 @@ Node *parse_primary() {
             expect(TK_RPARENT);
         } else {
             // variable (it must be declared already)
-            n = new_node(ND_LVAR, 0);
-            n->var = get_var(token->str);
+            n = new_lvar_node(get_var(token->str));
             next_token();
         }
     } else if (cur_tokenkind_is(TK_NUM)) {
@@ -723,9 +723,7 @@ Node *parse_primary() {
 
         register_new_gvar(v);
 
-        n = new_node(ND_LVAR, 0);
-        n->var = v;
-
+        n = new_lvar_node(v);
         next_token();
     } else {
         error("invalid primary");
