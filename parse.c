@@ -259,6 +259,8 @@ Exprs parse_exprs(char *terminator);
 Node *parse_primary();
 Node *parse_unary();
 Node *parse_mul();
+Node *new_add(Node *lhs, Node *rhs);
+Node *new_sub(Node *lhs, Node *rhs);
 Node *parse_add();
 Node *parse_shift();
 Node *parse_relational();
@@ -627,24 +629,12 @@ Node *parse_declaration(VarKind vk) {
 
 // `[]` operator
 Node *parse_indexing(Node *lhs) {
+    expect(TK_LBRACKET);
     Node *rhs = parse_expr();
-    add_type(lhs);
-    add_type(rhs);
-
     expect(TK_RBRACKET);
 
-    // canonicalize 'expr[ptr]' to 'ptr[expr]'.
-    if (!is_pointer(lhs) && is_pointer(rhs)) {
-        Node *tmp = lhs;
-        lhs = rhs;
-        rhs = tmp;
-    }
-
-    rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->base->size));
-
     Node *n = new_node(ND_DEREF, 0);
-    n->expr = new_node_with_lr(ND_ADD, lhs, rhs);
-
+    n->expr = new_add(lhs, rhs);
     return n;
 }
 
@@ -749,7 +739,6 @@ Node *parse_suffix() {
 
     while (1) {
         if (cur_token_is("[")) {
-            next_token();
             n = parse_indexing(n);
             continue;
         } else if (cur_token_is("++")) {
@@ -889,8 +878,7 @@ Node *parse_mul() {
     return lhs;
 }
 
-Node *new_add(Node *lhs) {
-    Node *rhs = parse_mul();
+Node *new_add(Node *lhs, Node *rhs) {
     add_type(lhs);
     add_type(rhs);
 
@@ -911,8 +899,7 @@ Node *new_add(Node *lhs) {
     return new_node_with_lr(ND_ADD, lhs, rhs);
 }
 
-Node *new_sub(Node *lhs) {
-    Node *rhs = parse_mul();
+Node *new_sub(Node *lhs, Node *rhs) {
     add_type(lhs);
     add_type(rhs);
 
@@ -943,10 +930,12 @@ Node *parse_add() {
     while (cur_token_is("+") || cur_token_is("-")) {
         if (cur_token_is("+")) {
             next_token();
-            lhs = new_add(lhs);
+            Node *rhs = parse_mul();
+            lhs = new_add(lhs, rhs);
         } else {
             next_token();
-            lhs = new_sub(lhs);
+            Node *rhs = parse_mul();
+            lhs = new_sub(lhs, rhs);
         }
     }
     
