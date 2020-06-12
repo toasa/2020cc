@@ -408,35 +408,85 @@ Type *parse_struct_union_decl(TypeKind tk) {
     return t;
 }
 
+// handle a specific type combination.
+//
+//     1. int long
+//        long int      => long
+//     2. short int
+//        int short     => short
+//     3. long long
+//        long long int => long
+//
 Type *parse_type_specifier() {
-    Type *t;
+    Type *t = NULL;
     assert(cur_tokenkind_is(TK_TYPE), "%s is not type", token->str);
 
-    TypeKind type_base;
-    if (cur_token_is("int")) {
+    int counter = 0;
+
+    enum {
+        TY_VOID = 1 << 0,
+        TY_CHAR = 1 << 2,
+        TY_SHORT = 1 << 4,
+        TY_INT = 1 << 6,
+        TY_LONG = 1 << 8,
+        TY_STRUCT = 1 << 10,
+        TY_UNION = 1 << 12,
+    };
+
+    while (cur_tokenkind_is(TK_TYPE)) {
+        if (cur_token_is("void")) {
+            counter += TY_VOID;
+        } else if (cur_token_is("char")) {
+            counter += TY_CHAR;
+        } else if (cur_token_is("short")) {
+            counter += TY_SHORT;
+        } else if (cur_token_is("int")) {
+            counter += TY_INT;
+        } else if (cur_token_is("long")) {
+            counter += TY_LONG;
+        } else if (cur_token_is("struct")) {
+            counter += TY_STRUCT;
+        } else if (cur_token_is("union")) {
+            counter += TY_UNION;
+        } else {
+            error("invalid base type: %s", token->str);
+        }
+
         next_token();
-        t = int_t;
-    } else if (cur_token_is("char")) {
-        next_token();
-        t = char_t;
-    } else if (cur_token_is("short")) {
-        next_token();
-        t = short_t;
-    } else if (cur_token_is("long")) {
-        next_token();
-        t = long_t;
-    } else if (cur_token_is("struct")) {
-        next_token();
-        t = parse_struct_union_decl(STRUCT);
-    } else if (cur_token_is("union")) {
-        next_token();
-        t = parse_struct_union_decl(UNION);
-    } else if (cur_token_is("void")) {
-        next_token();
-        t = void_t;
-    } else {
-        error("invalid base type: %s", token->str);
+
+        switch (counter) {
+        case TY_VOID:
+            t = void_t;
+            break;
+        case TY_CHAR:
+            t = char_t;
+            break;
+        case TY_SHORT:
+        case TY_SHORT + TY_INT:
+            t = short_t;
+            break;
+        case TY_INT:
+            t = int_t;
+            break;
+        case TY_LONG:
+        case TY_LONG + TY_INT:
+        case TY_LONG + TY_LONG:
+        case TY_LONG + TY_LONG + TY_INT:
+            t = long_t;
+            break;
+        case TY_STRUCT:
+            t = parse_struct_union_decl(STRUCT);
+            break;
+        case TY_UNION:
+            t = parse_struct_union_decl(UNION);
+            break;
+        default:
+            error("invalid type");
+        }
     }
+
+    assert(t != NULL, "valid type wasn't specified");
+
     return t;
 }
 
