@@ -44,6 +44,7 @@ int is_type(char *str) {
         "long",
         "struct",
         "union",
+        "void",
         NULL,
     };
     for (int i = 0; types[i] != NULL; i++) {

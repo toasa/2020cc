@@ -6,6 +6,7 @@ Type *char_t = &(Type){CHAR, 1, 1};
 Type *short_t = &(Type){SHORT, 2, 2};
 Type *int_t = &(Type){INT, 4, 4};
 Type *long_t = &(Type){LONG, 8, 8};
+Type *void_t = &(Type){VOID, 0, 0};
 
 Type *new_type(TypeKind tk, Type *base, int align) {
     Type *t = calloc(1, sizeof(Type));

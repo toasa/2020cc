@@ -431,6 +431,9 @@ Type *parse_type_specifier() {
     } else if (cur_token_is("union")) {
         next_token();
         t = parse_struct_union_decl(UNION);
+    } else if (cur_token_is("void")) {
+        next_token();
+        t = void_t;
     } else {
         error("invalid base type: %s", token->str);
     }
