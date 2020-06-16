@@ -20,7 +20,8 @@ typedef enum {
     TK_COMMA,     // ,
     TK_PERIOD,    // .
     TK_ARROW,     // ->
-    TK_TYPE,      // 'int', 'void', 'char',...
+    TK_TYPE,      // 'void', 'char', 'shor', 'int', 'long', 'struct', 'union'
+    TK_STORAGE,   // 'typedef'
     TK_STR,
     TK_EOF,
 } TokenKind;
@@ -94,6 +95,8 @@ typedef struct Type {
 
     size_t arr_size;   // the number of elements
 
+    bool is_typedef;
+
     Member *member;    // struct
 } Type;
 
@@ -109,6 +112,7 @@ typedef enum VarKind {
     GLOBAL,
     ARG,
     MEMBER,
+    DEFINEDTYPE,
 } VarKind;
 
 typedef struct Var {
@@ -140,6 +144,7 @@ typedef struct Scope {
     struct Scope *high;
     VarNode *lvar_head;
     Tag *tag_head;
+
     size_t depth;
     size_t total_var_size;
 } Scope;

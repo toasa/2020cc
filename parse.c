@@ -126,12 +126,14 @@ void leave_scope() {
 // add one `VarNode` at head of linked list which stored idefifier in current scope.
 void register_new_lvar(Var v) {
     VarNode *new_v = new_var_node(v);
-    cur_scope->total_var_size += v.type->size;
-    stack_frame_size += v.type->size;
-    new_v->data.offset = stack_frame_size;
 
-    VarNode *lvar_head = cur_scope->lvar_head;
-    new_v->next = lvar_head;
+    if (v.vk != DEFINEDTYPE) {
+        cur_scope->total_var_size += v.type->size;
+        stack_frame_size += v.type->size;
+        new_v->data.offset = stack_frame_size;
+    }
+
+    new_v->next = cur_scope->lvar_head;
     cur_scope->lvar_head = new_v;
 }
 
@@ -143,6 +145,10 @@ void register_new_gvar(Var v) {
 }
 
 // `head` is `lvar_head` or `gvar_head`.
+//
+// `name`: name of variable which to search for.
+// `head`: head node of linked list of variables, `lvar_head` or `gvar_head`.
+//
 VarNode *look_up_var(char *name, VarNode *head) {
     VarNode *var_iter = head;
     while (var_iter != NULL) {
@@ -160,23 +166,28 @@ VarNode *look_up_var(char *name, VarNode *head) {
 // First, look up the local variables from current level scope to highest.
 // The next, look up the global variables.
 // If not found then occur compile error and abort.
-Var get_var(char *name) {
+VarNode *get_var(char *name) {
     VarNode *v;
 
     Scope *tmp_scope = cur_scope;
     while (tmp_scope != NULL) {
         v = look_up_var(name, tmp_scope->lvar_head);
         if (v != NULL) {
-            return v->data;
+            return v;
         }
         tmp_scope = tmp_scope->high;
     }
 
     v = look_up_var(name, gvar_head);
-    if (v == NULL) {
-        error("%s: undeclared variable.", name);
+    return v;
+}
+
+bool is_defined_type(char *t_name) {
+    VarNode *v = get_var(t_name);
+    if (v != NULL && v->data.vk == DEFINEDTYPE) {
+        return true;
     }
-    return v->data;
+    return false;
 }
 
 Tag *new_tag(char *tag_name, Type *type) {
@@ -385,8 +396,7 @@ Type *parse_struct_union_decl(TypeKind tk) {
 //        long long int => long
 //
 Type *parse_type_specifier() {
-    Type *t = NULL;
-    assert(cur_tokenkind_is(TK_TYPE), "%s is not type", token->str);
+    bool typedef_exists = false;
 
     int counter = 0;
 
@@ -400,7 +410,17 @@ Type *parse_type_specifier() {
         TY_UNION = 1 << 12,
     };
 
-    while (cur_tokenkind_is(TK_TYPE)) {
+    VarNode *v = get_var(token->str);
+    if (v != NULL && v->data.vk == DEFINEDTYPE) {
+        next_token();
+        v->data.type->is_typedef = false;
+        return v->data.type;
+    }
+
+    // type default is 'int'.
+    Type *t = int_t;
+
+    while (cur_tokenkind_is(TK_TYPE) || cur_tokenkind_is(TK_STORAGE)) {
         if (cur_token_is("void")) {
             counter += TY_VOID;
         } else if (cur_token_is("char")) {
@@ -415,8 +435,12 @@ Type *parse_type_specifier() {
             counter += TY_STRUCT;
         } else if (cur_token_is("union")) {
             counter += TY_UNION;
+        } else if (cur_token_is("typedef")) {
+            typedef_exists = true;
+            next_token();
+            continue;
         } else {
-            error("invalid base type: %s", token->str);
+            error("unknown type name: %s", token->str);
         }
 
         next_token();
@@ -453,6 +477,10 @@ Type *parse_type_specifier() {
     }
 
     assert(t != NULL, "valid type wasn't specified");
+
+    if (typedef_exists) {
+        t->is_typedef = true;
+    }
 
     return t;
 }
@@ -492,7 +520,11 @@ Node *parse_initializer(Node *n) {
         Node *cur = calloc(1, sizeof(Node));
         head.next = cur;
 
-        Node *array = new_lvar_node(get_var(n->var.name));
+        VarNode *v = get_var(n->var.name);
+        if (v == NULL) {
+            error("Undeclared variable: %s\n", n->var.name);
+        }
+        Node *array = new_lvar_node(v->data);
 
         Node *elem = result.head;
         // create a linked list which preserve the assigning of each array index.
@@ -525,7 +557,11 @@ Node *parse_initializer(Node *n) {
         n = assigns;
         expect(TK_RBRACE);
     } else {
-        Node *lhs = new_lvar_node(get_var(n->var.name));
+        VarNode *v = get_var(n->var.name);
+        if (v == NULL) {
+            error("Undeclared variable: %s\n", n->var.name);
+        }
+        Node *lhs = new_lvar_node(v->data);
         n = new_node_with_lr(ND_ASSIGN, lhs, parse_equality());
     }
     return n;
@@ -552,11 +588,8 @@ Type *parse_type_suffix(Type *t) {
     return array_of(t, arr_size);
 }
 
-// direct-declarator = identifier
-//                   | '(' declarator ')'
-//                   | direct-declarator '[' assignment-expression ']'
-//                   | direct-declarator '(' parameter-type-list ')'
-//                   | direct-declarator '(' identifier-list? ')'
+// direct-declarator = identifier (type-suffix)?
+//                   | '(' declarator ')' (type-suffix)?
 Type *parse_direct_declarator(Type *t) {
     if (cur_tokenkind_is(TK_IDENT)) {
         t->name = token->str;
@@ -596,6 +629,9 @@ Node *parse_init_declarator(VarKind vk, Type *t) {
     t = parse_declarator(t);
 
     Var v = new_var(vk, t);
+    if (t->is_typedef) {
+        v.vk = DEFINEDTYPE;
+    }
 
     // add new node of variable at head of linked list.
     if (vk == GLOBAL) {
@@ -733,7 +769,11 @@ Node *parse_primary() {
             expect(TK_RPARENT);
         } else {
             // variable (it must be declared already)
-            n = new_lvar_node(get_var(token->str));
+            VarNode *v = get_var(token->str);
+            if (v == NULL) {
+                error("Undeclared variable: %s\n", token->str);
+            }
+            n = new_lvar_node(v->data);
             next_token();
         }
     } else if (cur_tokenkind_is(TK_NUM)) {
@@ -1143,7 +1183,9 @@ Node *parse_stmt() {
         n = parse_compound_stmt(n, 0);
         expect(TK_RBRACE);
         return n;
-    } else if (cur_tokenkind_is(TK_TYPE)) {
+    } else if (cur_tokenkind_is(TK_TYPE)
+          || cur_tokenkind_is(TK_STORAGE)
+          || is_defined_type(token->str)) {
         return parse_declaration(LOCAL);
     } else {
         n = parse_expr();

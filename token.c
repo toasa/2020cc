@@ -53,6 +53,19 @@ int is_type(char *str) {
     return 0;
 }
 
+int is_storage_class_specifier(char *str) {
+    char *specs[] = {
+        "typedef",
+        NULL,
+    };
+    for (int i = 0; specs[i] != NULL; i++) {
+        if (equal_strings(str, specs[i])) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 Token *new_token(Token *prev, TokenKind tk, int val, char *str) {
     Token *t = calloc(1, sizeof(Token));
     t->tk = tk;
@@ -158,6 +171,8 @@ Token *tokenize(char *input) {
                 cur_token = new_token(cur_token, TK_RESERVED, 0, str);
             } else if (is_type(str)) {
                 cur_token = new_token(cur_token, TK_TYPE, 0, str);
+            } else if (is_storage_class_specifier(str)) {
+                cur_token = new_token(cur_token, TK_STORAGE, 0, str);
             } else {
                 // identifier
                 cur_token = new_token(cur_token, TK_IDENT, 0, str);
