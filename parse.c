@@ -600,8 +600,13 @@ Node *parse_init_declarator(VarKind vk, Type *t) {
     t = parse_declarator(t);
 
     Var v = new_var(vk, t);
-    // add new node of variable at tail of linked list.
-    register_new_lvar(v);
+
+    // add new node of variable at head of linked list.
+    if (vk == GLOBAL) {
+        register_new_gvar(v);
+    } else {
+        register_new_lvar(v);
+    }
 
     Node *n;
     n = new_node(ND_DECL, 0);
@@ -1214,9 +1219,7 @@ Node *parse_toplevel_func(Type *ret_t) {
 }
 
 void parse_toplevel_global_var(Type *t) {
-    Var v = new_var(GLOBAL, t);
-    register_new_gvar(v);
-    expect(TK_SEMICOLON);
+    Node *n = parse_declaration(GLOBAL);
 }
 
 Node *funcs[100];
@@ -1224,6 +1227,7 @@ int func_count = 0;
 
 // parse type and identifier, and switch parsing if token is '(' or not.
 void parse_toplevel() {
+    Token *tok_org = token;
     Type *t = parse_type_specifier();
     t = parse_declarator(t);
 
@@ -1232,6 +1236,7 @@ void parse_toplevel() {
         funcs[func_count++] = parse_toplevel_func(t);
     } else {
         // global variable declaration
+        token = tok_org;
         parse_toplevel_global_var(t);
     }
 }
