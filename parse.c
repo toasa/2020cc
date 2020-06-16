@@ -73,10 +73,10 @@ FuncData new_func_data() {
     return data;
 }
 
-Var new_var(VarKind vk, char *name, Type *t) {
+Var new_var(VarKind vk, Type *t) {
     Var v;
     v.vk = vk;
-    v.name = name;
+    v.name = t->name;
     v.type = t;
     v.offset = 0;
     v.str = NULL;
@@ -246,8 +246,8 @@ Node *parse_assign();
 Node *parse_expr();
 Node *parse_compound_stmt(Node*, int);
 Node *parse_stmt();
-Node *parse_toplevel_func(Type *ret_t, char *func_name);
-void parse_toplevel_global_var(Type *t, char *gname);
+Node *parse_toplevel_func(Type *ret_t);
+void parse_toplevel_global_var(Type *t);
 void parse_toplevel();
 void parse_program();
 
@@ -599,7 +599,7 @@ Type *parse_declarator(Type *t) {
 Node *parse_init_declarator(VarKind vk, Type *t) {
     t = parse_declarator(t);
 
-    Var v = new_var(vk, t->name, t);
+    Var v = new_var(vk, t);
     // add new node of variable at tail of linked list.
     register_new_lvar(v);
 
@@ -741,7 +741,8 @@ Node *parse_primary() {
     } else if (cur_tokenkind_is(TK_STR)) {
         // string literal
         Type *t = array_of(char_t, token->str_len);
-        Var v = new_var(GLOBAL, new_label(), t);
+        t->name = new_label();
+        Var v = new_var(GLOBAL, t);
         v.str = token->str;
         v.str_len = token->str_len;
 
@@ -1157,7 +1158,7 @@ void init_function_context() {
     stack_frame_size = 0;
 }
 
-Node *parse_toplevel_func(Type *ret_t, char *func_name) {
+Node *parse_toplevel_func(Type *ret_t) {
     init_function_context();
     enter_scope();
 
@@ -1168,7 +1169,7 @@ Node *parse_toplevel_func(Type *ret_t, char *func_name) {
     func_data.return_type = ret_t;
 
     // function name
-    func_data.name = func_name;
+    func_data.name = ret_t->name;
 
     // parse argument
     expect(TK_LPARENT);
@@ -1212,8 +1213,8 @@ Node *parse_toplevel_func(Type *ret_t, char *func_name) {
     return n;
 }
 
-void parse_toplevel_global_var(Type *t, char *gname) {
-    Var v = new_var(GLOBAL, gname, t);
+void parse_toplevel_global_var(Type *t) {
+    Var v = new_var(GLOBAL, t);
     register_new_gvar(v);
     expect(TK_SEMICOLON);
 }
@@ -1228,10 +1229,10 @@ void parse_toplevel() {
 
     if (cur_token_is("(")) {
         // top level function definition
-        funcs[func_count++] = parse_toplevel_func(t, t->name);
+        funcs[func_count++] = parse_toplevel_func(t);
     } else {
         // global variable declaration
-        parse_toplevel_global_var(t, t->name);
+        parse_toplevel_global_var(t);
     }
 }
 
