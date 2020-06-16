@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "2020cc.h"
 
 char *read_file(char *path) {

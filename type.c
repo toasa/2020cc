@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "2020cc.h"
 
 Type *char_t = &(Type){CHAR, 1, 1};

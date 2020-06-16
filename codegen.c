@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <string.h>
 #include "2020cc.h"
 
 char *regs_64[6] = { "rdi", "rsi", "rdx", "rcx", "r8", "r9" };

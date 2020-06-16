@@ -1,5 +1,3 @@
-#include <stdlib.h>
-#include <string.h>
 #include "2020cc.h"
 
 int is_digit(char c) {

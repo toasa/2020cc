@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
 #include "2020cc.h"
 
 Node *new_node(NodeKind nk, int val) {

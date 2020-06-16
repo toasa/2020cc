@@ -1,6 +1,3 @@
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "2020cc.h"
 
 int equal_strings(char *s1, char *s2) {
