@@ -335,9 +335,13 @@ void gen_func(Node *n) {
 
     // arguments
     if (n->func.args_num > 0) {
-        // iterate the linked list of `vars`.
+        // skip a linked list of local variables to find a function argument.
         VarNode *arg = n->func.toplevel_scope->lvar_head;
-        for (int i = 0; i < n->func.args_num; i++) {
+        while (arg->data.vk != ARG) {
+            arg = arg->next;
+        }
+
+        for (int i = n->func.args_num - 1; i >=0; i--) {
             if (arg->data.vk != ARG) {
                 error("argument preparing error");
             }

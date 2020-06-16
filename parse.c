@@ -127,7 +127,7 @@ void leave_scope() {
     scope_depth--;
 }
 
-// add one `VarNode` at tail of linked list which stored idefifier in current scope.
+// add one `VarNode` at head of linked list which stored idefifier in current scope.
 void register_new_lvar(Var v) {
     VarNode *new_v = new_var_node(v);
     cur_scope->total_var_size += v.type->size;
@@ -137,48 +137,13 @@ void register_new_lvar(Var v) {
     VarNode *lvar_head = cur_scope->lvar_head;
     new_v->next = lvar_head;
     cur_scope->lvar_head = new_v;
-
-    // if (lvar_head == NULL) {
-    //     stack_frame_size += v.type->size;
-    //     new_v->data.offset = stack_frame_size;
-    //     cur_scope->total_var_size = v.type->size;
-    //     cur_scope->lvar_head = new_v;
-    //     return;
-    // }
-
-    // // jump to tail of linked list.
-    // VarNode *var_iter = lvar_head;
-    // while (var_iter->next != NULL) {
-    //     var_iter = var_iter->next;
-    // }
-
-    // cur_scope->total_var_size += v.type->size;
-    // stack_frame_size += v.type->size;
-    // new_v->data.offset = stack_frame_size;
-    // var_iter->next = new_v;
 }
 
+// add one `VarNode` at head of linked list of global variables.
 void register_new_gvar(Var v) {
     VarNode *new_v = new_var_node(v);
-
-    if (gvar_head == NULL) {
-        new_v->data.offset = v.type->size;
-        gvar_head = new_v;
-        return;
-    }
-
-    VarNode *var_iter = gvar_head;
-    while (var_iter->next != NULL) {
-        char *cur_name = var_iter->data.name;
-        // check duplication of variable declaration.
-        if (equal_strings(cur_name, v.name)) {
-            error("duplicate of variable declaration.");
-        }
-
-        var_iter = var_iter->next;
-    }
-
-    var_iter->next = new_v;
+    new_v->next = gvar_head;
+    gvar_head = new_v;
 }
 
 // `head` is `lvar_head` or `gvar_head`.
