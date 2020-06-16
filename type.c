@@ -11,6 +11,9 @@ Type *new_type(TypeKind tk, Type *base, int align) {
     t->tk = tk;
     t->base = base;
     t->align = align;
+    if (base != NULL) {
+        t->is_typedef = base->is_typedef;
+    }
     return t;
 }
 
