@@ -129,27 +129,33 @@ void leave_scope() {
 
 // add one `VarNode` at tail of linked list which stored idefifier in current scope.
 void register_new_lvar(Var v) {
-    VarNode *lvar_head = cur_scope->lvar_head;
     VarNode *new_v = new_var_node(v);
-
-    if (lvar_head == NULL) {
-        stack_frame_size += v.type->size;
-        new_v->data.offset = stack_frame_size;
-        cur_scope->total_var_size = v.type->size;
-        cur_scope->lvar_head = new_v;
-        return;
-    }
-
-    // jump to tail of linked list.
-    VarNode *var_iter = lvar_head;
-    while (var_iter->next != NULL) {
-        var_iter = var_iter->next;
-    }
-
     cur_scope->total_var_size += v.type->size;
     stack_frame_size += v.type->size;
     new_v->data.offset = stack_frame_size;
-    var_iter->next = new_v;
+
+    VarNode *lvar_head = cur_scope->lvar_head;
+    new_v->next = lvar_head;
+    cur_scope->lvar_head = new_v;
+
+    // if (lvar_head == NULL) {
+    //     stack_frame_size += v.type->size;
+    //     new_v->data.offset = stack_frame_size;
+    //     cur_scope->total_var_size = v.type->size;
+    //     cur_scope->lvar_head = new_v;
+    //     return;
+    // }
+
+    // // jump to tail of linked list.
+    // VarNode *var_iter = lvar_head;
+    // while (var_iter->next != NULL) {
+    //     var_iter = var_iter->next;
+    // }
+
+    // cur_scope->total_var_size += v.type->size;
+    // stack_frame_size += v.type->size;
+    // new_v->data.offset = stack_frame_size;
+    // var_iter->next = new_v;
 }
 
 void register_new_gvar(Var v) {
