@@ -451,6 +451,24 @@ int main() {
     test(3, ({ MyInt x=3; x; }), "({ MyInt x=3; x; })");
     test(16, ({ MyInt2 x; sizeof(x); }), "({ MyInt2 x; sizeof(x); })");
 
+    test(1, sizeof(char), "sizeof(char)");
+    test(2, sizeof(short), "sizeof(short)");
+    test(2, sizeof(short int), "sizeof(short int)");
+    test(2, sizeof(int short), "sizeof(int short)");
+    test(4, sizeof(int), "sizeof(int)");
+    test(8, sizeof(long), "sizeof(long)");
+    test(8, sizeof(long int), "sizeof(long int)");
+    test(8, sizeof(long int), "sizeof(long int)");
+    test(8, sizeof(char *), "sizeof(char *)");
+    test(8, sizeof(int *), "sizeof(int *)");
+    test(8, sizeof(long *), "sizeof(long *)");
+    test(8, sizeof(int **), "sizeof(int **)");
+    test(8, sizeof(int(*)[4]), "sizeof(int(*)[4])");
+    test(32, sizeof(int*[4]), "sizeof(int*[4])");
+    test(16, sizeof(int[4]), "sizeof(int[4])");
+    test(48, sizeof(int[3][4]), "sizeof(int[3][4])");
+    test(8, sizeof(struct {int a; int b;}), "sizeof(struct {int a; int b;})");
+
     printf("OK\n");
     return 0;
 }

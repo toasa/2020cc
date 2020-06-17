@@ -913,9 +913,18 @@ Node *parse_unary() {
         }
     } else if (cur_token_is("sizeof")) {
         next_token();
-        Node *tmp = parse_unary();
-        add_type(tmp);
-        n = new_node(ND_NUM, tmp->ty->size);
+        Type *t;
+        if (cur_token_is("(") && next_tokenkind_is(TK_TYPE)) {
+            expect(TK_LPARENT);
+            t = parse_type_specifier();
+            t = parse_declarator(t);
+            expect(TK_RPARENT);
+        } else {
+            Node *tmp = parse_unary();
+            add_type(tmp);
+            t = tmp->ty;
+        }
+        n = new_node(ND_NUM, t->size);
     } else {
         n = parse_suffix();
     }
