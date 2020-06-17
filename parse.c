@@ -241,6 +241,7 @@ Node *parse_init_declarator(VarKind vk, Type *t);
 Node *parse_declaration(VarKind vk);
 Exprs parse_exprs(char *terminator);
 Node *parse_primary();
+Node *parse_postfix();
 Node *parse_unary();
 Node *parse_mul();
 Node *new_add(Node *lhs, Node *rhs);
@@ -797,7 +798,7 @@ Node *parse_primary() {
     return n;
 }
 
-Node *parse_suffix() {
+Node *parse_postfix() {
     Node *n = parse_primary();
     Node *new_n;
 
@@ -875,11 +876,11 @@ Node *parse_unary() {
 
     if (cur_token_is("+")) {
         next_token();
-        n = parse_suffix();
+        n = parse_postfix();
     } else if (cur_token_is("-")) {
         next_token();
         Node *lhs = new_node(ND_NUM, 0);
-        Node *rhs = parse_suffix();
+        Node *rhs = parse_postfix();
         n = new_node_with_lr(ND_SUB, lhs, rhs);
     } else if (cur_token_is("*")) {
         next_token();
@@ -893,7 +894,7 @@ Node *parse_unary() {
         // pre increment
         next_token();
         n = new_node(ND_PREINC, 0);
-        n->expr = parse_suffix();
+        n->expr = parse_postfix();
         add_type(n->expr);
         if (is_pointer(n->expr)) {
             n->inc = new_node(ND_NUM, n->expr->ty->base->size);
@@ -904,7 +905,7 @@ Node *parse_unary() {
         // pre decrement
         next_token();
         n = new_node(ND_PREDEC, 0);
-        n->expr = parse_suffix();
+        n->expr = parse_postfix();
         add_type(n->expr);
         if (is_pointer(n->expr)) {
             n->inc = new_node(ND_NUM, n->expr->ty->base->size);
@@ -926,7 +927,7 @@ Node *parse_unary() {
         }
         n = new_node(ND_NUM, t->size);
     } else {
-        n = parse_suffix();
+        n = parse_postfix();
     }
 
     return n;
