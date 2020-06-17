@@ -734,6 +734,12 @@ char *new_label(void) {
     return buf;
 }
 
+// primary = '(' expr ')'
+//         | '(' '{' compound-stmt '}' ')'
+//         | ident
+//         | ident '(' arguments ')'
+//         | constatnt
+//         | string-literal
 Node *parse_primary() {
     Node *n;
     if (token->tk == TK_LPARENT) {
@@ -798,6 +804,11 @@ Node *parse_primary() {
     return n;
 }
 
+// postfix = primary ('[' expr ']'
+//                   | '.' ident
+//                   | '->' ident
+//                   | '++'
+//                   | '--' )*
 Node *parse_postfix() {
     Node *n = parse_primary();
     Node *new_n;
@@ -871,6 +882,12 @@ Node *parse_postfix() {
     return n;
 }
 
+// unary = postfix
+//       | '++' postfix
+//       | '--' postfix
+//       | ('&' | '*' | '+' | '-' | '~') postfix
+//       | 'sizeof' unary
+//       | 'sizeof' '(' type-name ')'
 Node *parse_unary() {
     Node *n;
 
@@ -933,6 +950,7 @@ Node *parse_unary() {
     return n;
 }
 
+// mul = unary ('*' unary | '/' unary | '%' unary)*
 Node *parse_mul() {
     Node *lhs = parse_unary();
 
@@ -998,6 +1016,7 @@ Node *new_sub(Node *lhs, Node *rhs) {
     return NULL;
 }
 
+// add = mul ('+' mul | '-' mul)*
 Node *parse_add() {
     Node *lhs = parse_mul();
 
@@ -1016,6 +1035,7 @@ Node *parse_add() {
     return lhs;
 }
 
+// shift = add ('<<' add | '>>' add)*
 Node *parse_shift() {
     Node *lhs = parse_add();
 
@@ -1032,6 +1052,7 @@ Node *parse_shift() {
     return lhs;
 }
 
+// relational = shift ('<' shift | '<=' shift | '>' shift | '>=' shift)*
 Node *parse_relational() {
     Node *lhs = parse_shift();
 
@@ -1056,6 +1077,7 @@ Node *parse_relational() {
     return lhs;
 }
 
+// equality = relational ('==' relational | '!=' relational)*
 Node *parse_equality() {
     Node *lhs = parse_relational();
 
@@ -1072,6 +1094,14 @@ Node *parse_equality() {
     return lhs;
 }
 
+// assign = equality ( '=' assign
+//                   | '+=' assign
+//                   | '-=' assign
+//                   | '*=' assign
+//                   | '/=' assign
+//                   | '%=' assign
+//                   | '<<=' assign
+//                   | '>>=' assign )*
 Node *parse_assign() {
     Node *lhs = parse_equality();
 
@@ -1111,6 +1141,7 @@ Node *parse_assign() {
     return lhs;
 }
 
+// expr = assign
 Node *parse_expr() {
     return parse_assign();
 }
