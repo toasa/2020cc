@@ -469,6 +469,16 @@ int main() {
     test(48, sizeof(int[3][4]), "sizeof(int[3][4])");
     test(8, sizeof(struct {int a; int b;}), "sizeof(struct {int a; int b;})");
 
+    test(131585, (int)8590066177, "(int)8590066177");
+    test(513, (short)8590066177, "(short)8590066177");
+    test(1, (char)8590066177, "(char)8590066177");
+    test(1, (long)1, "(long)1");
+    test(0, (long)&*(int *)0, "(long)&*(int *)0");
+    test(513, ({ int x=512; *(char *)&x=1; x; }), "({ int x=512; *(char *)&x=1; x; })");
+    test(5, ({ int x=5; long y=(long)&x; *(int*)y; }), "({ int x=5; long y=(long)&x; *(int*)y; })");
+
+    (void)1;
+
     printf("OK\n");
     return 0;
 }

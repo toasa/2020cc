@@ -70,6 +70,7 @@ typedef enum {
     ND_DECL,      // local variable declaration
     ND_STMT_EXPR, // statement expression
     ND_MEMBER,    // . (struct member access)
+    ND_CAST,      // (type-name) expr
 } NodeKind;
 
 typedef enum {
@@ -178,7 +179,7 @@ typedef struct Node {
     struct Node *cond;  // nkがND_IF, ND_WHILE, ND_FORの場合に使う
     struct Node *then;  // nkがND_IF, ND_WHILE, ND_FORの場合に使う
     struct Node *alt;   // nkがND_IFの場合に使う
-    struct Node *expr;  // nkがND_RETURN, ND_DEREF, ND_ADDR, ND_MEMBERの場合に使う
+    struct Node *expr;  // nkがND_RETURN, ND_DEREF, ND_ADDR, ND_MEMBER, ND_CASTの場合に使う
     struct Node *post;  // nkがND_FORの場合に使う
     struct Node *next;  // nkがND_BLOCK, ND_CALL, ND_FUNC, ND_DECLの場合に使う
     struct Node *block; // nkがND_BLOCK, ND_STMT_EXPRの場合に使う

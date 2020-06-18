@@ -49,6 +49,24 @@ void load(Node *n) {
     printf("    push rax\n");
 }
 
+void cast(Type *t) {
+    if (t->tk == VOID) {
+        return;
+    }
+
+    printf("    pop rax\n");
+
+    if (t->size == 1) {
+        printf("    movsx rax, al\n");
+    } else if (t->size == 2) {
+        printf("    movsx rax, ax\n");
+    } else if (t->size == 4) {
+        printf("    movsx rax, eax\n");
+    }
+
+    printf("    push rax\n");
+}
+
 // push the expression value onto a stack,
 // so caller of this function must call `pop` instruction.
 void gen_expr(Node *n) {
@@ -157,6 +175,10 @@ void gen_expr(Node *n) {
             stmt = stmt->next;
         }
         printf("    push rax\n");
+        return;
+    } else if (n->nk == ND_CAST) {
+        gen_expr(n->expr);
+        cast(n->ty);
         return;
     }
 

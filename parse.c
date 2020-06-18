@@ -242,6 +242,7 @@ Node *parse_declaration(VarKind vk);
 Exprs parse_exprs(char *terminator);
 Node *parse_primary();
 Node *parse_postfix();
+Node *parse_cast();
 Node *parse_unary();
 Node *parse_mul();
 Node *new_add(Node *lhs, Node *rhs);
@@ -883,9 +884,9 @@ Node *parse_postfix() {
 }
 
 // unary = postfix
-//       | '++' postfix
-//       | '--' postfix
-//       | ('&' | '*' | '+' | '-' | '~') postfix
+//       | '++' unary
+//       | '--' unary
+//       | ('&' | '*' | '+' | '-') cast
 //       | 'sizeof' unary
 //       | 'sizeof' '(' type-name ')'
 Node *parse_unary() {
@@ -893,25 +894,25 @@ Node *parse_unary() {
 
     if (cur_token_is("+")) {
         next_token();
-        n = parse_postfix();
+        n = parse_cast();
     } else if (cur_token_is("-")) {
         next_token();
         Node *lhs = new_node(ND_NUM, 0);
-        Node *rhs = parse_postfix();
+        Node *rhs = parse_cast();
         n = new_node_with_lr(ND_SUB, lhs, rhs);
     } else if (cur_token_is("*")) {
         next_token();
         n = new_node(ND_DEREF, 0);
-        n->expr = parse_unary();
+        n->expr = parse_cast();
     } else if (cur_token_is("&")) {
         next_token();
         n = new_node(ND_ADDR, 0);
-        n->expr = parse_unary();
+        n->expr = parse_cast();
     } else if (cur_token_is("++")) {
         // pre increment
         next_token();
         n = new_node(ND_PREINC, 0);
-        n->expr = parse_postfix();
+        n->expr = parse_unary();
         add_type(n->expr);
         if (is_pointer(n->expr)) {
             n->inc = new_node(ND_NUM, n->expr->ty->base->size);
@@ -950,20 +951,39 @@ Node *parse_unary() {
     return n;
 }
 
-// mul = unary ('*' unary | '/' unary | '%' unary)*
+// cast = unary
+//      | (type-name) cast
+Node *parse_cast() {
+    if (cur_token_is("(") && next_tokenkind_is(TK_TYPE)) {
+        expect(TK_LPARENT);
+
+        Node *cast_node = new_node(ND_CAST, 0);
+        Type *t = parse_type_specifier();
+        t = parse_declarator(t);
+        expect(TK_RPARENT);
+
+        cast_node->ty = t;
+        cast_node->expr = parse_cast();
+        add_type(cast_node->expr);
+        return cast_node;
+    }
+    return parse_unary();
+}
+
+// mul = cast ('*' cast | '/' cast | '%' cast)*
 Node *parse_mul() {
-    Node *lhs = parse_unary();
+    Node *lhs = parse_cast();
 
     while (cur_token_is("*") || cur_token_is("/") || cur_token_is("%")) {
         if (cur_token_is("*")) {
             next_token();
-            lhs = new_node_with_lr(ND_MUL, lhs, parse_unary());
+            lhs = new_node_with_lr(ND_MUL, lhs, parse_cast());
         } else if (cur_token_is("/")) {
             next_token();
-            lhs = new_node_with_lr(ND_DIV, lhs, parse_unary());
+            lhs = new_node_with_lr(ND_DIV, lhs, parse_cast());
         } else {
             next_token();
-            lhs = new_node_with_lr(ND_REM, lhs, parse_unary());
+            lhs = new_node_with_lr(ND_REM, lhs, parse_cast());
         }
     }
 
