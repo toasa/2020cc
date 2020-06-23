@@ -834,7 +834,7 @@ Node *parse_postfix() {
             new_n = new_node(ND_POSTINC, 0);
             new_n->expr = n;
             add_type(n);
-            if (is_pointer(n)) {
+            if (is_pointer(n->ty)) {
                 new_n->inc = new_node(ND_NUM, n->ty->base->size);
             } else {
                 new_n->inc = new_node(ND_NUM, 1);
@@ -848,7 +848,7 @@ Node *parse_postfix() {
             new_n = new_node(ND_POSTDEC, 0);
             new_n->expr = n;
             add_type(n);
-            if (is_pointer(n)) {
+            if (is_pointer(n->ty)) {
                 new_n->inc = new_node(ND_NUM, n->ty->base->size);
             } else {
                 new_n->inc = new_node(ND_NUM, 1);
@@ -924,7 +924,7 @@ Node *parse_unary() {
         n = new_node(ND_PREINC, 0);
         n->expr = parse_unary();
         add_type(n->expr);
-        if (is_pointer(n->expr)) {
+        if (is_pointer(n->expr->ty)) {
             n->inc = new_node(ND_NUM, n->expr->ty->base->size);
         } else {
             n->inc = new_node(ND_NUM, 1);
@@ -935,7 +935,7 @@ Node *parse_unary() {
         n = new_node(ND_PREDEC, 0);
         n->expr = parse_postfix();
         add_type(n->expr);
-        if (is_pointer(n->expr)) {
+        if (is_pointer(n->expr->ty)) {
             n->inc = new_node(ND_NUM, n->expr->ty->base->size);
         } else {
             n->inc = new_node(ND_NUM, 1);
@@ -1002,12 +1002,12 @@ Node *new_add(Node *lhs, Node *rhs) {
     add_type(rhs);
 
     // num + num
-    if (is_integer(lhs) && is_integer(rhs)) {
+    if (is_integer(lhs->ty) && is_integer(rhs->ty)) {
         return new_node_with_lr(ND_ADD, lhs, rhs);
     }
 
     // Canonicalize `num + ptr` to `ptr + num`.
-    if (!is_pointer(lhs) && is_pointer(rhs)) {
+    if (!is_pointer(lhs->ty) && is_pointer(rhs->ty)) {
         Node *tmp = lhs;
         lhs = rhs;
         rhs = tmp;
@@ -1023,18 +1023,18 @@ Node *new_sub(Node *lhs, Node *rhs) {
     add_type(rhs);
 
     // num - num
-    if (is_integer(lhs) && is_integer(rhs)) {
+    if (is_integer(lhs->ty) && is_integer(rhs->ty)) {
         return new_node_with_lr(ND_SUB, lhs, rhs);
     }
 
     // ptr - num
-    if (is_pointer(lhs) && !is_pointer(rhs)) {
+    if (is_pointer(lhs->ty) && !is_pointer(rhs->ty)) {
         rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->base->size));
         return new_node_with_lr(ND_SUB, lhs, rhs);
     }
 
     // ptr - ptr
-    if (is_pointer(lhs) && is_pointer(rhs)) {
+    if (is_pointer(lhs->ty) && is_pointer(rhs->ty)) {
         Node *sub = new_node_with_lr(ND_SUB, lhs, rhs);
         return new_node_with_lr(ND_DIV, sub, new_node(ND_NUM, lhs->ty->base->size));
     }

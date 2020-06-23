@@ -206,8 +206,8 @@ Type *new_type(TypeKind tk, Type *base, int align);
 int align_to(int n, int align);
 Type *pointer_to(Type *base);
 Type *array_of(Type *base, int len);
-int is_pointer(Node *n);
-int is_integer(Node *n);
+int is_pointer(Type *t);
+int is_integer(Type *t);
 Type *copy_type(Type *ty);
 void add_type(Node *n);
 

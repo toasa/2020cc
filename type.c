@@ -40,15 +40,15 @@ Type *array_of(Type *base, int len) {
     return t;
 }
 
-int is_pointer(Node *n) {
-    if (n->ty == NULL) { return 0; }
-    return (n->ty->tk == PTR) || (n->ty->tk == ARRAY);
+int is_pointer(Type *ty) {
+    if (ty == NULL) { return 0; }
+    return (ty->tk == PTR) || (ty->tk == ARRAY);
 }
 
-int is_integer(Node *n) {
-    if (n->ty == NULL) { return 0; }
-    return (n->ty->tk == INT) || (n->ty->tk == CHAR)
-          || (n->ty->tk == SHORT) || (n->ty->tk == LONG);
+int is_integer(Type *ty) {
+    if (ty == NULL) { return 0; }
+    return (ty->tk == INT) || (ty->tk == CHAR)
+          || (ty->tk == SHORT) || (ty->tk == LONG);
 }
 
 Type *copy_type(Type *ty) {
