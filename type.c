@@ -51,6 +51,12 @@ int is_integer(Node *n) {
           || (n->ty->tk == SHORT) || (n->ty->tk == LONG);
 }
 
+Type *copy_type(Type *ty) {
+    Type *ret = calloc(1, sizeof(Type));
+    *ret = *ty;
+    return ret;
+}
+
 void add_type(Node *n) {
     if (n == NULL || n->ty != NULL) {
         return;

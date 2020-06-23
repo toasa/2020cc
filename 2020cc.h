@@ -191,6 +191,7 @@ typedef struct Program {
     VarNode *gvars;
 } Program;
 
+Node *new_cast_node(Node *expr, Type *ty);
 Program *parse(Token *t);
 
 //
@@ -207,6 +208,7 @@ Type *pointer_to(Type *base);
 Type *array_of(Type *base, int len);
 int is_pointer(Node *n);
 int is_integer(Node *n);
+Type *copy_type(Type *ty);
 void add_type(Node *n);
 
 //

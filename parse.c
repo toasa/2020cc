@@ -27,6 +27,16 @@ Node *new_lvar_node(Var v) {
     return n;
 }
 
+Node *new_cast_node(Node *expr, Type *ty) {
+    add_type(expr);
+
+    Node *n = calloc(1, sizeof(Node));
+    n->nk = ND_CAST;
+    n->expr = expr;
+    n->ty = copy_type(ty);
+    return n;
+}
+
 // 現在検査中のトークン
 Token *token;
 
@@ -955,16 +965,13 @@ Node *parse_unary() {
 //      | (type-name) cast
 Node *parse_cast() {
     if (cur_token_is("(") && next_tokenkind_is(TK_TYPE)) {
-        expect(TK_LPARENT);
 
-        Node *cast_node = new_node(ND_CAST, 0);
+        expect(TK_LPARENT);
         Type *t = parse_type_specifier();
         t = parse_declarator(t);
         expect(TK_RPARENT);
 
-        cast_node->ty = t;
-        cast_node->expr = parse_cast();
-        add_type(cast_node->expr);
+        Node *cast_node = new_cast_node(parse_cast(), t);
         return cast_node;
     }
     return parse_unary();
