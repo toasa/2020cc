@@ -962,7 +962,7 @@ Node *parse_unary() {
 }
 
 // cast = unary
-//      | (type-name) cast
+//      | '(' type-name ')' cast
 Node *parse_cast() {
     if (cur_token_is("(") && next_tokenkind_is(TK_TYPE)) {
 

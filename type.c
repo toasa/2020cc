@@ -51,10 +51,30 @@ int is_integer(Type *ty) {
           || (ty->tk == SHORT) || (ty->tk == LONG);
 }
 
+int is_scalar(Type *ty) {
+    return is_integer(ty) || ty->base != NULL;
+}
+
 Type *copy_type(Type *ty) {
     Type *ret = calloc(1, sizeof(Type));
     *ret = *ty;
     return ret;
+}
+
+Type *get_common_type(Type *ty1, Type *ty2) {
+    if (ty1->base != NULL) {
+        return pointer_to(ty1->base);
+    }
+    if (ty1->size == 8 || ty2->size == 8) {
+        return long_t;
+    }
+    return int_t;
+}
+
+void usual_arith_conv(Node **lhs, Node **rhs) {
+    Type *ty = get_common_type((*lhs)->ty, (*rhs)->ty);
+    *lhs = new_cast_node(*lhs, ty);
+    *rhs = new_cast_node(*rhs, ty);
 }
 
 void add_type(Node *n) {
@@ -92,12 +112,16 @@ void add_type(Node *n) {
 
     switch (n->nk) {
     case ND_NUM:
+        n->ty = (n->val == (int)n->val) ? int_t : long_t;
+        return;
     case ND_EQ:
     case ND_NE:
     case ND_LT:
     case ND_LE:
-    case ND_CALL:
         n->ty = int_t;
+        return;
+    case ND_CALL:
+        n->ty = long_t;
         return;
     case ND_LVAR:
     case ND_DECL:
@@ -110,6 +134,9 @@ void add_type(Node *n) {
     case ND_REM:
     case ND_LSHIFT:
     case ND_RSHIFT:
+        usual_arith_conv(&n->lhs, &n->rhs);
+        n->ty = n->lhs->ty;
+        return;
     case ND_ASSIGN:
         n->ty = n->lhs->ty;
         return;
