@@ -500,9 +500,13 @@ int main() {
 
     test(1, -2 < (long)-1, "-2 < (long)-1");
     test(1, -2 <= (long)-1, "-2 <= (long)-1");
+    test(0, -2 > (long)-1, "-2 > (long)-1");
+    test(0, -2 >= (long)-1, "-2 >= (long)-1");
 
     test(1, (long)-2 < -1, "(long)-2 < -1");
     test(1, (long)-2 <= -1, "(long)-2 <= -1");
+    test(0, (long)-2 > -1, "(long)-2 > -1");
+    test(0, (long)-2 >= -1, "(long)-2 >= -1");
 
     test(0, 2147483647 + 2147483647 + 2, "2147483647 + 2147483647 + 2");
     test((long)-1, ({ long x; x=-1; x; }), "({ long x; x=-1; x; })");

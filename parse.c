@@ -1094,10 +1094,10 @@ Node *parse_relational() {
             lhs = new_node_with_lr(ND_LE, lhs, parse_shift());
         } else if (cur_token_is(">")) {
             next_token();
-            lhs = new_node_with_lr(ND_LT, lhs, parse_shift());
+            lhs = new_node_with_lr(ND_LT, parse_shift(), lhs);
         } else {
             next_token();
-            lhs = new_node_with_lr(ND_LE, lhs, parse_shift());
+            lhs = new_node_with_lr(ND_LE, parse_shift(), lhs);
         }
     }
 
