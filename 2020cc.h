@@ -39,6 +39,9 @@ Token *tokenize(char *input);
 //
 // parce.c
 //
+
+const int MAX_FUNC_NUM;
+
 typedef enum {
     ND_NUM,
     ND_LVAR,
@@ -66,7 +69,6 @@ typedef enum {
     ND_FOR,       // for
     ND_BLOCK,     // { ... }
     ND_CALL,      // function call
-    ND_FUNC,      // function definition
     ND_DECL,      // local variable declaration
     ND_STMT_EXPR, // statement expression
     ND_MEMBER,    // . (struct member access)
@@ -171,7 +173,7 @@ typedef struct Node {
     Type *ty;
 
     Var var;            // nkがND_LVAR, ND_DECLの場合に使う
-    FuncData func;      // nkがND_CALL, ND_FUNCの場合に使う
+    FuncData *func;     // nkがND_CALLの場合に使う
 
     Member *member;     // nkがND_MEMBERの場合に使う
 
@@ -181,13 +183,13 @@ typedef struct Node {
     struct Node *alt;   // nkがND_IFの場合に使う
     struct Node *expr;  // nkがND_RETURN, ND_DEREF, ND_ADDR, ND_MEMBER, ND_CASTの場合に使う
     struct Node *post;  // nkがND_FORの場合に使う
-    struct Node *next;  // nkがND_BLOCK, ND_CALL, ND_FUNC, ND_DECLの場合に使う
+    struct Node *next;  // nkがND_BLOCK, ND_CALL, ND_DECLの場合に使う
     struct Node *block; // nkがND_BLOCK, ND_STMT_EXPRの場合に使う
     struct Node *inc;   // nkがND_PREINC, ND_PREDEC, ND_POSTINC, ND_POSTDECの場合に使う
 } Node;
 
 typedef struct Program {
-    struct Node **funcs;
+    struct FuncData **funcs;
     VarNode *gvars;
 } Program;
 

@@ -68,15 +68,8 @@ void expect(TokenKind tk) {
 
 Node *parse_expr();
 
-FuncData new_func_data() {
-    FuncData data;
-    data.name = NULL;
-    data.body = NULL;
-    data.args_num = 0;
-    data.args = NULL;
-    data.toplevel_scope = NULL;
-    data.stack_frame_size = 0;
-    return data;
+FuncData *new_func_data() {
+    return calloc(1, sizeof(FuncData));
 }
 
 Var new_var(VarKind vk, Type *t) {
@@ -265,7 +258,7 @@ Node *parse_assign();
 Node *parse_expr();
 Node *parse_compound_stmt(Node*, int);
 Node *parse_stmt();
-Node *parse_toplevel_func(Type *ret_t);
+FuncData *parse_toplevel_func(Type *ret_t);
 void parse_toplevel_global_var(Type *t);
 void parse_toplevel();
 void parse_program();
@@ -769,9 +762,9 @@ Node *parse_primary() {
         if (next_tokenkind_is(TK_LPARENT)) {
             // function call
             n = new_node(ND_CALL, 0);
-            FuncData fd = new_func_data();
+            FuncData *fd = new_func_data();
 
-            fd.name = token->str;
+            fd->name = token->str;
 
             expect(TK_IDENT);
             expect(TK_LPARENT);
@@ -779,8 +772,8 @@ Node *parse_primary() {
             if (!cur_token_is(")")) {
                 // function arguments
                 Exprs result = parse_exprs(")");
-                fd.args = result.head;
-                fd.args_num = result.count;
+                fd->args = result.head;
+                fd->args_num = result.count;
             }
 
             n->func = fd;
@@ -1269,18 +1262,17 @@ void init_function_context() {
     stack_frame_size = 0;
 }
 
-Node *parse_toplevel_func(Type *ret_t) {
+FuncData *parse_toplevel_func(Type *ret_t) {
     init_function_context();
     enter_scope();
 
-    Node *n = new_node(ND_FUNC, 0);
-    FuncData func_data = new_func_data();
+    FuncData *func_data = new_func_data();
 
     // return type
-    func_data.return_type = ret_t;
+    func_data->return_type = ret_t;
 
     // function name
-    func_data.name = ret_t->name;
+    func_data->name = ret_t->name;
 
     // parse argument
     expect(TK_LPARENT);
@@ -1296,39 +1288,38 @@ Node *parse_toplevel_func(Type *ret_t) {
 
             args_num++;
         }
-        func_data.args_num = args_num;
+        func_data->args_num = args_num;
     }
     expect(TK_RPARENT);
 
     // function declaration (Not definition)
     if (cur_token_is(";")) {
         expect(TK_SEMICOLON);
-        n->func = func_data;
         leave_scope();
-        return n;
+        return func_data;
     }
 
     // parse function body
     Node *body = new_node(ND_BLOCK, 0);
     expect(TK_LBRACE);
-    func_data.body = parse_compound_stmt(body, 1);
+    func_data->body = parse_compound_stmt(body, 1);
     expect(TK_RBRACE);
 
     // store the head of linked list which include local variables.
     // func_data.vars = cur_scope->lvar_head;
-    func_data.toplevel_scope = toplevel_scope;
-    func_data.stack_frame_size = stack_frame_size;
+    func_data->toplevel_scope = toplevel_scope;
+    func_data->stack_frame_size = stack_frame_size;
 
-    n->func = func_data;
     leave_scope();
-    return n;
+    return func_data;
 }
 
 void parse_toplevel_global_var(Type *t) {
     Node *n = parse_declaration(GLOBAL);
 }
 
-Node *funcs[100];
+const int MAX_FUNC_NUM = 500;
+FuncData *funcs[MAX_FUNC_NUM];
 int func_count = 0;
 
 // parse type and identifier, and switch parsing if token is '(' or not.

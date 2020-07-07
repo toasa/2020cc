@@ -78,25 +78,25 @@ void gen_expr(Node *n) {
         load(n);
         return;
     } else if (n->nk == ND_CALL) {
-        FuncData callee = n->func;
+        FuncData *callee = n->func;
 
         // generate expression code for each argument.
-        if (callee.args_num > 0) {
-            Node *arg = callee.args;
-            for (int count = 0; count < callee.args_num; count++) {
+        if (callee->args_num > 0) {
+            Node *arg = callee->args;
+            for (int count = 0; count < callee->args_num; count++) {
                 gen_expr(arg);
                 arg = arg->next;
             }
         }
 
         // generated value of argument move to specified register for function calling.
-        for (int arg_i = callee.args_num; arg_i > 0; arg_i--) {
+        for (int arg_i = callee->args_num; arg_i > 0; arg_i--) {
             printf("    pop rax\n");
             printf("    mov %s, rax\n", regs_64[arg_i-1]);
         }
 
         printf("    mov rax, 0\n");
-        printf("    call %s\n", callee.name);
+        printf("    call %s\n", callee->name);
         printf("    push rax\n");
         return;
     } else if (n->nk == ND_DEREF) {
@@ -328,17 +328,15 @@ void gen_stmt(Node *n) {
 }
 
 
-void gen_func(Node *n) {
-    assert(n->nk == ND_FUNC, "top level node must be function.");
-
+void gen_func(FuncData *func) {
     // function declaration only. (Not a function definition)
-    if (n->func.body == NULL) {
+    if (func->body == NULL) {
         return;
     }
 
-    strcpy(cur_func, n->func.name);
-    printf(".global %s\n", n->func.name);
-    printf("%s:\n", n->func.name);
+    strcpy(cur_func, func->name);
+    printf(".global %s\n", func->name);
+    printf("%s:\n", func->name);
 
     // prologue
     printf("    push rbp\n");
@@ -351,17 +349,17 @@ void gen_func(Node *n) {
     printf("    mov rbp, rsp\n");
 
     // allocate for local variables in stack area.
-    printf("    sub rsp, %zu\n", n->func.stack_frame_size);
+    printf("    sub rsp, %zu\n", func->stack_frame_size);
 
     // arguments
-    if (n->func.args_num > 0) {
+    if (func->args_num > 0) {
         // skip a linked list of local variables to find a function argument.
-        VarNode *arg = n->func.toplevel_scope->lvar_head;
+        VarNode *arg = func->toplevel_scope->lvar_head;
         while (arg->data.vk != ARG) {
             arg = arg->next;
         }
 
-        for (int i = n->func.args_num - 1; i >=0; i--) {
+        for (int i = func->args_num - 1; i >= 0; i--) {
             if (arg->data.vk != ARG) {
                 error("argument preparing error");
             }
@@ -388,10 +386,10 @@ void gen_func(Node *n) {
     }
 
     // function body
-    gen_stmt(n->func.body);
+    gen_stmt(func->body);
 
     // epilogue
-    printf(".Lreturn_%s:\n", n->func.name);
+    printf(".Lreturn_%s:\n", func->name);
     printf("    mov rsp, rbp\n");
     printf("    pop r15\n");
     printf("    pop r14\n");
