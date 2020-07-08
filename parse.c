@@ -107,7 +107,12 @@ VarNode *gvar_head = NULL;
 size_t scope_depth = 0;
 Scope *toplevel_scope = NULL;
 Scope *cur_scope = NULL;
+Type *cur_function_return_type;
 size_t stack_frame_size = 0;
+
+const int MAX_FUNC_NUM = 500;
+FuncData *funcs[MAX_FUNC_NUM];
+int func_count = 0;
 
 void enter_scope() {
     Scope *s = new_scope(scope_depth);
@@ -162,6 +167,15 @@ VarNode *look_up_var(char *name, VarNode *head) {
         var_iter = var_iter->next;
     }
 
+    return NULL;
+}
+
+FuncData *look_up_func(char *name) {
+    for (int i = 0; funcs[i] != NULL; i++) {
+        if (equal_strings(funcs[i]->name, name)) {
+            return funcs[i];
+        }
+    }
     return NULL;
 }
 
@@ -777,6 +791,14 @@ Node *parse_primary() {
             }
 
             n->func = fd;
+
+            FuncData *callee = look_up_func(fd->name);
+            // When callee function is defined in this compiler, solve the type of this node 'n'.
+            if (callee != NULL) {
+                add_type(n);
+                n->ty = callee->return_type;
+            }
+
             expect(TK_RPARENT);
         } else {
             // variable (it must be declared already)
@@ -1196,8 +1218,10 @@ Node *parse_stmt() {
     if (cur_token_is("return")) {
         n = new_node(ND_RETURN, 0);
         next_token();
-        n->expr = parse_expr();
+        Node *expr = parse_expr();
         expect(TK_SEMICOLON);
+        add_type(expr);
+        n->expr = new_cast_node(expr, cur_function_return_type);
         return n;
     } else if (cur_token_is("if")) {
         n = new_node(ND_IF, 0);
@@ -1255,15 +1279,16 @@ Node *parse_stmt() {
     return n;
 }
 
-void init_function_context() {
+void init_function_context(Type *ret_t) {
     toplevel_scope = NULL;
     cur_scope = NULL;
     scope_depth = 0;
     stack_frame_size = 0;
+    cur_function_return_type = ret_t;
 }
 
 FuncData *parse_toplevel_func(Type *ret_t) {
-    init_function_context();
+    init_function_context(ret_t);
     enter_scope();
 
     FuncData *func_data = new_func_data();
@@ -1317,10 +1342,6 @@ FuncData *parse_toplevel_func(Type *ret_t) {
 void parse_toplevel_global_var(Type *t) {
     Node *n = parse_declaration(GLOBAL);
 }
-
-const int MAX_FUNC_NUM = 500;
-FuncData *funcs[MAX_FUNC_NUM];
-int func_count = 0;
 
 // parse type and identifier, and switch parsing if token is '(' or not.
 void parse_toplevel() {

@@ -73,6 +73,9 @@ int g1;
 int g2;
 int garr[4];
 
+int *g1_ptr() { return &g1; }
+char int_to_char(int x) { return x; }
+
 typedef int MyInt, MyInt2[4];
 
 int main() {
@@ -514,6 +517,9 @@ int main() {
     test(1, ({ char x[3]; x[0]=0; x[1]=1; x[2]=2; char *y=x+1; y[0]; }), "({ char x[3]; x[0]=0; x[1]=1; x[2]=2; char *y=x+1; y[0]; })");
     test(0, ({ char x[3]; x[0]=0; x[1]=1; x[2]=2; char *y=x+1; y[-1]; }), "({ char x[3]; x[0]=0; x[1]=1; x[2]=2; char *y=x+1; y[-1]; })");
     test(5, ({ struct t {char a;} x, y; x.a=5; y=x; y.a; }), "({ struct t {char a;} x, y; x.a=5; y=x; y.a; })");
+
+    test(3, *g1_ptr(), "*g1_ptr()");
+    test(5, int_to_char(261), "int_to_char(261)");
 
     printf("OK\n");
     return 0;
