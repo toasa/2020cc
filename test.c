@@ -76,6 +76,10 @@ int garr[4];
 int *g1_ptr() { return &g1; }
 char int_to_char(int x) { return x; }
 
+int div_long(long a, long b) {
+    return a / b;
+}
+
 typedef int MyInt, MyInt2[4];
 
 int main() {
@@ -520,6 +524,8 @@ int main() {
 
     test(3, *g1_ptr(), "*g1_ptr()");
     test(5, int_to_char(261), "int_to_char(261)");
+
+    test(-5, div_long(-10, 2), "div_long(-10, 2)");
 
     printf("OK\n");
     return 0;
