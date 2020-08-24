@@ -85,6 +85,7 @@ typedef enum {
     STRUCT,
     UNION,
     VOID,
+    BOOL,
 } TypeKind;
 
 typedef struct Member Member;
@@ -204,6 +205,7 @@ extern Type *short_t;
 extern Type *int_t;
 extern Type *long_t;
 extern Type *void_t;
+extern Type *bool_t;
 Type *new_type(TypeKind tk, Type *base, int align);
 int align_to(int n, int align);
 Type *pointer_to(Type *base);

@@ -421,12 +421,13 @@ Type *parse_type_specifier() {
 
     enum {
         TY_VOID = 1 << 0,
-        TY_CHAR = 1 << 2,
-        TY_SHORT = 1 << 4,
-        TY_INT = 1 << 6,
-        TY_LONG = 1 << 8,
-        TY_STRUCT = 1 << 10,
-        TY_UNION = 1 << 12,
+        TY_BOOL = 1 << 2,
+        TY_CHAR = 1 << 4,
+        TY_SHORT = 1 << 6,
+        TY_INT = 1 << 8,
+        TY_LONG = 1 << 10,
+        TY_STRUCT = 1 << 12,
+        TY_UNION = 1 << 14,
     };
 
     VarNode *v = get_var(token->str);
@@ -442,6 +443,8 @@ Type *parse_type_specifier() {
     while (cur_tokenkind_is(TK_TYPE) || cur_tokenkind_is(TK_STORAGE)) {
         if (cur_token_is("void")) {
             counter += TY_VOID;
+        } else if (cur_token_is("_Bool")) {
+            counter += TY_BOOL;
         } else if (cur_token_is("char")) {
             counter += TY_CHAR;
         } else if (cur_token_is("short")) {
@@ -467,6 +470,9 @@ Type *parse_type_specifier() {
         switch (counter) {
         case TY_VOID:
             t = void_t;
+            break;
+        case TY_BOOL:
+            t = bool_t;
             break;
         case TY_CHAR:
             t = char_t;
@@ -745,6 +751,25 @@ Exprs parse_exprs(char *terminator) {
     return result;
 }
 
+Node *adapt_casts(Node *exprs, Node *casts) {
+    Node head;
+    Node *cur = calloc(1, sizeof(Node));
+    head.next = cur;
+
+    Node *expr = exprs;
+    Node *cast = casts;
+
+    while (expr != NULL) {
+        Node *tmp = new_cast_node(expr, cast->ty);
+        cur->next = tmp;
+        cur = tmp;
+
+        expr = expr->next;
+        cast = cast->next;
+    }
+    return head.next->next;
+}
+
 char *new_label(void) {
     static int count = 0;
     char *buf = malloc(20);
@@ -777,8 +802,9 @@ Node *parse_primary() {
             // function call
             n = new_node(ND_CALL, 0);
             FuncData *fd = new_func_data();
-
             fd->name = token->str;
+
+            FuncData *defined = look_up_func(fd->name);
 
             expect(TK_IDENT);
             expect(TK_LPARENT);
@@ -786,17 +812,20 @@ Node *parse_primary() {
             if (!cur_token_is(")")) {
                 // function arguments
                 Exprs result = parse_exprs(")");
+                if (defined != NULL) {
+                    // cast each arguments to each defined parameters type.
+                    result.head = adapt_casts(result.head, defined->args);
+                }
                 fd->args = result.head;
                 fd->args_num = result.count;
             }
 
             n->func = fd;
 
-            FuncData *callee = look_up_func(fd->name);
             // When callee function is defined in this compiler, solve the type of this node 'n'.
-            if (callee != NULL) {
+            if (defined != NULL) {
                 add_type(n);
-                n->ty = callee->return_type;
+                n->ty = defined->return_type;
             }
 
             expect(TK_RPARENT);
@@ -1304,16 +1333,21 @@ FuncData *parse_toplevel_func(Type *ret_t) {
     if (!cur_token_is(")")) {
         // function arguments
         int args_num = 0;
+        Node head;
+        Node *cur = calloc(1, sizeof(Node));
+        head.next = cur;
         while (!cur_token_is(")")) {
             if (cur_token_is(",")) {
                 expect(TK_COMMA);
             }
             Type *t = parse_type_specifier();
             Node *arg = parse_init_declarator(ARG, t);
-
+            cur->next = arg;
+            cur = arg;
             args_num++;
         }
         func_data->args_num = args_num;
+        func_data->args = head.next->next;
     }
     expect(TK_RPARENT);
 

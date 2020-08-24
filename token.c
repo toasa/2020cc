@@ -43,6 +43,7 @@ int is_type(char *str) {
         "struct",
         "union",
         "void",
+        "_Bool",
         NULL,
     };
     for (int i = 0; types[i] != NULL; i++) {
@@ -90,13 +91,13 @@ int read_number(char **input) {
     return num;
 }
 
-// 一文字目はchar、二文字目以降はchar, 数字, `_`のいづれかの文字を読み、
+// 一文字目は char または `_` 、二文字目以降はchar, 数字, `_`のいづれかの文字を読み、
 // 新たにメモリを確保した上で文字列を返す
 char *read_ident(char **input) {
     char *input_org = *input;
 
     int str_count = 0;
-    if (is_char(**input)) {
+    if (is_char(**input) || (**input == '_')) {
         (*input)++;
         str_count++;
     } else {
@@ -165,7 +166,7 @@ Token *tokenize(char *input) {
         if (is_digit(*input)) {
             int num = read_number(&input);
             cur_token = new_token(cur_token, TK_NUM, num, "");
-        } else if (is_char(*input)) {
+        } else if (is_char(*input) || *input == '_') {
             char *str = read_ident(&input);
             if (is_keyword(str)) {
                 cur_token = new_token(cur_token, TK_RESERVED, 0, str);

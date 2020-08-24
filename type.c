@@ -1,6 +1,7 @@
 #include "2020cc.h"
 
 Type *char_t = &(Type){CHAR, 1, 1};
+Type *bool_t = &(Type){BOOL, 1, 1};
 Type *short_t = &(Type){SHORT, 2, 2};
 Type *int_t = &(Type){INT, 4, 4};
 Type *long_t = &(Type){LONG, 8, 8};
@@ -47,11 +48,15 @@ int is_pointer(Type *ty) {
 
 int is_integer(Type *ty) {
     if (ty == NULL) { return 0; }
-    return (ty->tk == INT) || (ty->tk == CHAR)
-          || (ty->tk == SHORT) || (ty->tk == LONG);
+    return (ty->tk == INT)
+        || (ty->tk == CHAR)
+        || (ty->tk == BOOL)
+        || (ty->tk == SHORT)
+        || (ty->tk == LONG);
 }
 
 int is_scalar(Type *ty) {
+    if (ty == NULL) { return 0; }
     return is_integer(ty) || ty->base != NULL;
 }
 
@@ -138,6 +143,9 @@ void add_type(Node *n) {
         n->ty = n->lhs->ty;
         return;
     case ND_ASSIGN:
+        if (is_scalar(n->rhs->ty)) {
+            n->rhs = new_cast_node(n->rhs, n->lhs->ty);
+        }
         n->ty = n->lhs->ty;
         return;
     case ND_MEMBER:

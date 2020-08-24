@@ -56,6 +56,14 @@ void cast(Type *t) {
 
     printf("    pop rax\n");
 
+    if (t->tk == BOOL) {
+        printf("    cmp rax, 0\n");
+        printf("    setne al\n");
+        printf("    movzx rax, al\n");
+        printf("    push rax\n");
+        return;
+    }
+
     if (t->size == 1) {
         printf("    movsx rax, al\n");
     } else if (t->size == 2) {

@@ -75,10 +75,14 @@ int garr[4];
 
 int *g1_ptr() { return &g1; }
 char int_to_char(int x) { return x; }
+int char_to_int(char c) { return c; }
 
 int div_long(long a, long b) {
     return a / b;
 }
+
+_Bool bool_fn_add(_Bool x) { return x + 1; }
+_Bool bool_fn_sub(_Bool x) { return x - 1; }
 
 typedef int MyInt, MyInt2[4];
 
@@ -524,8 +528,22 @@ int main() {
 
     test(3, *g1_ptr(), "*g1_ptr()");
     test(5, int_to_char(261), "int_to_char(261)");
+    test(0, char_to_int(256), "char_to_int(256)");
 
     test(-5, div_long(-10, 2), "div_long(-10, 2)");
+
+    test(0, ({ _Bool x=0; x; }), "({ _Bool x=0; x; })");
+    test(1, ({ _Bool x=1; x; }), "({ _Bool x=1; x; })");
+    test(1, ({ _Bool x=2; x; }), "({ _Bool x=2; x; })");
+    test(1, (_Bool)1, "(_Bool)1");
+    test(1, (_Bool)2, "(_Bool)2");
+    test(0, (_Bool)(char)256, "(_Bool)(char)256");
+    test(1, bool_fn_add(3), "bool_fn_add(3)");
+    test(0, bool_fn_sub(3), "bool_fn_sub(3)");
+    test(1, bool_fn_add(-3), "bool_fn_add(-3)");
+    test(0, bool_fn_sub(-3), "bool_fn_sub(-3)");
+    test(1, bool_fn_add(0), "bool_fn_add(0)");
+    test(1, bool_fn_sub(0), "bool_fn_sub(0)");
 
     printf("OK\n");
     return 0;
