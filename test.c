@@ -545,6 +545,10 @@ int main() {
     test(1, bool_fn_add(0), "bool_fn_add(0)");
     test(1, bool_fn_sub(0), "bool_fn_sub(0)");
 
+    test(97, 'a', "'a'");
+    test(10, '\n', "'\\n'");
+    test(4, sizeof('a'), "sizeof('a')");
+
     printf("OK\n");
     return 0;
 }

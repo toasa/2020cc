@@ -157,6 +157,20 @@ Token *new_str_token(Token *cur_token, char **input) {
     return str_token;
 }
 
+Token *new_char_token(Token *cur_token, char **input) {
+    char c;
+    if (**input == '\\') {
+        (*input)++;
+        c = read_escaped_char(**input);
+    } else {
+        c = **input;
+    }
+    (*input)++;
+
+    Token *char_token = new_token(cur_token, TK_NUM, c, "");
+    return char_token;
+}
+
 Token *tokenize(char *input) {
     Token *head_token = calloc(1, sizeof(Token));
     Token *cur_token = head_token;
@@ -181,6 +195,10 @@ Token *tokenize(char *input) {
         } else if (*input == '"') {
             input++;
             cur_token = new_str_token(cur_token, &input);
+            input++;
+        } else if (*input == '\'') {
+            input++;
+            cur_token = new_char_token(cur_token, &input);
             input++;
         } else if (*input == '+') {
             input++;
