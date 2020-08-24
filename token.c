@@ -44,6 +44,7 @@ int is_type(char *str) {
         "union",
         "void",
         "_Bool",
+        "enum",
         NULL,
     };
     for (int i = 0; types[i] != NULL; i++) {

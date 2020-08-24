@@ -20,7 +20,8 @@ typedef enum {
     TK_COMMA,     // ,
     TK_PERIOD,    // .
     TK_ARROW,     // ->
-    TK_TYPE,      // 'void', 'char', 'shor', 'int', 'long', 'struct', 'union'
+    TK_TYPE,      // 'void', 'char', 'shor', 'int', 'long'
+                  // 'struct', 'union', '_Bool', 'enum'
     TK_STORAGE,   // 'typedef'
     TK_STR,
     TK_EOF,
@@ -86,6 +87,7 @@ typedef enum {
     UNION,
     VOID,
     BOOL,
+    ENUM,
 } TypeKind;
 
 typedef struct Member Member;
@@ -117,6 +119,7 @@ typedef enum VarKind {
     ARG,
     MEMBER,
     DEFINEDTYPE,
+    ENUMMEMBER,
 } VarKind;
 
 typedef struct Var {
@@ -131,6 +134,9 @@ typedef struct Var {
     // global variable
     char *str;
     int str_len;
+
+    // value of each enum members
+    int enum_val;
 } Var;
 
 typedef struct VarNode {
@@ -140,7 +146,7 @@ typedef struct VarNode {
 
 typedef struct Tag {
     char *name;
-    Type *type; // typekind is STRUCT only.
+    Type *type; // STRUCT, UNION, or ENUM
     struct Tag *next;
 } Tag;
 

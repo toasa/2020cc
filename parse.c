@@ -208,7 +208,12 @@ bool is_defined_type(char *t_name) {
 }
 
 Tag *new_tag(char *tag_name, Type *type) {
-    assert(type->tk == STRUCT, "tag is used for struct only");
+    assert(
+        type->tk == STRUCT
+        || type->tk == UNION
+        || type->tk == ENUM,
+        "tag is used for struct, union, or enum"
+    );
     Tag *t = calloc(1, sizeof(Tag));
     t->name = tag_name;
     t->type = type;
@@ -405,6 +410,69 @@ Type *parse_struct_union_decl(TypeKind tk) {
     return t;
 }
 
+// enum-decl = ident? '{' enum-list? '}'
+//           | ident ('{' enum-list? '}')?
+//
+// enum-list = ident ('=' num)? (',' ident ('=' num)?)*
+Type *parse_enum_decl() {
+    Type *t = new_type(ENUM, NULL, 4);
+    t->size = 4;
+
+    int tag_exists = 0;
+    char *tag_name = NULL;
+    if (cur_tokenkind_is(TK_IDENT)) {
+        tag_name = token->str;
+        tag_exists = 1;
+        next_token();
+    }
+
+    if (tag_name != NULL && !cur_token_is("{")) {
+        t->name = tag_name;
+        Tag *registered = get_tag(tag_name);
+        if (registered == NULL) {
+            error("unknown enum type: %s", registered->name);
+        }
+        if (registered->type->tk != ENUM) {
+            error("enum type not found: %s", registered->name);
+        }
+        return registered->type;
+    }
+
+    expect(TK_LBRACE);
+
+    int count = 0;
+    while (!cur_token_is("}")) {
+        if (cur_token_is(",")) {
+            next_token();
+        }
+
+        char *name = token->str;
+        next_token();
+
+        Var v = new_var(ENUMMEMBER, t);
+        v.name = name;
+
+        if (cur_token_is("=")) {
+            next_token();
+            count = token->val;
+            v.enum_val = count;
+        } else {
+            v.enum_val = count++;
+        }
+
+        register_new_lvar(v);
+    }
+
+    expect(TK_RBRACE);
+
+    if (tag_exists) {
+        Tag *tag = new_tag(tag_name, t);
+        register_new_tag(tag);
+    }
+
+    return t;
+}
+
 // handle a specific type combination.
 //
 //     1. int long
@@ -428,6 +496,7 @@ Type *parse_type_specifier() {
         TY_LONG = 1 << 10,
         TY_STRUCT = 1 << 12,
         TY_UNION = 1 << 14,
+        TY_ENUM = 1 << 16,
     };
 
     VarNode *v = get_var(token->str);
@@ -457,6 +526,8 @@ Type *parse_type_specifier() {
             counter += TY_STRUCT;
         } else if (cur_token_is("union")) {
             counter += TY_UNION;
+        } else if (cur_token_is("enum")) {
+            counter += TY_ENUM;
         } else if (cur_token_is("typedef")) {
             typedef_exists = true;
             next_token();
@@ -495,6 +566,9 @@ Type *parse_type_specifier() {
             break;
         case TY_UNION:
             t = parse_struct_union_decl(UNION);
+            break;
+        case TY_ENUM:
+            t = parse_enum_decl();
             break;
         default:
             error("invalid type");
@@ -835,7 +909,12 @@ Node *parse_primary() {
             if (v == NULL) {
                 error("Undeclared variable: %s\n", token->str);
             }
-            n = new_lvar_node(v->data);
+
+            if (v->data.vk == ENUMMEMBER) {
+                n = new_node(ND_NUM, v->data.enum_val);
+            } else {
+                n = new_lvar_node(v->data);
+            }
             next_token();
         }
     } else if (cur_tokenkind_is(TK_NUM)) {

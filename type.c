@@ -52,7 +52,8 @@ int is_integer(Type *ty) {
         || (ty->tk == CHAR)
         || (ty->tk == BOOL)
         || (ty->tk == SHORT)
-        || (ty->tk == LONG);
+        || (ty->tk == LONG)
+        || (ty->tk == ENUM);
 }
 
 int is_scalar(Type *ty) {
