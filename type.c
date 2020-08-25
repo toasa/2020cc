@@ -169,6 +169,9 @@ void add_type(Node *n) {
     case ND_NOT:
         n->ty = int_t;
         return;
+    case ND_BITNOT:
+        n->ty = n->expr->ty;
+        return;
     default:;
     }
 }

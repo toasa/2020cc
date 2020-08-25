@@ -1020,7 +1020,7 @@ Node *parse_postfix() {
 // unary = postfix
 //       | '++' unary
 //       | '--' unary
-//       | ('&' | '*' | '+' | '-' | '!') cast
+//       | ('&' | '*' | '+' | '-' | '!' | '~') cast
 //       | 'sizeof' unary
 //       | 'sizeof' '(' type-name ')'
 Node *parse_unary() {
@@ -1045,6 +1045,10 @@ Node *parse_unary() {
     } else if (cur_token_is("!")) {
         next_token();
         n = new_node(ND_NOT, 0);
+        n->expr = parse_cast();
+    } else if (cur_token_is("~")) {
+        next_token();
+        n = new_node(ND_BITNOT, 0);
         n->expr = parse_cast();
     } else if (cur_token_is("++")) {
         // pre increment

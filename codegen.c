@@ -122,6 +122,12 @@ void gen_expr(Node *n) {
         printf("    movzb rax, al\n");
         printf("    push rax\n");
         return;
+    } else if (n->nk == ND_BITNOT) {
+        gen_expr(n->expr);
+        printf("    pop rax\n");
+        printf("    not rax\n");
+        printf("    push rax\n");
+        return;
     } else if (n->nk == ND_PREINC) {
         gen_expr(n->expr);
         gen_expr(n->inc);

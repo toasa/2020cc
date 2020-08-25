@@ -65,6 +65,7 @@ typedef enum {
     ND_PREDEC,    // --
     ND_POSTDEC,   // --
     ND_NOT,       // !
+    ND_BITNOT,    // ~
     ND_RETURN,    // return
     ND_IF,        // if
     ND_WHILE,     // while

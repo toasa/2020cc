@@ -593,6 +593,9 @@ int main() {
     test(4, sizeof(!(char)0), "sizeof(!(char)0)");
     test(4, sizeof(!(long)0), "sizeof(!(long)0)");
 
+    test(-1, ~0, "~0");
+    test(0, ~-1, "~-1");
+
     printf("OK\n");
     return 0;
 }
