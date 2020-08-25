@@ -58,6 +58,7 @@ int is_type(char *str) {
 int is_storage_class_specifier(char *str) {
     char *specs[] = {
         "typedef",
+        "static",
         NULL,
     };
     for (int i = 0; specs[i] != NULL; i++) {

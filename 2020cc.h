@@ -101,10 +101,13 @@ typedef struct Type {
 
     size_t arr_size;   // the number of elements
 
-    bool is_typedef;
-
     Member *member;    // struct
 } Type;
+
+typedef struct VarAttr {
+    bool is_typedef;
+    bool is_static;
+} VarAttr;
 
 struct Member {
     char *name;
@@ -118,7 +121,6 @@ typedef enum VarKind {
     GLOBAL,
     ARG,
     MEMBER,
-    DEFINEDTYPE,
     ENUMMEMBER,
 } VarKind;
 
@@ -127,6 +129,7 @@ typedef struct Var {
     char *name;
     Type *type;
     int is_global;
+    VarAttr attr;
 
     // local variable
     int offset;
@@ -169,6 +172,8 @@ typedef struct FuncData {
 
     size_t stack_frame_size;
     Scope *toplevel_scope;
+
+    bool is_static;
 } FuncData;
 
 typedef struct Node {

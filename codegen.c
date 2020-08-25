@@ -343,7 +343,9 @@ void gen_func(FuncData *func) {
     }
 
     strcpy(cur_func, func->name);
-    printf(".global %s\n", func->name);
+    if (!func->is_static) {
+        printf(".global %s\n", func->name);
+    }
     printf("%s:\n", func->name);
 
     // prologue

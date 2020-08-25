@@ -80,6 +80,8 @@ Var new_var(VarKind vk, Type *t) {
     v.offset = 0;
     v.str = NULL;
     v.str_len = 0;
+    v.attr.is_typedef = false;
+    v.attr.is_static = false;
     if (vk == GLOBAL) {
         v.is_global = 1;
     } else {
@@ -135,7 +137,7 @@ void leave_scope() {
 void register_new_lvar(Var v) {
     VarNode *new_v = new_var_node(v);
 
-    if (v.vk != DEFINEDTYPE) {
+    if (!v.attr.is_typedef) {
         cur_scope->total_var_size += v.type->size;
         stack_frame_size += v.type->size;
         new_v->data.offset = stack_frame_size;
@@ -201,7 +203,7 @@ VarNode *get_var(char *name) {
 
 bool is_defined_type(char *t_name) {
     VarNode *v = get_var(t_name);
-    if (v != NULL && v->data.vk == DEFINEDTYPE) {
+    if (v != NULL && v->data.attr.is_typedef) {
         return true;
     }
     return false;
@@ -254,12 +256,12 @@ typedef struct Exprs {
 Type *parse_struct_decl(Type *t);
 Type *parse_union_decl(Type *t);
 Type *parse_type_suffix(Type *t);
-Type *parse_type_specifier();
+Type *parse_type_specifier(VarAttr *attr);
 Type *parse_pointer(Type *base);
 Type *parse_direct_declarator(Type *t);
 Type *parse_declarator(Type *t);
 Node *parse_initializer(Node *n);
-Node *parse_init_declarator(VarKind vk, Type *t);
+Node *parse_init_declarator(VarKind vk, Type *t, VarAttr *attr);
 Node *parse_declaration(VarKind vk);
 Exprs parse_exprs(char *terminator);
 Node *parse_primary();
@@ -277,7 +279,7 @@ Node *parse_assign();
 Node *parse_expr();
 Node *parse_compound_stmt(Node*, int);
 Node *parse_stmt();
-FuncData *parse_toplevel_func(Type *ret_t);
+FuncData *parse_toplevel_func(Type *ret_t, bool is_static);
 void parse_toplevel_global_var(Type *t);
 void parse_toplevel();
 void parse_program();
@@ -307,7 +309,7 @@ Type *parse_struct_decl(Type *t) {
     int total_size = 0;
 
     while (!cur_token_is("}")) {
-        Type *member_t = parse_type_specifier();
+        Type *member_t = parse_type_specifier(NULL);
 
         do {
             if (cur_token_is(",")) {
@@ -341,7 +343,7 @@ Type *parse_union_decl(Type *t) {
     head.next = cur;
 
     while (!cur_token_is("}")) {
-        Type *member_t = parse_type_specifier();
+        Type *member_t = parse_type_specifier(NULL);
 
         // parse some members which have same type `member_t`.
         do {
@@ -482,9 +484,7 @@ Type *parse_enum_decl() {
 //     3. long long
 //        long long int => long
 //
-Type *parse_type_specifier() {
-    bool typedef_exists = false;
-
+Type *parse_type_specifier(VarAttr *attr) {
     int counter = 0;
 
     enum {
@@ -500,9 +500,9 @@ Type *parse_type_specifier() {
     };
 
     VarNode *v = get_var(token->str);
-    if (v != NULL && v->data.vk == DEFINEDTYPE) {
+    if (v != NULL && v->data.attr.is_typedef) {
         next_token();
-        v->data.type->is_typedef = false;
+        attr->is_typedef = false;
         return v->data.type;
     }
 
@@ -510,6 +510,15 @@ Type *parse_type_specifier() {
     Type *t = int_t;
 
     while (cur_tokenkind_is(TK_TYPE) || cur_tokenkind_is(TK_STORAGE)) {
+        if (cur_tokenkind_is(TK_STORAGE)) {
+            if (cur_token_is("typedef")) {
+                attr->is_typedef = true;
+            } else if (cur_token_is("static")) {
+                attr->is_static = true;
+            }
+            next_token();
+            continue;
+        }
         if (cur_token_is("void")) {
             counter += TY_VOID;
         } else if (cur_token_is("_Bool")) {
@@ -528,10 +537,6 @@ Type *parse_type_specifier() {
             counter += TY_UNION;
         } else if (cur_token_is("enum")) {
             counter += TY_ENUM;
-        } else if (cur_token_is("typedef")) {
-            typedef_exists = true;
-            next_token();
-            continue;
         } else {
             error("unknown type name: %s", token->str);
         }
@@ -576,11 +581,6 @@ Type *parse_type_specifier() {
     }
 
     assert(t != NULL, "valid type wasn't specified");
-
-    if (typedef_exists) {
-        t->is_typedef = true;
-    }
-
     return t;
 }
 
@@ -724,12 +724,12 @@ Type *parse_declarator(Type *t) {
 
 // init_declarator = declarator
 //                 | declarator '=' initializer
-Node *parse_init_declarator(VarKind vk, Type *t) {
+Node *parse_init_declarator(VarKind vk, Type *t, VarAttr *attr) {
     t = parse_declarator(t);
 
     Var v = new_var(vk, t);
-    if (t->is_typedef) {
-        v.vk = DEFINEDTYPE;
+    if (attr != NULL) {
+        v.attr.is_typedef = attr->is_typedef;
     }
 
     // add new node of variable at head of linked list.
@@ -754,7 +754,8 @@ Node *parse_init_declarator(VarKind vk, Type *t) {
 
 // declaration = type_specifier (init_declarator (',' init_declarator)*)? ';'
 Node *parse_declaration(VarKind vk) {
-    Type *t = parse_type_specifier();
+    VarAttr attr = {};
+    Type *t = parse_type_specifier(&attr);
 
     Node n;
     Node *cur = new_node(ND_DECL, 0);
@@ -768,7 +769,7 @@ Node *parse_declaration(VarKind vk) {
 
     bool do_loop = true;
     while (do_loop) {
-        Node *tmp = parse_init_declarator(vk, t);
+        Node *tmp = parse_init_declarator(vk, t, &attr);
 
         cur->next = tmp;
         cur = tmp;
@@ -1068,7 +1069,7 @@ Node *parse_unary() {
         Type *t;
         if (cur_token_is("(") && next_tokenkind_is(TK_TYPE)) {
             expect(TK_LPARENT);
-            t = parse_type_specifier();
+            t = parse_type_specifier(NULL);
             t = parse_declarator(t);
             expect(TK_RPARENT);
         } else {
@@ -1090,7 +1091,7 @@ Node *parse_cast() {
     if (cur_token_is("(") && next_tokenkind_is(TK_TYPE)) {
 
         expect(TK_LPARENT);
-        Type *t = parse_type_specifier();
+        Type *t = parse_type_specifier(NULL);
         t = parse_declarator(t);
         expect(TK_RPARENT);
 
@@ -1395,17 +1396,15 @@ void init_function_context(Type *ret_t) {
     cur_function_return_type = ret_t;
 }
 
-FuncData *parse_toplevel_func(Type *ret_t) {
+FuncData *parse_toplevel_func(Type *ret_t, bool is_static) {
     init_function_context(ret_t);
     enter_scope();
 
     FuncData *func_data = new_func_data();
 
-    // return type
     func_data->return_type = ret_t;
-
-    // function name
     func_data->name = ret_t->name;
+    func_data->is_static = is_static;
 
     // parse argument
     expect(TK_LPARENT);
@@ -1419,8 +1418,8 @@ FuncData *parse_toplevel_func(Type *ret_t) {
             if (cur_token_is(",")) {
                 expect(TK_COMMA);
             }
-            Type *t = parse_type_specifier();
-            Node *arg = parse_init_declarator(ARG, t);
+            Type *t = parse_type_specifier(NULL);
+            Node *arg = parse_init_declarator(ARG, t, NULL);
             cur->next = arg;
             cur = arg;
             args_num++;
@@ -1459,12 +1458,13 @@ void parse_toplevel_global_var(Type *t) {
 // parse type and identifier, and switch parsing if token is '(' or not.
 void parse_toplevel() {
     Token *tok_org = token;
-    Type *t = parse_type_specifier();
+    VarAttr attr = {};
+    Type *t = parse_type_specifier(&attr);
     t = parse_declarator(t);
 
     if (cur_token_is("(")) {
         // top level function definition
-        funcs[func_count++] = parse_toplevel_func(t);
+        funcs[func_count++] = parse_toplevel_func(t, attr.is_static);
     } else {
         // global variable declaration
         token = tok_org;

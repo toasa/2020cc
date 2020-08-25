@@ -84,6 +84,8 @@ int div_long(long a, long b) {
 _Bool bool_fn_add(_Bool x) { return x + 1; }
 _Bool bool_fn_sub(_Bool x) { return x - 1; }
 
+static int static_fn() { return 3; }
+
 typedef int MyInt, MyInt2[4];
 
 int main() {
@@ -560,6 +562,8 @@ int main() {
     test(4, ({ enum { zero, five=5, three=3, four }; four; }), "({ enum { zero, five=5, three=3, four }; four; })");
     test(4, ({ enum { zero, one, two } x; sizeof(x); }), "({ enum { zero, one, two } x; sizeof(x); })");
     test(4, ({ enum t { zero, one, two }; enum t y; sizeof(y); }), "({ enum t { zero, one, two }; enum t y; sizeof(y); })");
+
+    test(3, static_fn(), "static_fn()");
 
     printf("OK\n");
     return 0;
