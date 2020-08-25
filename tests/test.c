@@ -567,6 +567,8 @@ int main() {
     test(55, ({ int j=0; for (int i=0; i<=10; i=i+1) j=j+i; j; }), "({ int j=0; for (int i=0; i<=10; i=i+1) j=j+i; j; })");
     test(3, ({ int i=3; int j=0; for (int i=0; i<=10; i=i+1) j=j+i; i; }), "({ int i=3; int j=0; for (int i=0; i<=10; i=i+1) j=j+i; i; })");
 
+    test(5, ({ int i=2; i=5; }), "({ int i=2; i=5; })");
+
     printf("OK\n");
     return 0;
 }

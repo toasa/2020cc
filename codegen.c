@@ -327,6 +327,8 @@ void gen_stmt(Node *n) {
             error("invalid type size");
         }
 
+        printf("    mov rax, [rax]\n");
+
     } else if (n->nk == ND_DECL) {
         // need to do something?
     } else {
