@@ -1356,11 +1356,16 @@ Node *parse_stmt() {
         n = new_node(ND_FOR, 0);
         next_token();
         expect(TK_LPARENT);
+
+        // for statement allow to declare a new local variable.
+        enter_scope();
+
         if (!cur_tokenkind_is(TK_SEMICOLON)) {
             n->init = parse_stmt();
         } else {
             expect(TK_SEMICOLON);
         }
+
         if (!cur_tokenkind_is(TK_SEMICOLON)) {
             n->cond = parse_expr();
         }
@@ -1370,6 +1375,9 @@ Node *parse_stmt() {
         }
         expect(TK_RPARENT);
         n->then = parse_stmt();
+
+        leave_scope();
+
         return n;
     } else if (cur_token_is("{")) {
         n = new_node(ND_BLOCK, 0);

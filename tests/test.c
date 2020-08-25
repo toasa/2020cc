@@ -149,7 +149,6 @@ int main() {
     test(55, ({ int i; int sum; i = 0; sum = 0; while (i <= 10) { sum = sum + i; i = i + 1; } sum; }), "{ int i; int sum; i = 0; sum = 0; while (i <= 10) { sum = sum + i; i = i + 1; } sum; }");
 
     test(32, ({ int i; for (i = 20; i < 30; i = i + 1) i = i + 5; i; }), "{ int i; for (i = 20; i < 30; i = i + 1) i = i + 5; i; }");
-    test(10, ({ for (int i = 0; i < 10; i++) {} i; }), "({ for (int i = 0; i < 10; i++) {} i; })");
     test(10, ({ int i = 0; for (; i < 10; i++) {} i; }), "({ int i = 0; for (; i < 10; i++) {} i; })");
 
     test(1, ({ int i; i = 0; { i = i + 1; } i; }), "({ int i; i = 0; { i = i + 1; } i; })");
@@ -564,6 +563,9 @@ int main() {
     test(4, ({ enum t { zero, one, two }; enum t y; sizeof(y); }), "({ enum t { zero, one, two }; enum t y; sizeof(y); })");
 
     test(3, static_fn(), "static_fn()");
+
+    test(55, ({ int j=0; for (int i=0; i<=10; i=i+1) j=j+i; j; }), "({ int j=0; for (int i=0; i<=10; i=i+1) j=j+i; j; })");
+    test(3, ({ int i=3; int j=0; for (int i=0; i<=10; i=i+1) j=j+i; i; }), "({ int i=3; int j=0; for (int i=0; i<=10; i=i+1) j=j+i; i; })");
 
     printf("OK\n");
     return 0;
