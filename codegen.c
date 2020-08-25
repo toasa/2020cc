@@ -114,6 +114,14 @@ void gen_expr(Node *n) {
     } else if (n->nk == ND_ADDR) {
         gen_addr(n->expr);
         return;
+    } else if (n->nk == ND_NOT) {
+        gen_expr(n->expr);
+        printf("    pop rax\n");
+        printf("    cmp rax, 0\n");
+        printf("    sete al\n");
+        printf("    movzb rax, al\n");
+        printf("    push rax\n");
+        return;
     } else if (n->nk == ND_PREINC) {
         gen_expr(n->expr);
         gen_expr(n->inc);

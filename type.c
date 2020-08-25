@@ -166,6 +166,9 @@ void add_type(Node *n) {
     case ND_DEREF:
         n->ty = n->expr->ty->base;
         return;
+    case ND_NOT:
+        n->ty = int_t;
+        return;
     default:;
     }
 }

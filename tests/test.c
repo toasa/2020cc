@@ -585,6 +585,14 @@ int main() {
     test(47, 0b101111, "0b101111");
     test(47, 0B101111, "0B101111");
 
+    test(0, !1, "!1");
+    test(0, !2, "!2");
+    test(1, !0, "!0");
+    test(1, !(char)0, "!(char)0");
+    test(0, !(long)3, "!(long)3");
+    test(4, sizeof(!(char)0), "sizeof(!(char)0)");
+    test(4, sizeof(!(long)0), "sizeof(!(long)0)");
+
     printf("OK\n");
     return 0;
 }
