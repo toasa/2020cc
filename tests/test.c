@@ -573,6 +573,18 @@ int main() {
     test(2, ({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; ++*p; }), "({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; ++*p; })");
     test(0, ({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; --*p; }), "({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; --*p; })");
 
+    test(511, 0777, "0777");
+    test(0, 0x0, "0x0");
+    test(10, 0xa, "0xa");
+    test(10, 0XA, "0XA");
+    test(48879, 0xbeef, "0xbeef");
+    test(48879, 0xBEEF, "0xBEEF");
+    test(48879, 0XBEEF, "0XBEEF");
+    test(0, 0b0, "0b0");
+    test(1, 0b1, "0b1");
+    test(47, 0b101111, "0b101111");
+    test(47, 0B101111, "0B101111");
+
     printf("OK\n");
     return 0;
 }

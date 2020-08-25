@@ -4,6 +4,12 @@ int is_digit(char c) {
     return ('0' <= c && c <= '9');
 }
 
+int is_hex(char c) {
+    return ('0' <= c && c <= '9')
+        || ('a' <= c && c <= 'f')
+        || ('A' <= c && c <= 'F');
+}
+
 int is_char(char c) {
     return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
 }
@@ -14,6 +20,18 @@ int is_space(char c) {
 
 int can_skip(char c) {
     return is_space(c) || c == '\n' || c == '\t';
+}
+
+int hexchar_to_int(char c) {
+    if (is_digit(c)) {
+        return c - '0';
+    }
+
+    if ('a' <= c && c <= 'f') {
+        return c - 'a' + 10;
+    }
+
+    return c - 'A' + 10;
 }
 
 int is_keyword(char *str) {
@@ -86,6 +104,35 @@ void skip(char **input) {
 
 int read_number(char **input) {
     int num = 0;
+
+    if (**input == '0') {
+        (*input)++;
+
+        if (**input == 'x' || **input == 'X') {
+            // hexadecimal number
+            (*input)++;
+            while (is_hex(**input)) {
+                num = num * 16 + hexchar_to_int(**input);
+                (*input)++;
+            }
+        } else if (**input == 'b' || **input == 'B') {
+            // binary number
+            (*input)++;
+            while (is_digit(**input)) {
+                num = num * 2 + (**input - '0');
+                (*input)++;
+            }
+        } else {
+            // octal number
+            while (is_digit(**input)) {
+                num = num * 8 + (**input - '0');
+                (*input)++;
+            }
+        }
+
+        return num;
+    }
+
     while (is_digit(**input)) {
         num = num * 10 + (**input - '0');
         (*input)++;
