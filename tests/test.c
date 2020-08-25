@@ -569,6 +569,10 @@ int main() {
 
     test(5, ({ int i=2; i=5; }), "({ int i=2; i=5; })");
 
+    test(3, ({ int i=2; ++i; }), "({ int i=2; ++i; })");
+    test(2, ({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; ++*p; }), "({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; ++*p; })");
+    test(0, ({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; --*p; }), "({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; --*p; })");
+
     printf("OK\n");
     return 0;
 }

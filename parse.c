@@ -1057,7 +1057,7 @@ Node *parse_unary() {
         // pre decrement
         next_token();
         n = new_node(ND_PREDEC, 0);
-        n->expr = parse_postfix();
+        n->expr = parse_unary();
         add_type(n->expr);
         if (is_pointer(n->expr->ty)) {
             n->inc = new_node(ND_NUM, n->expr->ty->base->size);
