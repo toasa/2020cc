@@ -1497,6 +1497,33 @@ void init_function_context(Type *ret_t) {
     cur_function_return_type = ret_t;
 }
 
+void parse_parameters(FuncData *f) {
+    int args_num = 0;
+    Node head;
+    Node *cur = calloc(1, sizeof(Node));
+    head.next = cur;
+    while (!cur_token_is(")")) {
+        if (cur_token_is(",")) {
+            expect(TK_COMMA);
+        }
+
+        Type *t = parse_abstruct_declarator(NULL);
+
+        Var v = new_var(ARG, t);
+        register_new_lvar(v);
+
+        Node *arg = new_node(ND_DECL, 0);
+        arg->ty = t;
+        arg->var = v;
+
+        cur->next = arg;
+        cur = arg;
+        args_num++;
+    }
+    f->args_num = args_num;
+    f->args = head.next->next;
+}
+
 FuncData *parse_toplevel_func(Type *ret_t, bool is_static) {
     init_function_context(ret_t);
     enter_scope();
@@ -1507,26 +1534,10 @@ FuncData *parse_toplevel_func(Type *ret_t, bool is_static) {
     func_data->name = ret_t->name;
     func_data->is_static = is_static;
 
-    // parse argument
     expect(TK_LPARENT);
     if (!cur_token_is(")")) {
-        // function arguments
-        int args_num = 0;
-        Node head;
-        Node *cur = calloc(1, sizeof(Node));
-        head.next = cur;
-        while (!cur_token_is(")")) {
-            if (cur_token_is(",")) {
-                expect(TK_COMMA);
-            }
-            Type *t = parse_type_specifier(NULL);
-            Node *arg = parse_init_declarator(ARG, t, NULL);
-            cur->next = arg;
-            cur = arg;
-            args_num++;
-        }
-        func_data->args_num = args_num;
-        func_data->args = head.next->next;
+        // function parameters
+        parse_parameters(func_data);
     }
     expect(TK_RPARENT);
 
