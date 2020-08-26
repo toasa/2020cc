@@ -255,26 +255,26 @@ void gen_expr(Node *n) {
         printf("    xor rax, r10\n");
     } else if (n->nk == ND_LOGAND) {
         printf("    cmp rax, 0\n");
-        printf("    je .L.false.%03d\n", label_count);
+        printf("    je .L.false.%d\n", label_count);
         printf("    cmp r10, 0\n");
-        printf("    je .L.false.%03d\n", label_count);
+        printf("    je .L.false.%d\n", label_count);
         printf("    mov rax, 1\n");
-        printf("    jmp .L.end.%03d\n", label_count);
-        printf(".L.false.%03d:\n", label_count);
+        printf("    jmp .L.end.%d\n", label_count);
+        printf(".L.false.%d:\n", label_count);
         printf("    mov rax, 0\n");
-        printf(".L.end.%03d:\n", label_count);
+        printf(".L.end.%d:\n", label_count);
 
         label_count++;
     } else if (n->nk == ND_LOGOR) {
         printf("    cmp rax, 0\n");
-        printf("    jne .L.true.%03d\n", label_count);
+        printf("    jne .L.true.%d\n", label_count);
         printf("    cmp r10, 0\n");
-        printf("    jne .L.true.%03d\n", label_count);
+        printf("    jne .L.true.%d\n", label_count);
         printf("    mov rax, 0\n");
-        printf("    jmp .L.end.%03d\n", label_count);
-        printf(".L.true.%03d:\n", label_count);
+        printf("    jmp .L.end.%d\n", label_count);
+        printf(".L.true.%d:\n", label_count);
         printf("    mov rax, 1\n");
-        printf(".L.end.%03d:\n", label_count);
+        printf(".L.end.%d:\n", label_count);
 
         label_count++;
     }
@@ -297,36 +297,36 @@ void gen_stmt(Node *n) {
 
         if (n->alt == NULL) {
             // Not exists 'else'.
-            printf("    je  .Lend%03d\n", label_count);
+            printf("    je  .L.end.%d\n", label_count);
             gen_stmt(n->then);
-            printf(".Lend%03d:\n", label_count);
+            printf(".L.end.%d:\n", label_count);
         } else {
             // exists 'else'.
-            printf("    je  .Lelse%03d\n", label_count);
+            printf("    je  .L.else.%d\n", label_count);
             gen_stmt(n->then);
-            printf("    jmp .Lend%03d\n", label_count);
-            printf(".Lelse%03d:\n", label_count);
+            printf("    jmp .L.end.%d\n", label_count);
+            printf(".L.else.%d:\n", label_count);
             gen_stmt(n->alt);
-            printf(".Lend%03d:\n", label_count);
+            printf(".L.end.%d:\n", label_count);
         }
 
         label_count++;
     } else if (n->nk == ND_WHILE) {
-        printf(".Lstart%03d:\n", label_count);
+        printf(".L.start.%d:\n", label_count);
         gen_expr(n->cond);
         printf("    pop rax\n");
         printf("    cmp rax, 0\n");
-        printf("    je  .Lend%03d\n", label_count);
+        printf("    je  .L.end.%d\n", label_count);
         gen_stmt(n->then);
-        printf("    jmp .Lstart%03d\n", label_count);
-        printf(".Lend%03d:\n", label_count);
+        printf("    jmp .L.start.%d\n", label_count);
+        printf(".L.end.%d:\n", label_count);
 
         label_count++;
     } else if (n->nk == ND_FOR) {
         if (n->init != NULL) {
             gen_stmt(n->init);
         }
-        printf(".Lstart%03d:\n", label_count);
+        printf(".L.start.%d:\n", label_count);
         if (n->cond != NULL) {
             gen_expr(n->cond);
             printf("    pop rax\n");
@@ -335,13 +335,13 @@ void gen_stmt(Node *n) {
             printf("    mov rax, 1\n");
         }
         printf("    cmp rax, 0\n");
-        printf("    je  .Lend%03d\n", label_count);
+        printf("    je  .L.end.%d\n", label_count);
         gen_stmt(n->then);
         if (n->post != NULL) {
             gen_stmt(n->post);
         }
-        printf("    jmp .Lstart%03d\n", label_count);
-        printf(".Lend%03d:\n", label_count);
+        printf("    jmp .L.start.%d\n", label_count);
+        printf(".L.end.%d:\n", label_count);
 
         label_count++;
     } else if (n->nk == ND_BLOCK) {
