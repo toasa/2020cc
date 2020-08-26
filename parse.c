@@ -1509,6 +1509,14 @@ void parse_parameters(FuncData *f) {
 
         Type *t = parse_typename(NULL);
 
+        // "array of T" is converted to "pointer to T" only in the
+        // parameter context. For exmaple, *argv[] is converted to **argv.
+        if (t->tk == ARRAY) {
+            char *name = t->name;
+            t = pointer_to(t->base);
+            t->name = name;
+        }
+
         Var v = new_var(ARG, t);
         register_new_lvar(v);
 

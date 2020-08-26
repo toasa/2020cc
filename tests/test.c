@@ -86,6 +86,8 @@ _Bool bool_fn_sub(_Bool x) { return x - 1; }
 
 static int static_fn() { return 3; }
 
+int param_decay(int x[]) { return x[0]; }
+
 typedef int MyInt, MyInt2[4];
 
 int main() {
@@ -625,6 +627,8 @@ int main() {
     test(0, 0&&1, "0&&1");
     test(0, (2-2)&&5, "(2-2)&&5");
     test(1, 1&&5, "1&&5");
+
+    test(3, ({ int x[2]; x[0]=3; param_decay(x); }), "({ int x[2]; x[0]=3; param_decay(x); })");
 
     printf("OK\n");
     return 0;
