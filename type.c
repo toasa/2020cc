@@ -137,6 +137,9 @@ void add_type(Node *n) {
     case ND_REM:
     case ND_LSHIFT:
     case ND_RSHIFT:
+    case ND_BITAND:
+    case ND_BITOR:
+    case ND_BITXOR:
         usual_arith_conv(&n->lhs, &n->rhs);
         n->ty = n->lhs->ty;
         return;
@@ -167,6 +170,8 @@ void add_type(Node *n) {
         n->ty = n->expr->ty->base;
         return;
     case ND_NOT:
+    case ND_LOGAND:
+    case ND_LOGOR:
         n->ty = int_t;
         return;
     case ND_BITNOT:
