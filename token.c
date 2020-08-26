@@ -313,7 +313,28 @@ Token *tokenize(char *input) {
             }
         } else if (*input == '&') {
             input++;
-            cur_token = new_token(cur_token, TK_RESERVED, 0, "&");
+            if (*input == '=') {
+                input++;
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "&=");
+            } else {
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "&");
+            }
+        } else if (*input == '|') {
+            input++;
+            if (*input == '=') {
+                input++;
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "|=");
+            } else {
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "|");
+            }
+        } else if (*input == '^') {
+            input++;
+            if (*input == '=') {
+                input++;
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "^=");
+            } else {
+                cur_token = new_token(cur_token, TK_RESERVED, 0, "^");
+            }
         } else if (*input == ';') {
             input++;
             cur_token = new_token(cur_token, TK_SEMICOLON, 0, ";");

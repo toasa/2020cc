@@ -245,6 +245,12 @@ void gen_expr(Node *n) {
         printf("    cmp rax, r10\n");
         printf("    setle al\n");
         printf("    movzb rax, al\n");
+    } else if (n->nk == ND_BITAND) {
+        printf("    and rax, r10\n");
+    } else if (n->nk == ND_BITOR) {
+        printf("    or rax, r10\n");
+    } else if (n->nk == ND_BITXOR) {
+        printf("    xor rax, r10\n");
     }
 
     printf("    push rax\n");

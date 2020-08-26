@@ -1253,16 +1253,55 @@ Node *parse_equality() {
     return lhs;
 }
 
-// assign = equality ( '=' assign
-//                   | '+=' assign
-//                   | '-=' assign
-//                   | '*=' assign
-//                   | '/=' assign
-//                   | '%=' assign
-//                   | '<<=' assign
-//                   | '>>=' assign )*
-Node *parse_assign() {
+// bitand = equality ('&' equality)*
+Node *parse_bitand() {
     Node *lhs = parse_equality();
+
+    while (cur_token_is("&")) {
+        next_token();
+        lhs = new_node_with_lr(ND_BITAND, lhs, parse_equality());
+    }
+
+    return lhs;
+}
+
+// bitxor = bitand ('^' bitand)*
+Node *parse_bitxor() {
+    Node *lhs = parse_bitand();
+
+    while (cur_token_is("^")) {
+        next_token();
+        lhs = new_node_with_lr(ND_BITXOR, lhs, parse_bitand());
+    }
+
+    return lhs;
+}
+
+// bitor = bitxor ('|' bitxor)*
+Node *parse_bitor() {
+    Node *lhs = parse_bitxor();
+
+    while (cur_token_is("|")) {
+        next_token();
+        lhs = new_node_with_lr(ND_BITOR, lhs, parse_bitxor());
+    }
+
+    return lhs;
+}
+
+// assign = bitor ( '='   assign
+//                | '+='  assign
+//                | '-='  assign
+//                | '*='  assign
+//                | '/='  assign
+//                | '%='  assign
+//                | '<<=' assign
+//                | '>>=' assign
+//                | '&='  assign
+//                | '|='  assign
+//                | '^='  assign )*
+Node *parse_assign() {
+    Node *lhs = parse_bitor();
 
     if (cur_token_is("=")) {
         next_token();
@@ -1295,6 +1334,18 @@ Node *parse_assign() {
         next_token();
         Node *rshift = new_node_with_lr(ND_RSHIFT, lhs, parse_equality());
         lhs = new_node_with_lr(ND_ASSIGN, lhs, rshift);
+    } else if (cur_token_is("&=")) {
+        next_token();
+        Node *bitand = new_node_with_lr(ND_BITAND, lhs, parse_equality());
+        lhs = new_node_with_lr(ND_ASSIGN, lhs, bitand);
+    } else if (cur_token_is("|=")) {
+        next_token();
+        Node *bitor = new_node_with_lr(ND_BITOR, lhs, parse_equality());
+        lhs = new_node_with_lr(ND_ASSIGN, lhs, bitor);
+    } else if (cur_token_is("^=")) {
+        next_token();
+        Node *bitxor = new_node_with_lr(ND_BITXOR, lhs, parse_equality());
+        lhs = new_node_with_lr(ND_ASSIGN, lhs, bitxor);
     }
 
     return lhs;
