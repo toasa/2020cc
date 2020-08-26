@@ -256,6 +256,7 @@ typedef struct Exprs {
 Type *parse_struct_decl(Type *t);
 Type *parse_union_decl(Type *t);
 Type *parse_type_suffix(Type *t);
+Type *parse_abstruct_declarator(VarAttr *attr);
 Type *parse_type_specifier(VarAttr *attr);
 Type *parse_pointer(Type *base);
 Type *parse_direct_declarator(Type *t);
@@ -727,6 +728,12 @@ Type *parse_declarator(Type *t) {
     return parse_direct_declarator(t);
 }
 
+// abstruct_declarator = type_specifier declarator
+Type *parse_abstruct_declarator(VarAttr *attr) {
+    Type *t = parse_type_specifier(attr);
+    return parse_declarator(t);
+}
+
 // init_declarator = declarator
 //                 | declarator '=' initializer
 Node *parse_init_declarator(VarKind vk, Type *t, VarAttr *attr) {
@@ -1082,8 +1089,7 @@ Node *parse_unary() {
         Type *t;
         if (cur_token_is("(") && next_tokenkind_is(TK_TYPE)) {
             expect(TK_LPARENT);
-            t = parse_type_specifier(NULL);
-            t = parse_declarator(t);
+            t = parse_abstruct_declarator(NULL);
             expect(TK_RPARENT);
         } else {
             Node *tmp = parse_unary();
@@ -1104,8 +1110,7 @@ Node *parse_cast() {
     if (cur_token_is("(") && next_tokenkind_is(TK_TYPE)) {
 
         expect(TK_LPARENT);
-        Type *t = parse_type_specifier(NULL);
-        t = parse_declarator(t);
+        Type *t = parse_abstruct_declarator(NULL);
         expect(TK_RPARENT);
 
         Node *cast_node = new_cast_node(parse_cast(), t);
@@ -1555,8 +1560,7 @@ void parse_toplevel_global_var(Type *t) {
 void parse_toplevel() {
     Token *tok_org = token;
     VarAttr attr = {};
-    Type *t = parse_type_specifier(&attr);
-    t = parse_declarator(t);
+    Type *t = parse_abstruct_declarator(&attr);
 
     if (cur_token_is("(")) {
         // top level function definition
