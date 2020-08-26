@@ -8,6 +8,8 @@ char *regs_8[6] = { "dil", "sil", "dl", "cl", "r8b", "r9b" };
 void gen_expr(Node *n);
 void gen_stmt(Node *n);
 
+int label_count = 0;
+
 void gen_addr(Node *n) {
     if (n->nk == ND_LVAR) {
         if (n->var.is_global) {
@@ -251,12 +253,35 @@ void gen_expr(Node *n) {
         printf("    or rax, r10\n");
     } else if (n->nk == ND_BITXOR) {
         printf("    xor rax, r10\n");
+    } else if (n->nk == ND_LOGAND) {
+        printf("    cmp rax, 0\n");
+        printf("    je .L.false.%03d\n", label_count);
+        printf("    cmp r10, 0\n");
+        printf("    je .L.false.%03d\n", label_count);
+        printf("    mov rax, 1\n");
+        printf("    jmp .L.end.%03d\n", label_count);
+        printf(".L.false.%03d:\n", label_count);
+        printf("    mov rax, 0\n");
+        printf(".L.end.%03d:\n", label_count);
+
+        label_count++;
+    } else if (n->nk == ND_LOGOR) {
+        printf("    cmp rax, 0\n");
+        printf("    jne .L.true.%03d\n", label_count);
+        printf("    cmp r10, 0\n");
+        printf("    jne .L.true.%03d\n", label_count);
+        printf("    mov rax, 0\n");
+        printf("    jmp .L.end.%03d\n", label_count);
+        printf(".L.true.%03d:\n", label_count);
+        printf("    mov rax, 1\n");
+        printf(".L.end.%03d:\n", label_count);
+
+        label_count++;
     }
 
     printf("    push rax\n");
 }
 
-int label_count = 0;
 // the function name which is generating assemblly currently.
 char cur_func[100];
 

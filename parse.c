@@ -275,6 +275,11 @@ Node *parse_add();
 Node *parse_shift();
 Node *parse_relational();
 Node *parse_equality();
+Node *parse_bitand();
+Node *parse_bitxor();
+Node *parse_bitor();
+Node *parse_logand();
+Node *parse_logor();
 Node *parse_assign();
 Node *parse_expr();
 Node *parse_compound_stmt(Node*, int);
@@ -1289,6 +1294,30 @@ Node *parse_bitor() {
     return lhs;
 }
 
+// logand = bitor ('&&' bitor)*
+Node *parse_logand() {
+    Node *lhs = parse_bitor();
+
+    while (cur_token_is("&&")) {
+        next_token();
+        lhs = new_node_with_lr(ND_LOGAND, lhs, parse_bitor());
+    }
+
+    return lhs;
+}
+
+// logor = logand ('||' logand)*
+Node *parse_logor() {
+    Node *lhs = parse_logand();
+
+    while (cur_token_is("||")) {
+        next_token();
+        lhs = new_node_with_lr(ND_LOGOR, lhs, parse_logand());
+    }
+
+    return lhs;
+}
+
 // assign = bitor ( '='   assign
 //                | '+='  assign
 //                | '-='  assign
@@ -1301,7 +1330,7 @@ Node *parse_bitor() {
 //                | '|='  assign
 //                | '^='  assign )*
 Node *parse_assign() {
-    Node *lhs = parse_bitor();
+    Node *lhs = parse_logor();
 
     if (cur_token_is("=")) {
         next_token();
