@@ -390,14 +390,13 @@ Type *parse_struct_union_decl(TypeKind tk) {
     char *tag_name;
     if (cur_tokenkind_is(TK_IDENT)) {
         tag_name = token->str;
+        next_token();
         Tag *registered = get_tag(tag_name);
         if (registered != NULL) {
-            next_token();
             return registered->type;
         }
 
         tag_exists = 1;
-        next_token();
     }
 
     expect(TK_LBRACE);
