@@ -391,12 +391,17 @@ Type *parse_struct_union_decl(TypeKind tk) {
     if (cur_tokenkind_is(TK_IDENT)) {
         tag_name = token->str;
         next_token();
+        tag_exists = 1;
+    }
+
+    if (tag_exists && !cur_token_is("{")) {
         Tag *registered = get_tag(tag_name);
         if (registered != NULL) {
             return registered->type;
         }
-
-        tag_exists = 1;
+        Tag *tag = new_tag(tag_name, t);
+        register_new_tag(tag);
+        return t;
     }
 
     expect(TK_LBRACE);
@@ -410,6 +415,13 @@ Type *parse_struct_union_decl(TypeKind tk) {
     expect(TK_RBRACE);
 
     if (tag_exists) {
+        Tag *registered = get_tag(tag_name);
+        // redefinition of struct tag.
+        if (registered != NULL) {
+            *registered->type = *t;
+            return t;
+        }
+
         Tag *tag = new_tag(tag_name, t);
         register_new_tag(tag);
     }
