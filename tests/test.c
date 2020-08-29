@@ -637,6 +637,11 @@ int main() {
 
     test(10, ({ int i=0; for(;i<10;i++) { if (i == 3) { i = 5; } } i; }), "({ int i=0; for(;i<10;i++) { if (i == 3) { i = 5; } i; })");
 
+	test(3, ({ int i=0; for(;i<10;i++) { if (i == 3) break; } i; }), "({ int i=0; for(;i<10;i++) { if (i == 3) break; } i; })");
+	test(4, ({ int i=0; while (1) { if (i++ == 3) break; } i; }), "({ int i=0; while (1) { if (i++ == 3) break; } i; })");
+	test(3, ({ int i=0; for(;i<10;i++) { for (;;) break; if (i == 3) break; } i; }), "({ int i=0; for(;i<10;i++) { for (;;) break; if (i == 3) break; } i; })");
+	test(4, ({ int i=0; while (1) { while(1) break; if (i++ == 3) break; } i; }), "({ int i=0; while (1) { while(1) break; if (i++ == 3) break; } i; })");
+
     printf("OK\n");
     return 0;
 }

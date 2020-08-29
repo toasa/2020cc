@@ -285,12 +285,16 @@ void gen_expr(Node *n) {
 
 // the function name which is generating assemblly currently.
 char cur_func[100];
+// preserve a label of current control block for break statement.
+int brk_num;
 
 void gen_stmt(Node *n) {
     if (n->nk == ND_RETURN) {
         gen_expr(n->expr);
         printf("    pop rax\n");
         printf("    jmp .Lreturn_%s\n", cur_func);
+    } else if (n->nk == ND_BREAK) {
+        printf("    jmp .L.end.%d\n", brk_num);
     } else if (n->nk == ND_IF) {
         int c = count();
         gen_expr(n->cond);
@@ -313,6 +317,9 @@ void gen_stmt(Node *n) {
         }
     } else if (n->nk == ND_WHILE) {
         int c = count();
+        int brk = brk_num;
+        brk_num = c;
+
         printf(".L.start.%d:\n", c);
         gen_expr(n->cond);
         printf("    pop rax\n");
@@ -321,8 +328,13 @@ void gen_stmt(Node *n) {
         gen_stmt(n->then);
         printf("    jmp .L.start.%d\n", c);
         printf(".L.end.%d:\n", c);
+
+        brk_num = brk;
     } else if (n->nk == ND_FOR) {
         int c = count();
+        int brk = brk_num;
+        brk_num = c;
+
         if (n->init != NULL) {
             gen_stmt(n->init);
         }
@@ -342,6 +354,8 @@ void gen_stmt(Node *n) {
         }
         printf("    jmp .L.start.%d\n", c);
         printf(".L.end.%d:\n", c);
+
+        brk_num = brk;
     } else if (n->nk == ND_BLOCK) {
         Node *stmt = n->block;
         while (stmt != NULL) {

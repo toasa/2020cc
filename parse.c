@@ -1436,6 +1436,11 @@ Node *parse_stmt() {
         add_type(expr);
         n->expr = new_cast_node(expr, cur_function_return_type);
         return n;
+    } else if (cur_token_is("break")) {
+        n = new_node(ND_BREAK, 0);
+        next_token();
+        expect(TK_SEMICOLON);
+        return n;
     } else if (cur_token_is("if")) {
         n = new_node(ND_IF, 0);
         next_token();
