@@ -287,6 +287,8 @@ void gen_expr(Node *n) {
 char cur_func[100];
 // preserve a label of current control block for break statement.
 int brk_num;
+// preserve a label of current control block for continue statement.
+int cont_num;
 
 void gen_stmt(Node *n) {
     if (n->nk == ND_RETURN) {
@@ -295,6 +297,8 @@ void gen_stmt(Node *n) {
         printf("    jmp .Lreturn_%s\n", cur_func);
     } else if (n->nk == ND_BREAK) {
         printf("    jmp .L.end.%d\n", brk_num);
+    } else if (n->nk == ND_CONTINUE) {
+        printf("    jmp .L.continue.%d\n", cont_num);
     } else if (n->nk == ND_IF) {
         int c = count();
         gen_expr(n->cond);
@@ -318,7 +322,9 @@ void gen_stmt(Node *n) {
     } else if (n->nk == ND_WHILE) {
         int c = count();
         int brk = brk_num;
+        int cont = cont_num;
         brk_num = c;
+        cont_num = c;
 
         printf(".L.start.%d:\n", c);
         gen_expr(n->cond);
@@ -326,14 +332,18 @@ void gen_stmt(Node *n) {
         printf("    cmp rax, 0\n");
         printf("    je  .L.end.%d\n", c);
         gen_stmt(n->then);
+        printf(".L.continue.%d:\n", c);
         printf("    jmp .L.start.%d\n", c);
         printf(".L.end.%d:\n", c);
 
         brk_num = brk;
+        cont_num = cont;
     } else if (n->nk == ND_FOR) {
         int c = count();
         int brk = brk_num;
+        int cont = cont_num;
         brk_num = c;
+        cont_num = c;
 
         if (n->init != NULL) {
             gen_stmt(n->init);
@@ -342,13 +352,11 @@ void gen_stmt(Node *n) {
         if (n->cond != NULL) {
             gen_expr(n->cond);
             printf("    pop rax\n");
-        } else {
-            // If a condition does not exist, to will be a infinite loop.
-            printf("    mov rax, 1\n");
+            printf("    cmp rax, 0\n");
+            printf("    je  .L.end.%d\n", c);
         }
-        printf("    cmp rax, 0\n");
-        printf("    je  .L.end.%d\n", c);
         gen_stmt(n->then);
+        printf(".L.continue.%d:\n", c);
         if (n->post != NULL) {
             gen_stmt(n->post);
         }
@@ -356,6 +364,7 @@ void gen_stmt(Node *n) {
         printf(".L.end.%d:\n", c);
 
         brk_num = brk;
+        cont_num = cont;
     } else if (n->nk == ND_BLOCK) {
         Node *stmt = n->block;
         while (stmt != NULL) {

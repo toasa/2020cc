@@ -38,6 +38,7 @@ int is_keyword(char *str) {
     char *keywords[] = {
         "return",
         "break",
+        "continue",
         "if",
         "else",
         "while",

@@ -1441,6 +1441,11 @@ Node *parse_stmt() {
         next_token();
         expect(TK_SEMICOLON);
         return n;
+    } else if (cur_token_is("continue")) {
+        n = new_node(ND_CONTINUE, 0);
+        next_token();
+        expect(TK_SEMICOLON);
+        return n;
     } else if (cur_token_is("if")) {
         n = new_node(ND_IF, 0);
         next_token();

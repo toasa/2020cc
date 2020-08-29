@@ -72,6 +72,7 @@ typedef enum {
     ND_LOGAND,    // &&
     ND_LOGOR,     // ||
     ND_RETURN,    // return
+    ND_CONTINUE,  // continue
     ND_BREAK,     // break
     ND_IF,        // if
     ND_WHILE,     // while

@@ -642,6 +642,13 @@ int main() {
 	test(3, ({ int i=0; for(;i<10;i++) { for (;;) break; if (i == 3) break; } i; }), "({ int i=0; for(;i<10;i++) { for (;;) break; if (i == 3) break; } i; })");
 	test(4, ({ int i=0; while (1) { while(1) break; if (i++ == 3) break; } i; }), "({ int i=0; while (1) { while(1) break; if (i++ == 3) break; } i; })");
 
+	test(10, ({ int i=0; int j=0; for (;i<10;i++) { if (i>5) continue; j+=1; } i; }), "({ int i=0; int j=0; for (;i<10;i++) { if (i>5) continue; j++; } i; })");
+	test(6, ({ int i=0; int j=0; for (;i<10;i++) { if (i>5) continue; j+=1; } j; }), "({ int i=0; int j=0; for (;i<10;i++) { if (i>5) continue; j++; } j; })");
+	test(10, ({ int i=0; int j=0; for(;!i;) { for (;j!=10;j++) continue; break; } j; }), "({ int i=0; int j=0; for(;!i;) { for (;j!=10;j++) continue; break; } j; })");
+	test(11, ({ int i=0; int j=0; while (i++<10) { if (i>5) continue; j+=1; } i; }), "({ int i=0; int j=0; while (i++<10) { if (i>5) continue; j++; } i; })");
+	test(5, ({ int i=0; int j=0; while (i++<10) { if (i>5) continue; j+=1; } j; }), "({ int i=0; int j=0; while (i++<10) { if (i>5) continue; j++; } j; })");
+	test(11, ({ int i=0; int j=0; while(!i) { while (j++!=10) continue; break; } j; }), "({ int i=0; int j=0; while(!i) { while (j++!=10) continue; break; } j; })");
+
     printf("OK\n");
     return 0;
 }
