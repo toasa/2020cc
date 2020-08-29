@@ -635,6 +635,8 @@ int main() {
 	test(1, ({ struct T { struct T *next; int x; } a; struct T b; b.x=1; a.next=&b; a.next->x; }), "({ struct T { struct T *next; int x; } a; struct T b; b.x=1; a.next=&b; a.next->x; })");
 	test(4, ({ typedef struct T T; struct T { int x; }; sizeof(T); }), "({ typedef struct T T; struct T { int x; }; sizeof(T); })");
 
+    test(10, ({ int i=0; for(;i<10;i++) { if (i == 3) { i = 5; } } i; }), "({ int i=0; for(;i<10;i++) { if (i == 3) { i = 5; } i; })");
+
     printf("OK\n");
     return 0;
 }
