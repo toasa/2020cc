@@ -294,7 +294,7 @@ void gen_stmt(Node *n) {
     if (n->nk == ND_RETURN) {
         gen_expr(n->expr);
         printf("    pop rax\n");
-        printf("    jmp .Lreturn_%s\n", cur_func);
+        printf("    jmp .L.return_%s\n", cur_func);
     } else if (n->nk == ND_BREAK) {
         printf("    jmp .L.end.%d\n", brk_num);
     } else if (n->nk == ND_CONTINUE) {
@@ -467,7 +467,7 @@ void gen_func(FuncData *func) {
     gen_stmt(func->body);
 
     // epilogue
-    printf(".Lreturn_%s:\n", func->name);
+    printf(".L.return_%s:\n", func->name);
     printf("    mov rsp, rbp\n");
     printf("    pop r15\n");
     printf("    pop r14\n");
