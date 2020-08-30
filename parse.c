@@ -7,6 +7,10 @@ Node *new_node(NodeKind nk, int val) {
     return n;
 }
 
+Node *new_num_node(int val) {
+    return new_node(ND_NUM, val);
+}
+
 Node *new_node_with_lr(NodeKind nk, Node *lhs, Node *rhs) {
     Node *n = new_node(nk, 0);
     n->lhs = lhs;
