@@ -31,7 +31,8 @@ void gen_addr(Node *n) {
     } else if (n->nk == ND_DEREF) {
         gen_expr(n->expr);
     } else if (n->nk == ND_COMMA) {
-        gen_stmt(n->lhs);
+        gen_expr(n->lhs);
+        printf("    pop rax\n");
         gen_addr(n->rhs);
     }
 }
@@ -215,6 +216,26 @@ void gen_expr(Node *n) {
         gen_expr(n->expr);
         cast(n->ty);
         return;
+    } else if (n->nk == ND_ASSIGN) {
+        gen_addr(n->lhs);
+        gen_expr(n->rhs);
+
+        printf("    pop r10\n");
+        printf("    pop rax\n");
+        if (n->ty->size == 1) {
+            printf("    mov byte ptr [rax], r10b\n");
+        } else if (n->ty->size == 2) {
+            printf("    mov word ptr [rax], r10w\n");
+        } else if (n->ty->size == 4) {
+            printf("    mov dword ptr [rax], r10d\n");
+        } else if (n->ty->size == 8) {
+            printf("    mov [rax], r10\n");
+        } else {
+            error("invalid type size");
+        }
+
+        printf("    push r10\n");
+        return;
     }
 
     gen_expr(n->lhs);
@@ -383,27 +404,6 @@ void gen_stmt(Node *n) {
             }
             stmt = stmt->next;
         }
-    } else if (n->nk == ND_ASSIGN) {
-
-        gen_addr(n->lhs);
-        gen_expr(n->rhs);
-
-        printf("    pop r10\n");
-        printf("    pop rax\n");
-        if (n->ty->size == 1) {
-            printf("    mov byte ptr [rax], r10b\n");
-        } else if (n->ty->size == 2) {
-            printf("    mov word ptr [rax], r10w\n");
-        } else if (n->ty->size == 4) {
-            printf("    mov dword ptr [rax], r10d\n");
-        } else if (n->ty->size == 8) {
-            printf("    mov [rax], r10\n");
-        } else {
-            error("invalid type size");
-        }
-
-        printf("    mov rax, [rax]\n");
-
     } else if (n->nk == ND_DECL) {
         // need to do something?
     } else {
