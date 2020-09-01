@@ -61,9 +61,7 @@ typedef enum {
     ND_LT,        // <
     ND_LE,        // <=
     ND_ASSIGN,    // =
-    ND_PREINC,    // ++
     ND_POSTINC,   // ++
-    ND_PREDEC,    // --
     ND_POSTDEC,   // --
     ND_NOT,       // !
     ND_BITNOT,    // ~
@@ -207,7 +205,7 @@ typedef struct Node {
     struct Node *post;  // nkがND_FORの場合に使う
     struct Node *next;  // nkがND_BLOCK, ND_CALL, ND_DECLの場合に使う
     struct Node *block; // nkがND_BLOCK, ND_STMT_EXPRの場合に使う
-    struct Node *inc;   // nkがND_PREINC, ND_PREDEC, ND_POSTINC, ND_POSTDECの場合に使う
+    struct Node *inc;   // nkがND_POSTINC, ND_POSTDECの場合に使う
 } Node;
 
 typedef struct Program {

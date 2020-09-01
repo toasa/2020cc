@@ -1079,25 +1079,15 @@ Node *parse_unary() {
     } else if (cur_token_is("++")) {
         // pre increment
         next_token();
-        n = new_node(ND_PREINC, 0);
-        n->expr = parse_unary();
-        add_type(n->expr);
-        if (is_pointer(n->expr->ty)) {
-            n->inc = new_node(ND_NUM, n->expr->ty->base->size);
-        } else {
-            n->inc = new_node(ND_NUM, 1);
-        }
+        Node *lhs = parse_unary();
+        Node *add = new_add(lhs, new_num_node(1));
+        n = new_node_with_lr(ND_ASSIGN, lhs, add);
     } else if (cur_token_is("--")) {
         // pre decrement
         next_token();
-        n = new_node(ND_PREDEC, 0);
-        n->expr = parse_unary();
-        add_type(n->expr);
-        if (is_pointer(n->expr->ty)) {
-            n->inc = new_node(ND_NUM, n->expr->ty->base->size);
-        } else {
-            n->inc = new_node(ND_NUM, 1);
-        }
+        Node *lhs = parse_unary();
+        Node *add = new_sub(lhs, new_num_node(1));
+        n = new_node_with_lr(ND_ASSIGN, lhs, add);
     } else if (cur_token_is("sizeof")) {
         next_token();
         Type *t;

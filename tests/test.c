@@ -653,6 +653,8 @@ int main() {
 	test(5, ({ int i=2, j=3; (i=5,j)=6; i; }), "({ int i=2, j=3; (i=5,j)=6; i; })");
 	test(6, ({ int i=2, j=3; (i=5,j)=6; j; }), "({ int i=2, j=3; (i=5,j)=6; j; })");
 
+	test(10, ({ int i=0; int j=0; while(i<10) { ++i; ++j; } i; }), "({ int i=0; int j=0; while(i<10) { i++; j++; } i; })");
+
     printf("OK\n");
     return 0;
 }
