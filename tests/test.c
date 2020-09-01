@@ -649,6 +649,10 @@ int main() {
 	test(5, ({ int i=0; int j=0; while (i++<10) { if (i>5) continue; j+=1; } j; }), "({ int i=0; int j=0; while (i++<10) { if (i>5) continue; j++; } j; })");
 	test(11, ({ int i=0; int j=0; while(!i) { while (j++!=10) continue; break; } j; }), "({ int i=0; int j=0; while(!i) { while (j++!=10) continue; break; } j; })");
 
+	test(3, (1,2,3), "(1,2,3)");
+	test(5, ({ int i=2, j=3; (i=5,j)=6; i; }), "({ int i=2, j=3; (i=5,j)=6; i; })");
+	test(6, ({ int i=2, j=3; (i=5,j)=6; j; }), "({ int i=2, j=3; (i=5,j)=6; j; })");
+
     printf("OK\n");
     return 0;
 }

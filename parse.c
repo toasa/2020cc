@@ -320,10 +320,11 @@ Type *parse_struct_decl(Type *t) {
 
     while (!cur_token_is("}")) {
         Type *member_t = parse_type_specifier(NULL);
+        int i = 0;
 
         do {
-            if (cur_token_is(",")) {
-                next_token();
+            if (i++ > 0) {
+                expect(TK_COMMA);
             }
             Type *each_member_t = parse_declarator(member_t);
             Member *tmp = new_member(each_member_t);
@@ -354,11 +355,12 @@ Type *parse_union_decl(Type *t) {
 
     while (!cur_token_is("}")) {
         Type *member_t = parse_type_specifier(NULL);
+        int i = 0;
 
         // parse some members which have same type `member_t`.
         do {
-            if (cur_token_is(",")) {
-                next_token();
+            if (i++ > 0) {
+                expect(TK_COMMA);
             }
             Type *each_member_t = parse_declarator(member_t);
             Member *tmp = new_member(each_member_t);
@@ -463,10 +465,11 @@ Type *parse_enum_decl() {
 
     expect(TK_LBRACE);
 
+    int i = 0;
     int count = 0;
     while (!cur_token_is("}")) {
-        if (cur_token_is(",")) {
-            next_token();
+        if (i++ > 0) {
+            expect(TK_COMMA);
         }
 
         char *name = token->str;
@@ -478,10 +481,9 @@ Type *parse_enum_decl() {
         if (cur_token_is("=")) {
             next_token();
             count = token->val;
-            v.enum_val = count;
-        } else {
-            v.enum_val = count++;
+            next_token();
         }
+        v.enum_val = count++;
 
         register_new_lvar(v);
     }
@@ -794,18 +796,16 @@ Node *parse_declaration(VarKind vk) {
 
     n.next = cur;
 
-    bool do_loop = true;
-    while (do_loop) {
+    int i = 0;
+    while (!cur_token_is(";")) {
+        if (i++ > 0) {
+            expect(TK_COMMA);
+        }
+
         Node *tmp = parse_init_declarator(vk, t, &attr);
 
         cur->next = tmp;
         cur = tmp;
-
-        if (cur_token_is(",")) {
-            next_token();
-        } else {
-            do_loop = false;
-        }
     }
 
     expect(TK_SEMICOLON);
@@ -839,13 +839,12 @@ Exprs parse_exprs(char *terminator) {
     int count = 0;
 
     while (!cur_token_is(terminator)) {
-        if (cur_token_is(",")) {
+        if (count++ > 0) {
             expect(TK_COMMA);
         }
-        Node *tmp = parse_expr();
+        Node *tmp = parse_assign();
         cur->next = tmp;
         cur = tmp;
-        count++;
     }
 
     result.count = count;
@@ -1400,9 +1399,16 @@ Node *parse_assign() {
     return lhs;
 }
 
-// expr = assign
+// expr = assign (',' expr)?
 Node *parse_expr() {
-    return parse_assign();
+    Node *n = parse_assign();
+
+    if (cur_token_is(",")) {
+        next_token();
+        return new_node_with_lr(ND_COMMA, n, parse_expr());
+    }
+
+    return n;
 }
 
 // parse stmt, stmt, ... "}"
@@ -1528,7 +1534,7 @@ void parse_parameters(FuncData *f) {
     Node *cur = calloc(1, sizeof(Node));
     head.next = cur;
     while (!cur_token_is(")")) {
-        if (cur_token_is(",")) {
+        if (cur != head.next) {
             expect(TK_COMMA);
         }
 

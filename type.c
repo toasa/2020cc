@@ -130,6 +130,9 @@ void add_type(Node *n) {
     case ND_DECL:
         n->ty = n->var.type;
         return;
+    case ND_COMMA:
+        n->ty = n->rhs->ty;
+        return;
     case ND_ADD:
     case ND_SUB:
     case ND_MUL:

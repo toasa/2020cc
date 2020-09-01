@@ -55,6 +55,7 @@ typedef enum {
     ND_RSHIFT,    // >>
     ND_DEREF,     // *
     ND_ADDR,      // &
+    ND_COMMA,     // ,
     ND_EQ,        // ==
     ND_NE,        // !=
     ND_LT,        // <

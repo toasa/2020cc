@@ -30,6 +30,9 @@ void gen_addr(Node *n) {
         printf("    push rax\n");
     } else if (n->nk == ND_DEREF) {
         gen_expr(n->expr);
+    } else if (n->nk == ND_COMMA) {
+        gen_stmt(n->lhs);
+        gen_addr(n->rhs);
     }
 }
 
@@ -190,6 +193,11 @@ void gen_expr(Node *n) {
         printf("    mov [rax], r10\n");
 
         printf("    push r11\n");
+        return;
+    } else if (n->nk == ND_COMMA) {
+        gen_expr(n->lhs);
+        printf("    pop rax\n");
+        gen_expr(n->rhs);
         return;
     } else if (n->nk == ND_STMT_EXPR) {
         Node *stmt = n->block;
@@ -376,6 +384,7 @@ void gen_stmt(Node *n) {
             stmt = stmt->next;
         }
     } else if (n->nk == ND_ASSIGN) {
+
         gen_addr(n->lhs);
         gen_expr(n->rhs);
 
