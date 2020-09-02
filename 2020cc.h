@@ -18,6 +18,7 @@ typedef enum {
     TK_RBRACKET,  // ]
     TK_SEMICOLON, // ;
     TK_COLON,     // :
+    TK_QUEST,     // ?
     TK_COMMA,     // ,
     TK_PERIOD,    // .
     TK_ARROW,     // ->
@@ -62,6 +63,7 @@ typedef enum {
     ND_LT,        // <
     ND_LE,        // <=
     ND_ASSIGN,    // =
+    ND_COND,      // ?:
     ND_NOT,       // !
     ND_BITNOT,    // ~
     ND_BITAND,    // &
@@ -202,8 +204,8 @@ typedef struct Node {
 
     struct Node *init;  // nkがND_FORの場合に使う
     struct Node *cond;  // nkがND_IF, ND_WHILE, ND_FOR, ND_SWITCHの場合に使う
-    struct Node *then;  // nkがND_IF, ND_WHILE, ND_FOR, ND_SWITCHの場合に使う
-    struct Node *alt;   // nkがND_IFの場合に使う
+    struct Node *then;  // nkがND_IF, ND_WHILE, ND_FOR, ND_SWITCH, ND_CONDの場合に使う
+    struct Node *alt;   // nkがND_IF, ND_CONDの場合に使う
     struct Node *expr;  // nkがND_RETURN, ND_DEREF, ND_ADDR, ND_MEMBER, ND_CASTの場合に使う
     struct Node *post;  // nkがND_FORの場合に使う
     struct Node *next;  // nkがND_BLOCK, ND_CALL, ND_DECLの場合に使う

@@ -158,6 +158,23 @@ void gen_expr(Node *n) {
         gen_expr(n->expr);
         cast(n->ty);
         return;
+    } else if (n->nk == ND_COND) {
+        int c = count();
+
+        gen_expr(n->cond);
+        printf("    pop rax\n");
+
+        printf("    cmp rax, 0\n");
+        printf("    je .L.else.%d\n", c);
+        gen_expr(n->then);
+        printf("    pop rax\n");
+        printf("    jmp .L.end.%d\n", c);
+        printf(".L.else.%d:\n", c);
+        gen_expr(n->alt);
+        printf("    pop rax\n");
+        printf(".L.end.%d:\n", c);
+        printf("    push rax\n");
+        return;
     } else if (n->nk == ND_ASSIGN) {
         gen_addr(n->lhs);
         gen_expr(n->rhs);

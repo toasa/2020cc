@@ -353,6 +353,9 @@ Token *tokenize(char *input) {
         } else if (*input == ':') {
             input++;
             cur_token = new_token(cur_token, TK_COLON, 0, ":");
+        } else if (*input == '?') {
+            input++;
+            cur_token = new_token(cur_token, TK_QUEST, 0, "?");
         } else if (*input == ',') {
             input++;
             cur_token = new_token(cur_token, TK_COMMA, 0, ",");

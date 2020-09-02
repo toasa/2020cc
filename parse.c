@@ -296,6 +296,7 @@ Node *parse_bitxor();
 Node *parse_bitor();
 Node *parse_logand();
 Node *parse_logor();
+Node *parse_cond();
 Node *parse_assign();
 Node *parse_expr();
 Node *parse_compound_stmt(Node*, int);
@@ -1352,19 +1353,38 @@ Node *parse_logor() {
     return lhs;
 }
 
-// assign = bitor ( '='   assign
-//                | '+='  assign
-//                | '-='  assign
-//                | '*='  assign
-//                | '/='  assign
-//                | '%='  assign
-//                | '<<=' assign
-//                | '>>=' assign
-//                | '&='  assign
-//                | '|='  assign
-//                | '^='  assign )*
+// cond = logor
+//      | logor ? expr : cond
+Node *parse_cond() {
+    Node *n = parse_logor();
+    if (!cur_token_is("?")) {
+        return n;
+    }
+
+    expect(TK_QUEST);
+    Node *cond = new_node(ND_COND);
+    cond->cond = n;
+
+    cond->then = parse_expr();
+    expect(TK_COLON);
+    cond->alt = parse_cond();
+
+    return cond;
+}
+
+// assign = cond ( '='   assign
+//               | '+='  assign
+//               | '-='  assign
+//               | '*='  assign
+//               | '/='  assign
+//               | '%='  assign
+//               | '<<=' assign
+//               | '>>=' assign
+//               | '&='  assign
+//               | '|='  assign
+//               | '^='  assign )*
 Node *parse_assign() {
-    Node *lhs = parse_logor();
+    Node *lhs = parse_cond();
 
     if (cur_token_is("=")) {
         next_token();

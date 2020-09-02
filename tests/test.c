@@ -692,6 +692,17 @@ int main() {
     test(2, ({ int i=0; switch(1) { case 0: 0; case 1: 0; case 2: 0; i=2; } i; }), "({ int i=0; switch(1) { case 0: 0; case 1: 0; case 2: 0; i=2; } i; })");
     test(0, ({ int i=0; switch(3) { case 0: 0; case 1: 0; case 2: 0; i=2; } i; }), "({ int i=0; switch(3) { case 0: 0; case 1: 0; case 2: 0; i=2; } i; })");
 
+    test(2, 0?1:2, "0?1:2");
+    test(1, 1?1:2, "1?1:2");
+    test(-1, 0?-2:-1, "0?-2:-1");
+    test(-2, 1?-2:-1, "1?-2:-1");
+    test(4, sizeof(0?1:2), "sizeof(0?1:2)");
+    test(8, sizeof(0?(long)1:(long)2), "sizeof(0?(long)1:(long)2)");
+    test(-1, 0?(long)-2:-1, "0?(long)-2:-1");
+    test(-1, 0?-2:(long)-1, "0?-2:(long)-1");
+    test(-2, 1?(long)-2:-1, "1?(long)-2:-1");
+    test(-2, 1?-2:(long)-1, "1?-2:(long)-1");
+
     printf("OK\n");
     return 0;
 }

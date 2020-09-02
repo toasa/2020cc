@@ -133,6 +133,14 @@ void add_type(Node *n) {
     case ND_COMMA:
         n->ty = n->rhs->ty;
         return;
+    case ND_COND:
+        if (n->then->ty->tk == VOID || n->alt->ty->tk == VOID) {
+            n->ty = void_t;
+        } else {
+            usual_arith_conv(&n->then, &n->alt);
+            n->ty = n->then->ty;
+        }
+        return;
     case ND_ADD:
     case ND_SUB:
     case ND_MUL:
