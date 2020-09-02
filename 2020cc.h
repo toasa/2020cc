@@ -206,7 +206,9 @@ typedef struct Node {
     struct Node *cond;  // nkがND_IF, ND_WHILE, ND_FOR, ND_SWITCHの場合に使う
     struct Node *then;  // nkがND_IF, ND_WHILE, ND_FOR, ND_SWITCH, ND_CONDの場合に使う
     struct Node *alt;   // nkがND_IF, ND_CONDの場合に使う
-    struct Node *expr;  // nkがND_RETURN, ND_DEREF, ND_ADDR, ND_MEMBER, ND_CASTの場合に使う
+    struct Node *expr;  // nkがND_RETURN, ND_DEREF, ND_ADDR,
+                        // ND_MEMBER, ND_CAST, ND_NOT, ND_BITNOT,
+                        // の場合に使う
     struct Node *post;  // nkがND_FORの場合に使う
     struct Node *next;  // nkがND_BLOCK, ND_CALL, ND_DECLの場合に使う
     struct Node *block; // nkがND_BLOCK, ND_STMT_EXPRの場合に使う

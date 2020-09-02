@@ -299,6 +299,7 @@ Node *parse_logor();
 Node *parse_cond();
 Node *parse_assign();
 Node *parse_expr();
+long const_expr();
 Node *parse_compound_stmt(Node*, int);
 Node *parse_stmt();
 FuncData *parse_toplevel_func(Type *ret_t, bool is_static);
@@ -491,8 +492,7 @@ Type *parse_enum_decl() {
 
         if (cur_token_is("=")) {
             next_token();
-            count = token->val;
-            next_token();
+            count = const_expr();
         }
         v.enum_val = count++;
 
@@ -700,7 +700,7 @@ Node *parse_initializer(Node *n) {
     return n;
 }
 
-// type-suffix = ('[' integer-literal ']')*
+// type-suffix = ('[' const-expr ']')*
 Type *parse_type_suffix(Type *t) {
     if (!cur_token_is("[")) {
         return t;
@@ -711,9 +711,7 @@ Type *parse_type_suffix(Type *t) {
     if (cur_token_is("]")) {
         // array initialization allow that the number of array elements is not specified.
     } else {
-        assert(cur_tokenkind_is(TK_NUM), "array size must be integer literal");
-        arr_size = token->val;
-        next_token();
+        arr_size = const_expr();
     }
     expect(TK_RBRACKET);
 
@@ -1446,6 +1444,73 @@ Node *parse_expr() {
     return n;
 }
 
+long eval(Node *n) {
+    add_type(n);
+
+    if (n->nk == ND_ADD) {
+        return eval(n->lhs) + eval(n->rhs);
+    } else if (n->nk == ND_SUB) {
+        return eval(n->lhs) - eval(n->rhs);
+    } else if (n->nk == ND_MUL) {
+        return eval(n->lhs) * eval(n->rhs);
+    } else if (n->nk == ND_DIV) {
+        return eval(n->lhs) / eval(n->rhs);
+    } else if (n->nk == ND_REM) {
+        return eval(n->lhs) % eval(n->rhs);
+    } else if (n->nk == ND_BITAND) {
+        return eval(n->lhs) & eval(n->rhs);
+    } else if (n->nk == ND_BITOR) {
+        return eval(n->lhs) | eval(n->rhs);
+    } else if (n->nk == ND_BITXOR) {
+        return eval(n->lhs) ^ eval(n->rhs);
+    } else if (n->nk == ND_BITNOT) {
+        return ~eval(n->expr);
+    } else if (n->nk == ND_LSHIFT) {
+        return eval(n->lhs) << eval(n->rhs);
+    } else if (n->nk == ND_RSHIFT) {
+        return eval(n->lhs) >> eval(n->rhs);
+    } else if (n->nk == ND_EQ) {
+        return eval(n->lhs) == eval(n->rhs);
+    } else if (n->nk == ND_NE) {
+        return eval(n->lhs) != eval(n->rhs);
+    } else if (n->nk == ND_LT) {
+        return eval(n->lhs) < eval(n->rhs);
+    } else if (n->nk == ND_LE) {
+        return eval(n->lhs) <= eval(n->rhs);
+    } else if (n->nk == ND_COND) {
+        return eval(n->cond) ? eval(n->then) : eval(n->alt);
+    } else if (n->nk == ND_COMMA) {
+        return eval(n->rhs);
+    } else if (n->nk == ND_NOT) {
+        return !eval(n->expr);
+    } else if (n->nk == ND_LOGAND) {
+        return eval(n->lhs) && eval(n->rhs);
+    } else if (n->nk == ND_LOGOR) {
+        return eval(n->lhs) || eval(n->rhs);
+    } else if (n->nk == ND_CAST) {
+        if (is_integer(n->ty)) {
+            if (n->ty->size == 1) {
+                return (char)eval(n->expr);
+            } else if (n->ty->size == 2) {
+                return (short)eval(n->expr);
+            } else if (n->ty->size == 4) {
+                return (int)eval(n->expr);
+            }
+        }
+        return eval(n->expr);
+    }
+
+    if (n->nk != ND_NUM) {
+        error("not a constant expression");
+    }
+    return n->val;
+}
+
+long const_expr() {
+    Node *n = parse_cond();
+    return eval(n);
+}
+
 // parse stmt, stmt, ... "}"
 // if this function is called from top level function, not enter the scope.
 Node *parse_compound_stmt(Node *n, int from_func_body) {
@@ -1553,8 +1618,7 @@ Node *parse_stmt() {
     } else if (cur_token_is("case")) {
         n = new_node(ND_CASE);
         next_token();
-        int val = token->val;
-        next_token();
+        int val = const_expr();
 
         expect(TK_COLON);
         n->stmt = parse_stmt();
