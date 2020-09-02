@@ -137,36 +137,6 @@ void gen_expr(Node *n) {
         printf("    not rax\n");
         printf("    push rax\n");
         return;
-    } else if (n->nk == ND_POSTINC) {
-        gen_expr(n->expr);
-        gen_expr(n->inc);
-        printf("    pop rax\n");
-        printf("    pop r10\n");
-        printf("    mov r11, r10\n");
-        printf("    add r10, rax\n");
-
-        gen_addr(n->expr);
-
-        printf("    pop rax\n");
-        printf("    mov [rax], r10\n");
-
-        printf("    push r11\n");
-        return;
-    } else if (n->nk == ND_POSTDEC) {
-        gen_expr(n->expr);
-        gen_expr(n->inc);
-        printf("    pop rax\n");
-        printf("    pop r10\n");
-        printf("    mov r11, r10\n");
-        printf("    sub r10, rax\n");
-
-        gen_addr(n->expr);
-
-        printf("    pop rax\n");
-        printf("    mov [rax], r10\n");
-
-        printf("    push r11\n");
-        return;
     } else if (n->nk == ND_COMMA) {
         gen_expr(n->lhs);
         printf("    pop rax\n");

@@ -31,6 +31,12 @@ Node *new_lvar_node(Var v) {
     return n;
 }
 
+Node *new_unary_node(NodeKind nk, Node *expr) {
+    Node *n = new_node(nk, 0);
+    n->expr = expr;
+    return n;
+}
+
 Node *new_cast_node(Node *expr, Type *ty) {
     add_type(expr);
 
@@ -76,10 +82,10 @@ FuncData *new_func_data() {
     return calloc(1, sizeof(FuncData));
 }
 
-Var new_var(VarKind vk, Type *t) {
+Var new_var(VarKind vk, char *name, Type *t) {
     Var v;
     v.vk = vk;
-    v.name = t->name;
+    v.name = name;
     v.type = t;
     v.offset = 0;
     v.str = NULL;
@@ -475,8 +481,7 @@ Type *parse_enum_decl() {
         char *name = token->str;
         next_token();
 
-        Var v = new_var(ENUMMEMBER, t);
-        v.name = name;
+        Var v = new_var(ENUMMEMBER, name, t);
 
         if (cur_token_is("=")) {
             next_token();
@@ -756,7 +761,7 @@ Type *parse_typename(VarAttr *attr) {
 Node *parse_init_declarator(VarKind vk, Type *t, VarAttr *attr) {
     t = parse_declarator(t);
 
-    Var v = new_var(vk, t);
+    Var v = new_var(vk, t->name, t);
     if (attr != NULL) {
         v.attr.is_typedef = attr->is_typedef;
     }
@@ -951,7 +956,7 @@ Node *parse_primary() {
         // string literal
         Type *t = array_of(char_t, token->str_len);
         t->name = new_label();
-        Var v = new_var(GLOBAL, t);
+        Var v = new_var(GLOBAL, t->name, t);
         v.str = token->str;
         v.str_len = token->str_len;
 
@@ -963,6 +968,43 @@ Node *parse_primary() {
         error("invalid primary");
     }
     return n;
+}
+
+// Convert x++ to `tmp = &A, *tmp = *tmp + 1, *tmp - 1`
+// where tmp is a fresh pointer variable.
+Node *new_inc_dec(Node *n, int imm) {
+    add_type(n);
+    Var v = new_var(LOCAL, "", pointer_to(n->ty));
+
+    Node *expr1 = new_node_with_lr(
+        ND_ASSIGN,
+        new_lvar_node(v),
+        new_unary_node(ND_ADDR, n)
+    );
+
+    Node *expr2 = new_node_with_lr(
+        ND_ASSIGN,
+        new_unary_node(ND_DEREF, new_lvar_node(v)),
+        new_add(
+            new_unary_node(ND_DEREF, new_lvar_node(v)),
+            new_num_node(imm)
+        )
+    );
+
+    Node *expr3 = new_add(
+        new_unary_node(ND_DEREF, new_lvar_node(v)),
+        new_num_node(-imm)
+    );
+
+    return new_node_with_lr(
+        ND_COMMA,
+        expr1,
+        new_node_with_lr(
+            ND_COMMA,
+            expr2,
+            expr3
+        )
+    );
 }
 
 // postfix = primary ('[' expr ']'
@@ -981,30 +1023,12 @@ Node *parse_postfix() {
         } else if (cur_token_is("++")) {
             // post increment
             next_token();
-            new_n = new_node(ND_POSTINC, 0);
-            new_n->expr = n;
-            add_type(n);
-            if (is_pointer(n->ty)) {
-                new_n->inc = new_node(ND_NUM, n->ty->base->size);
-            } else {
-                new_n->inc = new_node(ND_NUM, 1);
-            }
-
-            n = new_n;
+            n = new_inc_dec(n, 1);
             continue;
         } else if (cur_token_is("--")) {
             // post decrement
             next_token();
-            new_n = new_node(ND_POSTDEC, 0);
-            new_n->expr = n;
-            add_type(n);
-            if (is_pointer(n->ty)) {
-                new_n->inc = new_node(ND_NUM, n->ty->base->size);
-            } else {
-                new_n->inc = new_node(ND_NUM, 1);
-            }
-
-            n = new_n;
+            n = new_inc_dec(n, -1);
             continue;
         } else if (cur_token_is(".")) {
             // member access operator
@@ -1538,7 +1562,7 @@ void parse_parameters(FuncData *f) {
             t->name = name;
         }
 
-        Var v = new_var(ARG, t);
+        Var v = new_var(ARG, t->name, t);
         register_new_lvar(v);
 
         Node *arg = new_node(ND_DECL, 0);
