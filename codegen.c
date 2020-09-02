@@ -341,6 +341,37 @@ void gen_stmt(Node *n) {
     } else if (n->nk == ND_LABEL) {
         printf(".L.label.%s.%s:\n", cur_func, n->label_name);
         gen_stmt(n->stmt);
+    } else if (n->nk == ND_SWITCH) {
+        int c = count();
+        int brk = brk_num;
+        brk_num = c;
+        n->case_label = c;
+
+        gen_expr(n->cond);
+        printf("    pop rax\n");
+
+        for (Node *n_iter = n->case_next; n_iter != NULL; n_iter = n_iter->case_next) {
+            n_iter->case_label = count();
+            n_iter->case_end_label = c;
+            printf("    cmp rax, %d\n", n_iter->val);
+            printf("    je .L.case.%d\n", n_iter->case_label);
+        }
+
+        if (n->default_case != NULL) {
+            int i = count();
+            n->default_case->case_label = i;
+            n->default_case->case_end_label = c;
+            printf("    jmp .L.case.%d\n", i);
+        }
+
+        printf("    jmp .L.end.%d\n", c);
+        gen_stmt(n->then);
+        printf(".L.end.%d:\n", c);
+
+        brk_num = brk;
+    } else if (n->nk == ND_CASE) {
+        printf(".L.case.%d:\n", n->case_label);
+        gen_stmt(n->stmt);
     } else if (n->nk == ND_BLOCK) {
         Node *stmt = n->block;
         while (stmt != NULL) {

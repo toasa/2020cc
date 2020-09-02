@@ -45,6 +45,9 @@ int is_keyword(char *str) {
         "for",
         "sizeof",
         "goto",
+        "switch",
+        "case",
+        "default",
         NULL,
     };
     for (int i = 0; keywords[i] != NULL; i++) {

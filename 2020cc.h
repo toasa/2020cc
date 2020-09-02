@@ -78,6 +78,8 @@ typedef enum {
     ND_WHILE,     // while
     ND_FOR,       // for
     ND_BLOCK,     // { ... }
+    ND_SWITCH,    // switch
+    ND_CASE,      // case
     ND_CALL,      // function call
     ND_DECL,      // local variable declaration
     ND_STMT_EXPR, // statement expression
@@ -199,17 +201,23 @@ typedef struct Node {
     Member *member;     // nkがND_MEMBERの場合に使う
 
     struct Node *init;  // nkがND_FORの場合に使う
-    struct Node *cond;  // nkがND_IF, ND_WHILE, ND_FORの場合に使う
-    struct Node *then;  // nkがND_IF, ND_WHILE, ND_FORの場合に使う
+    struct Node *cond;  // nkがND_IF, ND_WHILE, ND_FOR, ND_SWITCHの場合に使う
+    struct Node *then;  // nkがND_IF, ND_WHILE, ND_FOR, ND_SWITCHの場合に使う
     struct Node *alt;   // nkがND_IFの場合に使う
     struct Node *expr;  // nkがND_RETURN, ND_DEREF, ND_ADDR, ND_MEMBER, ND_CASTの場合に使う
     struct Node *post;  // nkがND_FORの場合に使う
     struct Node *next;  // nkがND_BLOCK, ND_CALL, ND_DECLの場合に使う
     struct Node *block; // nkがND_BLOCK, ND_STMT_EXPRの場合に使う
-    struct Node *stmt;  // nkがND_LABELの場合に使う
+    struct Node *stmt;  // nkがND_LABEL, ND_CASEの場合に使う
 
     // Goto or labeled statement
     char *label_name;
+
+    // switch-cases
+    struct Node *case_next;
+    struct Node *default_case;
+    int case_label;
+    int case_end_label;
 } Node;
 
 typedef struct Program {

@@ -121,6 +121,10 @@ size_t scope_depth = 0;
 Scope *toplevel_scope = NULL;
 Scope *cur_scope = NULL;
 Type *cur_function_return_type;
+
+// Points to a node representing a switch if we are
+// parsing a switch statement.
+Node *cur_switch;
 size_t stack_frame_size = 0;
 
 const int MAX_FUNC_NUM = 500;
@@ -1513,6 +1517,37 @@ Node *parse_stmt() {
 
         leave_scope();
 
+        return n;
+    } else if (cur_token_is("switch")) {
+        n = new_node(ND_SWITCH);
+        next_token();
+        expect(TK_LPARENT);
+        n->cond = parse_expr();
+        expect(TK_RPARENT);
+
+        Node *sw = cur_switch;
+        cur_switch = n;
+        n->then = parse_stmt();
+        cur_switch = sw;
+        return n;
+    } else if (cur_token_is("case")) {
+        n = new_node(ND_CASE);
+        next_token();
+        int val = token->val;
+        next_token();
+
+        expect(TK_COLON);
+        n->stmt = parse_stmt();
+        n->val = val;
+        n->case_next = cur_switch->case_next;
+        cur_switch->case_next = n;
+        return n;
+    } else if (cur_token_is("default")) {
+        n = new_node(ND_CASE);
+        next_token();
+        expect(TK_COLON);
+        n->stmt = parse_stmt();
+        cur_switch->default_case = n;
         return n;
     } else if (cur_token_is("goto")) {
         n = new_node(ND_GOTO);
