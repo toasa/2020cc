@@ -94,6 +94,7 @@ void add_type(Node *n) {
     add_type(n->expr);
     add_type(n->post);
     add_type(n->block);
+    add_type(n->stmt);
 
     for (Node *n_i = n->block; n_i != NULL; n_i = n_i->next) {
         add_type(n_i);

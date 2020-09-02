@@ -336,6 +336,11 @@ void gen_stmt(Node *n) {
 
         brk_num = brk;
         cont_num = cont;
+    } else if (n->nk == ND_GOTO) {
+        printf("    jmp .L.label.%s.%s\n", cur_func, n->label_name);
+    } else if (n->nk == ND_LABEL) {
+        printf(".L.label.%s.%s:\n", cur_func, n->label_name);
+        gen_stmt(n->stmt);
     } else if (n->nk == ND_BLOCK) {
         Node *stmt = n->block;
         while (stmt != NULL) {

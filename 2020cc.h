@@ -17,6 +17,7 @@ typedef enum {
     TK_LBRACKET,  // [
     TK_RBRACKET,  // ]
     TK_SEMICOLON, // ;
+    TK_COLON,     // :
     TK_COMMA,     // ,
     TK_PERIOD,    // .
     TK_ARROW,     // ->
@@ -70,6 +71,8 @@ typedef enum {
     ND_LOGOR,     // ||
     ND_RETURN,    // return
     ND_CONTINUE,  // continue
+    ND_GOTO,      // goto
+    ND_LABEL,     // labeled statement
     ND_BREAK,     // break
     ND_IF,        // if
     ND_WHILE,     // while
@@ -203,6 +206,10 @@ typedef struct Node {
     struct Node *post;  // nkがND_FORの場合に使う
     struct Node *next;  // nkがND_BLOCK, ND_CALL, ND_DECLの場合に使う
     struct Node *block; // nkがND_BLOCK, ND_STMT_EXPRの場合に使う
+    struct Node *stmt;  // nkがND_LABELの場合に使う
+
+    // Goto or labeled statement
+    char *label_name;
 } Node;
 
 typedef struct Program {

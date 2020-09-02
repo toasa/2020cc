@@ -1514,6 +1514,20 @@ Node *parse_stmt() {
         leave_scope();
 
         return n;
+    } else if (cur_token_is("goto")) {
+        n = new_node(ND_GOTO);
+        next_token();
+        n->label_name = token->str;
+        next_token();
+        expect(TK_SEMICOLON);
+        return n;
+    } else if (cur_tokenkind_is(TK_IDENT) && next_tokenkind_is(TK_COLON)) {
+        n = new_node(ND_LABEL);
+        n->label_name = token->str;
+        next_token();
+        expect(TK_COLON);
+        n->stmt = parse_stmt();
+        return n;
     } else if (cur_token_is("{")) {
         n = new_node(ND_BLOCK);
         next_token();

@@ -44,6 +44,7 @@ int is_keyword(char *str) {
         "while",
         "for",
         "sizeof",
+        "goto",
         NULL,
     };
     for (int i = 0; keywords[i] != NULL; i++) {
@@ -346,6 +347,9 @@ Token *tokenize(char *input) {
         } else if (*input == ';') {
             input++;
             cur_token = new_token(cur_token, TK_SEMICOLON, 0, ";");
+        } else if (*input == ':') {
+            input++;
+            cur_token = new_token(cur_token, TK_COLON, 0, ":");
         } else if (*input == ',') {
             input++;
             cur_token = new_token(cur_token, TK_COMMA, 0, ",");
