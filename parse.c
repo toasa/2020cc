@@ -301,6 +301,7 @@ Node *parse_assign();
 Node *parse_expr();
 long const_expr();
 Node *parse_compound_stmt(Node*, int);
+Node *parse_stmt_sub();
 Node *parse_stmt();
 FuncData *parse_toplevel_func(Type *ret_t, bool is_static);
 void parse_toplevel_global_var(Type *t);
@@ -902,7 +903,6 @@ Node *parse_primary() {
             n = new_node(ND_STMT_EXPR);
             n = parse_compound_stmt(n, 0);
             expect(TK_RBRACE);
-            add_type(n);
         } else {
             n = parse_expr();
         }
@@ -934,7 +934,6 @@ Node *parse_primary() {
 
             // When callee function is defined in this compiler, solve the type of this node 'n'.
             if (defined != NULL) {
-                add_type(n);
                 n->ty = defined->return_type;
             }
 
@@ -1524,7 +1523,6 @@ Node *parse_compound_stmt(Node *n, int from_func_body) {
 
         while (!cur_token_is("}")) {
             Node *tmp = parse_stmt();
-            add_type(tmp);
             cur->next = tmp;
             cur = tmp;
         }
@@ -1536,14 +1534,27 @@ Node *parse_compound_stmt(Node *n, int from_func_body) {
     return n;
 }
 
-Node *parse_stmt() {
+// stmt_sub = 'return' expr ';'
+//          | 'if' '(' expr ')' stmt ('else' stmt)?
+//          | 'while' '(' expr ')' stmt
+//          | 'for' '(' stmt? ';' expr ';' expr ')' stmt
+//          | 'break' ';'
+//          | 'continue' ';'
+//          | 'switch' '(' expr ')' stmt
+//          | 'case' const-expr ':' stmt
+//          | 'default' ':' stmt
+//          | 'goto' ident ';'
+//          | ident ':' stmt
+//          | '{' stmt '}'
+//          | declaration
+//          | expr ';'
+Node *parse_stmt_sub() {
     Node *n;
     if (cur_token_is("return")) {
         n = new_node(ND_RETURN);
         next_token();
         Node *expr = parse_expr();
         expect(TK_SEMICOLON);
-        add_type(expr);
         n->expr = new_cast_node(expr, cur_function_return_type);
         return n;
     } else if (cur_token_is("break")) {
@@ -1657,10 +1668,16 @@ Node *parse_stmt() {
           || cur_tokenkind_is(TK_STORAGE)
           || is_defined_type(token->str)) {
         return parse_declaration(LOCAL);
-    } else {
-        n = parse_expr();
-        expect(TK_SEMICOLON);
     }
+
+    n = parse_expr();
+    expect(TK_SEMICOLON);
+    return n;
+}
+
+Node *parse_stmt() {
+    Node *n = parse_stmt_sub();
+    add_type(n);
     return n;
 }
 
