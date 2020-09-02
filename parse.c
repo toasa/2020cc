@@ -1,38 +1,39 @@
 #include "2020cc.h"
 
-Node *new_node(NodeKind nk, int val) {
+Node *new_node(NodeKind nk) {
     Node *n = calloc(1, sizeof(Node));
     n->nk = nk;
-    n->val = val;
     return n;
 }
 
 Node *new_num_node(int val) {
-    return new_node(ND_NUM, val);
+    Node *n = new_node(ND_NUM);
+    n->val = val;
+    return n;
 }
 
 Node *new_node_with_lr(NodeKind nk, Node *lhs, Node *rhs) {
-    Node *n = new_node(nk, 0);
+    Node *n = new_node(nk);
     n->lhs = lhs;
     n->rhs = rhs;
     return n;
 }
 
 Node *new_struct_member_node(Node *stru, Member *mem, char *mem_name) {
-    Node *mem_node = new_node(ND_MEMBER, 0);
+    Node *mem_node = new_node(ND_MEMBER);
     mem_node->member = mem;
     mem_node->expr = stru;
     return mem_node;
 }
 
 Node *new_lvar_node(Var v) {
-    Node *n = new_node(ND_LVAR, 0);
+    Node *n = new_node(ND_LVAR);
     n->var = v;
     return n;
 }
 
 Node *new_unary_node(NodeKind nk, Node *expr) {
-    Node *n = new_node(nk, 0);
+    Node *n = new_node(nk);
     n->expr = expr;
     return n;
 }
@@ -666,9 +667,9 @@ Node *parse_initializer(Node *n) {
         //     arr[2] = 30;
         // ```
         for (int i = 0; i < result.count; i++) {
-            Node *add = new_add(array, new_node(ND_NUM, i));
+            Node *add = new_add(array, new_num_node(i));
 
-            Node *deref = new_node(ND_DEREF, 0);
+            Node *deref = new_node(ND_DEREF);
             deref->expr = add;
 
             Node *assign = new_node_with_lr(ND_ASSIGN, deref, elem);
@@ -679,7 +680,7 @@ Node *parse_initializer(Node *n) {
             elem = elem->next;
         }
 
-        Node *assigns = new_node(ND_BLOCK, 0);
+        Node *assigns = new_node(ND_BLOCK);
         assigns->block = head.next->next;
         n = assigns;
         expect(TK_RBRACE);
@@ -774,7 +775,7 @@ Node *parse_init_declarator(VarKind vk, Type *t, VarAttr *attr) {
     }
 
     Node *n;
-    n = new_node(ND_DECL, 0);
+    n = new_node(ND_DECL);
     n->ty = t;
     n->var = v;
 
@@ -792,7 +793,7 @@ Node *parse_declaration(VarKind vk) {
     Type *t = parse_type_specifier(&attr);
 
     Node n;
-    Node *cur = new_node(ND_DECL, 0);
+    Node *cur = new_node(ND_DECL);
 
     if (cur_token_is(";")) {
         next_token();
@@ -815,7 +816,7 @@ Node *parse_declaration(VarKind vk) {
 
     expect(TK_SEMICOLON);
 
-    Node *b = new_node(ND_BLOCK, 0);
+    Node *b = new_node(ND_BLOCK);
     b->block = n.next->next;
     return b;
 }
@@ -827,7 +828,7 @@ Node *parse_indexing(Node *lhs) {
     Node *rhs = parse_expr();
     expect(TK_RBRACKET);
 
-    Node *n = new_node(ND_DEREF, 0);
+    Node *n = new_node(ND_DEREF);
     n->expr = new_add(lhs, rhs);
     return n;
 }
@@ -895,7 +896,7 @@ Node *parse_primary() {
         next_token();
         if (cur_token_is("{")) {
             next_token();
-            n = new_node(ND_STMT_EXPR, 0);
+            n = new_node(ND_STMT_EXPR);
             n = parse_compound_stmt(n, 0);
             expect(TK_RBRACE);
             add_type(n);
@@ -906,7 +907,7 @@ Node *parse_primary() {
     } else if (token->tk == TK_IDENT) {
         if (next_tokenkind_is(TK_LPARENT)) {
             // function call
-            n = new_node(ND_CALL, 0);
+            n = new_node(ND_CALL);
             FuncData *fd = new_func_data();
             fd->name = token->str;
 
@@ -943,14 +944,14 @@ Node *parse_primary() {
             }
 
             if (v->data.vk == ENUMMEMBER) {
-                n = new_node(ND_NUM, v->data.enum_val);
+                n = new_num_node(v->data.enum_val);
             } else {
                 n = new_lvar_node(v->data);
             }
             next_token();
         }
     } else if (cur_tokenkind_is(TK_NUM)) {
-        n = new_node(ND_NUM, token->val);
+        n = new_num_node(token->val);
         next_token();
     } else if (cur_tokenkind_is(TK_STR)) {
         // string literal
@@ -1055,7 +1056,7 @@ Node *parse_postfix() {
                 error("unknown member specified: %s", member_name);
             }
 
-            Node *deref = new_node(ND_DEREF, 0);
+            Node *deref = new_node(ND_DEREF);
             deref->expr = n;
 
             n = new_struct_member_node(deref, m, member_name);
@@ -1081,25 +1082,21 @@ Node *parse_unary() {
         n = parse_cast();
     } else if (cur_token_is("-")) {
         next_token();
-        Node *lhs = new_node(ND_NUM, 0);
+        Node *lhs = new_node(ND_NUM);
         Node *rhs = parse_cast();
         n = new_node_with_lr(ND_SUB, lhs, rhs);
     } else if (cur_token_is("*")) {
         next_token();
-        n = new_node(ND_DEREF, 0);
-        n->expr = parse_cast();
+        n = new_unary_node(ND_DEREF, parse_cast());
     } else if (cur_token_is("&")) {
         next_token();
-        n = new_node(ND_ADDR, 0);
-        n->expr = parse_cast();
+        n = new_unary_node(ND_ADDR, parse_cast());
     } else if (cur_token_is("!")) {
         next_token();
-        n = new_node(ND_NOT, 0);
-        n->expr = parse_cast();
+        n = new_unary_node(ND_NOT, parse_cast());
     } else if (cur_token_is("~")) {
         next_token();
-        n = new_node(ND_BITNOT, 0);
-        n->expr = parse_cast();
+        n = new_unary_node(ND_BITNOT, parse_cast());
     } else if (cur_token_is("++")) {
         // pre increment
         next_token();
@@ -1124,7 +1121,7 @@ Node *parse_unary() {
             add_type(tmp);
             t = tmp->ty;
         }
-        n = new_node(ND_NUM, t->size);
+        n = new_num_node(t->size);
     } else {
         n = parse_postfix();
     }
@@ -1184,7 +1181,7 @@ Node *new_add(Node *lhs, Node *rhs) {
     }
 
     // ptr + num
-    rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->base->size));
+    rhs = new_node_with_lr(ND_MUL, rhs, new_num_node(lhs->ty->base->size));
     return new_node_with_lr(ND_ADD, lhs, rhs);
 }
 
@@ -1199,14 +1196,14 @@ Node *new_sub(Node *lhs, Node *rhs) {
 
     // ptr - num
     if (is_pointer(lhs->ty) && !is_pointer(rhs->ty)) {
-        rhs = new_node_with_lr(ND_MUL, rhs, new_node(ND_NUM, lhs->ty->base->size));
+        rhs = new_node_with_lr(ND_MUL, rhs, new_num_node(lhs->ty->base->size));
         return new_node_with_lr(ND_SUB, lhs, rhs);
     }
 
     // ptr - ptr
     if (is_pointer(lhs->ty) && is_pointer(rhs->ty)) {
         Node *sub = new_node_with_lr(ND_SUB, lhs, rhs);
-        return new_node_with_lr(ND_DIV, sub, new_node(ND_NUM, lhs->ty->base->size));
+        return new_node_with_lr(ND_DIV, sub, new_num_node(lhs->ty->base->size));
     }
 
     error("invalid - operation");
@@ -1453,7 +1450,7 @@ Node *parse_compound_stmt(Node *n, int from_func_body) {
 Node *parse_stmt() {
     Node *n;
     if (cur_token_is("return")) {
-        n = new_node(ND_RETURN, 0);
+        n = new_node(ND_RETURN);
         next_token();
         Node *expr = parse_expr();
         expect(TK_SEMICOLON);
@@ -1461,17 +1458,17 @@ Node *parse_stmt() {
         n->expr = new_cast_node(expr, cur_function_return_type);
         return n;
     } else if (cur_token_is("break")) {
-        n = new_node(ND_BREAK, 0);
+        n = new_node(ND_BREAK);
         next_token();
         expect(TK_SEMICOLON);
         return n;
     } else if (cur_token_is("continue")) {
-        n = new_node(ND_CONTINUE, 0);
+        n = new_node(ND_CONTINUE);
         next_token();
         expect(TK_SEMICOLON);
         return n;
     } else if (cur_token_is("if")) {
-        n = new_node(ND_IF, 0);
+        n = new_node(ND_IF);
         next_token();
         expect(TK_LPARENT);
         n->cond = parse_expr();
@@ -1483,7 +1480,7 @@ Node *parse_stmt() {
         }
         return n;
     } else if (cur_token_is("while")) {
-        n = new_node(ND_WHILE, 0);
+        n = new_node(ND_WHILE);
         next_token();
         expect(TK_LPARENT);
         n->cond = parse_expr();
@@ -1491,7 +1488,7 @@ Node *parse_stmt() {
         n->then = parse_stmt();
         return n;
     } else if (cur_token_is("for")) {
-        n = new_node(ND_FOR, 0);
+        n = new_node(ND_FOR);
         next_token();
         expect(TK_LPARENT);
 
@@ -1518,7 +1515,7 @@ Node *parse_stmt() {
 
         return n;
     } else if (cur_token_is("{")) {
-        n = new_node(ND_BLOCK, 0);
+        n = new_node(ND_BLOCK);
         next_token();
         n = parse_compound_stmt(n, 0);
         expect(TK_RBRACE);
@@ -1565,7 +1562,7 @@ void parse_parameters(FuncData *f) {
         Var v = new_var(ARG, t->name, t);
         register_new_lvar(v);
 
-        Node *arg = new_node(ND_DECL, 0);
+        Node *arg = new_node(ND_DECL);
         arg->ty = t;
         arg->var = v;
 
@@ -1602,7 +1599,7 @@ FuncData *parse_toplevel_func(Type *ret_t, bool is_static) {
     }
 
     // parse function body
-    Node *body = new_node(ND_BLOCK, 0);
+    Node *body = new_node(ND_BLOCK);
     expect(TK_LBRACE);
     func_data->body = parse_compound_stmt(body, 1);
     expect(TK_RBRACE);
