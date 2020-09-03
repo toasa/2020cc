@@ -276,7 +276,7 @@ Type *parse_type_specifier(VarAttr *attr);
 Type *parse_pointer(Type *base);
 Type *parse_direct_declarator(Type *t);
 Type *parse_declarator(Type *t);
-Node *parse_initializer(Node *n);
+Node *parse_initializer(Var v);
 Node *parse_init_declarator(VarKind vk, Type *t, VarAttr *attr);
 Node *parse_declaration(VarKind vk);
 Exprs parse_exprs(char *terminator);
@@ -619,10 +619,10 @@ Type *parse_type_specifier(VarAttr *attr) {
     return t;
 }
 
-void resolve_array_size(Node *n, Exprs result) {
+void resolve_array_size(Var var, Exprs result) {
     VarNode *var_iter = cur_scope->lvar_head;
     while (1) {
-        if (equal_strings(n->var.name, var_iter->data.name)) {
+        if (equal_strings(var.name, var_iter->data.name)) {
             var_iter->data.type->arr_size = result.count;
             size_t size = var_iter->data.type->base->size * result.count;
             var_iter->data.type->size = size;
@@ -635,70 +635,73 @@ void resolve_array_size(Node *n, Exprs result) {
     }
 }
 
+Node *parse_array_initializer(Var var) {
+    expect(TK_LBRACE);
+
+    // parse elements of array.
+    Exprs result = parse_exprs("}");
+
+    // if array size not determined yet, resolve here.
+    if (var.type->arr_size == 0) {
+        resolve_array_size(var, result);
+    }
+
+    // preparation of linked list
+    Node head;
+    Node *cur = calloc(1, sizeof(Node));
+    head.next = cur;
+
+    VarNode *v = get_var(var.name);
+    if (v == NULL) {
+        error("Undeclared variable: %s\n", var.name);
+    }
+    Node *array = new_lvar_node(v->data);
+
+    Node *elem = result.head;
+    // create a linked list which preserve the assigning of each array index.
+    // ex.
+    // ```
+    //     arr[3] = { 10, 20, 30 };
+    //
+    //     // above converts to below
+    //
+    //     arr[0] = 10;
+    //     arr[1] = 20;
+    //     arr[2] = 30;
+    // ```
+    for (int i = 0; i < result.count; i++) {
+        Node *add = new_add(array, new_num_node(i));
+
+        Node *deref = new_unary_node(ND_DEREF, add);
+
+        Node *assign = new_node_with_lr(ND_ASSIGN, deref, elem);
+
+        cur->next = assign;
+        cur = assign;
+
+        elem = elem->next;
+    }
+
+    Node *assigns = new_node(ND_BLOCK);
+    assigns->block = head.next->next;
+    expect(TK_RBRACE);
+
+    return assigns;
+}
+
 // initializer = assignment-expression
 //             | '{' initializer-list ','? '}'
-Node *parse_initializer(Node *n) {
-    if (n->var.type->tk == ARRAY) {
-        expect(TK_LBRACE);
-
-        // parse elements of array.
-        Exprs result = parse_exprs("}");
-
-        // if array size not determined yet, resolve here.
-        if (n->var.type->arr_size == 0) {
-            resolve_array_size(n, result);
-        }
-
-        // preparation of linked list
-        Node head;
-        Node *cur = calloc(1, sizeof(Node));
-        head.next = cur;
-
-        VarNode *v = get_var(n->var.name);
-        if (v == NULL) {
-            error("Undeclared variable: %s\n", n->var.name);
-        }
-        Node *array = new_lvar_node(v->data);
-
-        Node *elem = result.head;
-        // create a linked list which preserve the assigning of each array index.
-        // ex.
-        // ```
-        //     arr[3] = { 10, 20, 30 };
-        //
-        //     // above converts to below
-        //
-        //     arr[0] = 10;
-        //     arr[1] = 20;
-        //     arr[2] = 30;
-        // ```
-        for (int i = 0; i < result.count; i++) {
-            Node *add = new_add(array, new_num_node(i));
-
-            Node *deref = new_node(ND_DEREF);
-            deref->expr = add;
-
-            Node *assign = new_node_with_lr(ND_ASSIGN, deref, elem);
-
-            cur->next = assign;
-            cur = assign;
-
-            elem = elem->next;
-        }
-
-        Node *assigns = new_node(ND_BLOCK);
-        assigns->block = head.next->next;
-        n = assigns;
-        expect(TK_RBRACE);
-    } else {
-        VarNode *v = get_var(n->var.name);
-        if (v == NULL) {
-            error("Undeclared variable: %s\n", n->var.name);
-        }
-        Node *lhs = new_lvar_node(v->data);
-        n = new_node_with_lr(ND_ASSIGN, lhs, parse_equality());
+Node *parse_initializer(Var var) {
+    if (var.type->tk == ARRAY) {
+        return parse_array_initializer(var);
     }
-    return n;
+
+    VarNode *v = get_var(var.name);
+    if (v == NULL) {
+        error("Undeclared variable: %s\n", var.name);
+    }
+    Node *lhs = new_lvar_node(v->data);
+    return new_node_with_lr(ND_ASSIGN, lhs, parse_equality());
 }
 
 // type-suffix = ('[' const-expr ']')*
@@ -785,7 +788,7 @@ Node *parse_init_declarator(VarKind vk, Type *t, VarAttr *attr) {
 
     if (cur_token_is("=")) {
         next_token();
-        return parse_initializer(n);
+        return parse_initializer(v);
     }
 
     return n;
