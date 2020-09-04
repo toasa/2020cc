@@ -42,7 +42,6 @@ Token *tokenize(char *input);
 //
 // parce.c
 //
-
 const int MAX_FUNC_NUM;
 
 typedef enum {

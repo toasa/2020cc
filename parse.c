@@ -619,12 +619,23 @@ Type *parse_type_specifier(VarAttr *attr) {
     return t;
 }
 
-void resolve_array_size(Var var, Exprs result) {
+void resolve_array_size(Var var) {
+    // count element of array.
+    int arr_size = 1;
+    Token *t_org = token;
+    while (!cur_token_is("}")) {
+        if (cur_token_is(",")) {
+            arr_size++;
+        }
+        next_token();
+    }
+    token = t_org;
+
     VarNode *var_iter = cur_scope->lvar_head;
     while (1) {
         if (equal_strings(var.name, var_iter->data.name)) {
-            var_iter->data.type->arr_size = result.count;
-            size_t size = var_iter->data.type->base->size * result.count;
+            var_iter->data.type->arr_size = arr_size;
+            size_t size = var_iter->data.type->base->size * arr_size;
             var_iter->data.type->size = size;
             stack_frame_size += size;
             var_iter->data.offset = stack_frame_size;
@@ -635,29 +646,20 @@ void resolve_array_size(Var var, Exprs result) {
     }
 }
 
-Node *parse_array_initializer(Var var) {
+Node *parse_array_initializer(Type *type, char *name) {
     expect(TK_LBRACE);
-
-    // parse elements of array.
-    Exprs result = parse_exprs("}");
-
-    // if array size not determined yet, resolve here.
-    if (var.type->arr_size == 0) {
-        resolve_array_size(var, result);
-    }
 
     // preparation of linked list
     Node head;
     Node *cur = calloc(1, sizeof(Node));
     head.next = cur;
 
-    VarNode *v = get_var(var.name);
+    VarNode *v = get_var(name);
     if (v == NULL) {
-        error("Undeclared variable: %s\n", var.name);
+        error("Undeclared variable: %s\n", name);
     }
     Node *array = new_lvar_node(v->data);
 
-    Node *elem = result.head;
     // create a linked list which preserve the assigning of each array index.
     // ex.
     // ```
@@ -669,23 +671,23 @@ Node *parse_array_initializer(Var var) {
     //     arr[1] = 20;
     //     arr[2] = 30;
     // ```
-    for (int i = 0; i < result.count; i++) {
+    for (int i = 0; i < type->arr_size; i++) {
+        if (i != 0) {
+            expect(TK_COMMA);
+        }
+
         Node *add = new_add(array, new_num_node(i));
-
         Node *deref = new_unary_node(ND_DEREF, add);
-
-        Node *assign = new_node_with_lr(ND_ASSIGN, deref, elem);
+        Node *assign = new_node_with_lr(ND_ASSIGN, deref, parse_assign());
 
         cur->next = assign;
         cur = assign;
-
-        elem = elem->next;
     }
 
     Node *assigns = new_node(ND_BLOCK);
     assigns->block = head.next->next;
-    expect(TK_RBRACE);
 
+    expect(TK_RBRACE);
     return assigns;
 }
 
@@ -693,7 +695,14 @@ Node *parse_array_initializer(Var var) {
 //             | '{' initializer-list ','? '}'
 Node *parse_initializer(Var var) {
     if (var.type->tk == ARRAY) {
-        return parse_array_initializer(var);
+
+        // if array size not determined yet, resolve here.
+        // TODO? currently, can handle a one dimensional array only.
+        if (var.type->arr_size == 0) {
+            resolve_array_size(var);
+        }
+
+        return parse_array_initializer(var.type, var.type->name);
     }
 
     VarNode *v = get_var(var.name);
