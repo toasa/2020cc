@@ -653,11 +653,11 @@ struct SLL {
 };
 
 // Get source array or pointer type recursively.
-Type *get_src_type(Type *t) {
+Type *get_src_array_type(Type *t) {
     if (is_pointer(t) && !is_pointer(t->base)) {
         return t;
     }
-    return get_src_type(t->base);
+    return get_src_array_type(t->base);
 }
 
 // To parse nested initialization of array, `array_elements_count`
@@ -678,12 +678,12 @@ struct SLL parse_array_init_one_dim(Type *type, char *name) {
         error("Undeclared variable: %s\n", name);
     }
 
-    Type *src_type = get_src_type(type);
+    Type *src_type = get_src_array_type(type);
     Node *array = new_lvar_node(v->data);
     array->ty = src_type;
 
     for (int i = 0; i < type->arr_size; i++) {
-        if (i != 0) {
+        if (i != 0 && !cur_tokenkind_is(TK_RBRACE)) {
             expect(TK_COMMA);
         }
 
@@ -695,7 +695,15 @@ struct SLL parse_array_init_one_dim(Type *type, char *name) {
         add->ty = src_type;
 
         Node *deref = new_unary_node(ND_DEREF, add);
-        Node *assign = new_node_with_lr(ND_ASSIGN, deref, parse_assign());
+        Node *assign;
+
+        // If a element of array is not initialized explicitly,
+        // compiler inserts zero initialization.
+        if (cur_tokenkind_is(TK_RBRACE)) {
+            assign = new_node_with_lr(ND_ASSIGN, deref, new_num_node(0));
+        } else {
+            assign = new_node_with_lr(ND_ASSIGN, deref, parse_assign());
+        }
 
         cur->next = assign;
         cur = assign;
