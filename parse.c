@@ -646,7 +646,26 @@ void resolve_array_size(Var var) {
     }
 }
 
-Node *parse_array_initializer(Type *type, char *name) {
+// singly linked list.
+struct SLL {
+    Node *head;
+    Node *tail;
+};
+
+// Get source array or pointer type recursively.
+Type *get_src_type(Type *t) {
+    if (is_pointer(t) && !is_pointer(t->base)) {
+        return t;
+    }
+    return get_src_type(t->base);
+}
+
+// To parse nested initialization of array, `array_elements_count`
+// holds a index of array which is parsed already.
+int array_elements_count;
+
+// parse one dimensional array.
+struct SLL parse_array_init_one_dim(Type *type, char *name) {
     expect(TK_LBRACE);
 
     // preparation of linked list
@@ -658,37 +677,102 @@ Node *parse_array_initializer(Type *type, char *name) {
     if (v == NULL) {
         error("Undeclared variable: %s\n", name);
     }
-    Node *array = new_lvar_node(v->data);
 
-    // create a linked list which preserve the assigning of each array index.
-    // ex.
-    // ```
-    //     arr[3] = { 10, 20, 30 };
-    //
-    //     // above converts to below
-    //
-    //     arr[0] = 10;
-    //     arr[1] = 20;
-    //     arr[2] = 30;
-    // ```
+    Type *src_type = get_src_type(type);
+    Node *array = new_lvar_node(v->data);
+    array->ty = src_type;
+
     for (int i = 0; i < type->arr_size; i++) {
         if (i != 0) {
             expect(TK_COMMA);
         }
 
-        Node *add = new_add(array, new_num_node(i));
+        // We have to serialize a multidimensional array
+        // into a one dimensinal to handle a initialization
+        // of the array. So the base type must be a source type
+        // in any multidimensinal array.
+        Node *add = new_add(array, new_num_node(array_elements_count++));
+        add->ty = src_type;
+
         Node *deref = new_unary_node(ND_DEREF, add);
         Node *assign = new_node_with_lr(ND_ASSIGN, deref, parse_assign());
 
         cur->next = assign;
         cur = assign;
+
     }
 
-    Node *assigns = new_node(ND_BLOCK);
-    assigns->block = head.next->next;
+    expect(TK_RBRACE);
+
+    struct SLL sll;
+    sll.head = head.next->next;
+    sll.tail = cur;
+    return sll;
+}
+
+struct SLL parse_array_initializer_rec(Type *type, char *name) {
+    if (type->base->tk != ARRAY) {
+        return parse_array_init_one_dim(type, name);
+    }
+
+    expect(TK_LBRACE);
+
+    VarNode *v = get_var(name);
+    if (v == NULL) {
+        error("Undeclared variable: %s\n", name);
+    }
+
+    Node *head = NULL;
+    Node *tail = NULL;
+    for (int i = 0; i < type->arr_size; i++) {
+        if (i != 0) {
+            expect(TK_COMMA);
+        }
+        struct SLL sll = parse_array_initializer_rec(type->base, name);
+
+        if (i == 0) {
+            head = sll.head;
+            tail = sll.tail;
+            continue;
+        }
+
+        // merge two linked lists.
+        tail->next = sll.head;
+        tail = sll.tail;
+    }
 
     expect(TK_RBRACE);
-    return assigns;
+
+    struct SLL sll;
+    sll.head = head;
+    sll.tail = tail;
+    return sll;
+}
+
+// Create a linked list which preserve the assigning of each array index.
+// For example, convert
+//
+// ```
+//     arr[2][3] = { {1,2,3}, {4,5,6} };
+// ```
+//
+// into
+//
+// ```
+//     arr[0] = 1;
+//     arr[1] = 2;
+//     arr[2] = 3;
+//     arr[3] = 4;
+//     arr[4] = 5;
+//     arr[5] = 6;
+// ```
+// .
+Node *parse_array_initializer(Type *type, char *name) {
+    Node *b = new_node(ND_BLOCK);
+    array_elements_count = 0;
+    b->block = parse_array_initializer_rec(type, name).head;
+    add_type(b);
+    return b;
 }
 
 // initializer = assignment-expression
