@@ -72,7 +72,28 @@ void next_token() {
 
 void expect(TokenKind tk) {
     if (token->tk != tk) {
-        error("expect %d token, but got %d", tk, token->tk);
+        char *tokens[] = {
+            "TK_NUM",
+            "TK_RESERVED",
+            "TK_IDENT",
+            "TK_LPARENT",
+            "TK_RPARENT",
+            "TK_LBRACE",
+            "TK_RBRACE",
+            "TK_LBRACKET",
+            "TK_RBRACKET",
+            "TK_SEMICOLON",
+            "TK_COLON",
+            "TK_QUEST",
+            "TK_COMMA",
+            "TK_PERIOD",
+            "TK_ARROW",
+            "TK_TYPE",
+            "TK_STORAGE",
+            "TK_STR",
+            "TK_EOF",
+        };
+        error("expect %s, but got %s", tokens[tk], tokens[token->tk]);
     }
     next_token();
 }
