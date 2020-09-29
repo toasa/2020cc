@@ -734,6 +734,11 @@ struct SLL parse_array_init_one_dim(Type *type, char *name) {
 
     }
 
+    // Skip a trailing comma.
+    if (cur_tokenkind_is(TK_COMMA)) {
+        next_token();
+    }
+
     if (has_brace) {
         expect(TK_RBRACE);
     }
@@ -773,6 +778,11 @@ struct SLL parse_array_initializer_rec(Type *type, char *name) {
         // merge two linked lists.
         tail->next = sll.head;
         tail = sll.tail;
+    }
+
+    // Skip a trailing comma.
+    if (cur_tokenkind_is(TK_COMMA)) {
+        next_token();
     }
 
     expect(TK_RBRACE);
