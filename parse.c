@@ -687,7 +687,10 @@ int array_elements_count;
 
 // parse one dimensional array.
 struct SLL parse_array_init_one_dim(Type *type, char *name) {
-    expect(TK_LBRACE);
+    bool has_brace = cur_tokenkind_is(TK_LBRACE);
+    if (has_brace) {
+        expect(TK_LBRACE);
+    }
 
     // preparation of linked list
     Node head;
@@ -731,7 +734,9 @@ struct SLL parse_array_init_one_dim(Type *type, char *name) {
 
     }
 
-    expect(TK_RBRACE);
+    if (has_brace) {
+        expect(TK_RBRACE);
+    }
 
     struct SLL sll;
     sll.head = head.next->next;
@@ -754,8 +759,8 @@ struct SLL parse_array_initializer_rec(Type *type, char *name) {
     Node *head = NULL;
     Node *tail = NULL;
     for (int i = 0; i < type->arr_size; i++) {
-        if (i != 0) {
-            expect(TK_COMMA);
+        if (i != 0 && cur_tokenkind_is(TK_COMMA)) {
+            next_token();
         }
         struct SLL sll = parse_array_initializer_rec(type->base, name);
 
