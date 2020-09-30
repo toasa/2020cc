@@ -785,6 +785,16 @@ int main() {
     test(1, ({ int arr[2][3] = {{1,2,3,},{},}; arr[0][0]; }), "({ int arr[2][3] = {{1,2,3,},{},}; arr[0][0]; })");
     test(0, ({ int arr[2][3] = {{1,2,3,},{},}; arr[1][2]; }), "({ int arr[2][3] = {{1,2,3,},{},}; arr[1][2]; })");
 
+    test('a', ({ char x[4]="abc"; x[0]; }), "({ char x[4]=\"abc\"; x[0]; })");
+    test('c', ({ char x[4]="abc"; x[2]; }), "({ char x[4]=\"abc\"; x[2]; })");
+    test(0, ({ char x[4]="abc"; x[3]; }), "({ char x[4]=\"abc\"; x[3]; })");
+    test(0, ({ char x[4]="ab"; x[2]; }), "({ char x[4]=\"ab\"; x[2]; })");
+    test(0, ({ char x[4]="ab"; x[3]; }), "({ char x[4]=\"ab\"; x[3]; })");
+    test('a', ({ char x[2][4]={"abc","def"}; x[0][0]; }), "({ char x[2][4]={\"abc\",\"def\"}; x[0][0]; })");
+    test(0, ({ char x[2][4]={"abc","def"}; x[0][3]; }), "({ char x[2][4]={\"abc\",\"def\"}; x[0][3]; })");
+    test('d', ({ char x[2][4]={"abc","def"}; x[1][0]; }), "({ char x[2][4]={\"abc\",\"def\"}; x[1][0]; })");
+    test('f', ({ char x[2][4]={"abc","def"}; x[1][2]; }), "({ char x[2][4]={\"abc\",\"def\"}; x[1][2]; })");
+
     printf("OK\n");
 
     return 0;

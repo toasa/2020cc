@@ -685,8 +685,63 @@ Type *get_src_array_type(Type *t) {
 // holds a index of array which is parsed already.
 int array_elements_count;
 
-// parse one dimensional array.
+// Array initialization by string literal.
+// For example, `char arr[4] = "abc";`.
+struct SLL parse_array_init_by_str(Type *type, char *name) {
+    // preparation of linked list
+    Node head;
+    Node *cur = calloc(1, sizeof(Node));
+    head.next = cur;
+
+    VarNode *v = get_var(name);
+    if (v == NULL) {
+        error("Undeclared variable: %s\n", name);
+    }
+
+    Type *src_type = get_src_array_type(type);
+    Node *array = new_lvar_node(v->data);
+    array->ty = src_type;
+
+    for (int i = 0; i < type->arr_size; i++) {
+        Node *add = new_add(array, new_num_node(array_elements_count++));
+        add->ty = src_type;
+
+        Node *deref = new_unary_node(ND_DEREF, add);
+        Node *assign;
+
+        // If a element of array is not initialized explicitly,
+        // compiler inserts zero initialization.
+        if (i < token->str_len) {
+            assign = new_node_with_lr(ND_ASSIGN, deref, new_num_node(token->str[i]));
+        } else {
+            assign = new_node_with_lr(ND_ASSIGN, deref, new_num_node(0));
+        }
+
+        cur->next = assign;
+        cur = assign;
+
+    }
+
+    expect(TK_STR);
+
+    struct SLL sll;
+    sll.head = head.next->next;
+    sll.tail = cur;
+    return sll;
+}
+
+// Parse a initialization of one dimensional array.
+// There are two cases.
+//
+//   1. values in parentheses,
+//   2. string literal.
+//
+// If 2, we call parse_array_init_by_str.
 struct SLL parse_array_init_one_dim(Type *type, char *name) {
+    if (cur_tokenkind_is(TK_STR)) {
+        return parse_array_init_by_str(type, name);
+    }
+
     bool has_brace = cur_tokenkind_is(TK_LBRACE);
     if (has_brace) {
         expect(TK_LBRACE);
@@ -733,6 +788,7 @@ struct SLL parse_array_init_one_dim(Type *type, char *name) {
         cur = assign;
 
     }
+
 
     // Skip a trailing comma.
     if (cur_tokenkind_is(TK_COMMA)) {
