@@ -272,6 +272,8 @@ int main() {
     test(40, ({ int arr[] = {10, 20, 30, 40}; arr[3]; }), "({ int arr[] = {10, 20, 30, 40}; arr[3]; })");
     test(40, ({ int a = 20; int arr[] = {1, 2, 3}; a * arr[1]; }), "({ int a = 20; int arr[] = {1, 2, 3}; a * arr[1]; })");
     test(60, ({ int a = 20; int b = 30; int arr[] = {a, b, a * b}; arr[2] / (arr[1] - arr[0]); }), "({ int a = 20; int b = 30; int arr[] = {a, b, a * b}; arr[2] / (arr[1] - arr[0]); })");
+    test(16, ({ int x[]={1,2,3,4}; sizeof(x); }), "({ int x[]={1,2,3,4}; sizeof(x); })");
+    test(4, ({ char x[]="foo"; sizeof(x); }), "({ char x[]=\"foo\"; sizeof(x); })");
 
     test(0, g1, "g1;");
     test(3, ({ g1=3; g1; }), "({ g1=3; g1; })");

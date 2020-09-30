@@ -640,18 +640,31 @@ Type *parse_type_specifier(VarAttr *attr) {
     return t;
 }
 
+// When array length is omitted, resolve here.
+// There are two cases. For example,
+//
+//   1. `char arr[] = "abc";`,
+//   2. `int arr[] = {11, 12, 13, 14};`.
+//
+// In both cases, array length is 4.
 void resolve_array_size(Var var) {
-    // count element of array.
-    int arr_size = 1;
-    Token *t_org = token;
-    while (!cur_token_is("}")) {
-        if (cur_token_is(",")) {
-            arr_size++;
+    int arr_size;
+    if (cur_tokenkind_is(TK_STR)) {
+        arr_size = token->str_len;
+    } else {
+        // count element of array.
+        arr_size = 1;
+        Token *t_org = token;
+        while (!cur_token_is("}")) {
+            if (cur_token_is(",")) {
+                arr_size++;
+            }
+            next_token();
         }
-        next_token();
+        token = t_org;
     }
-    token = t_org;
 
+    // Reregistration of variable node into linked list.
     VarNode *var_iter = cur_scope->lvar_head;
     while (1) {
         if (equal_strings(var.name, var_iter->data.name)) {
